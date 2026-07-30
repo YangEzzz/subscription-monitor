@@ -1,0 +1,5 @@
+.reciver {
+        padding: 40px 0px;
+        text-align: center;
+        line-height: 40px;
+}

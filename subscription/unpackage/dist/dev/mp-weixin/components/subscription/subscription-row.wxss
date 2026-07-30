@@ -1,0 +1,20 @@
+.renewal-row.data-v-b2ba1050 { min-height: 112rpx; display: flex; align-items: center;
+}
+.renewal-main.data-v-b2ba1050 { flex: 1; min-width: 0; margin-left: 22rpx;
+}
+.renewal-name.data-v-b2ba1050 { display: block; overflow: hidden; color: #171b18; font-size: 28rpx; font-weight: 650; text-overflow: ellipsis; white-space: nowrap;
+}
+.renewal-date.data-v-b2ba1050 { display: block; margin-top: 7rpx; color: #818781; font-size: 23rpx;
+}
+.renewal-side.data-v-b2ba1050 { text-align: right;
+}
+.renewal-price.data-v-b2ba1050 { display: block; font-size: 26rpx; font-weight: 650;
+}
+.days.data-v-b2ba1050 { display: block; margin-top: 7rpx; font-size: 23rpx; white-space: nowrap;
+}
+.days.urgent.data-v-b2ba1050 { color: #f0444d;
+}
+.days.normal.data-v-b2ba1050 { color: #ff7b2f;
+}
+.row-status.data-v-b2ba1050 { display: block; margin-top: 4rpx; color: #727b75; font-size: 18rpx;
+}

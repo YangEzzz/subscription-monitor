@@ -1,0 +1,1 @@
+<view><view id="str">{{a}}</view><button id="button" bindtap="{{b}}">crypto.getRandomValues</button></view>

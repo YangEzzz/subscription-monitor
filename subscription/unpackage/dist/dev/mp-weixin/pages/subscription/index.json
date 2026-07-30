@@ -1,0 +1,11 @@
+{
+  "navigationStyle": "custom",
+  "navigationBarTitleText": "续订清单",
+  "backgroundColor": "#f4f7f5",
+  "enablePullDownRefresh": false,
+  "usingComponents": {
+    "brand-logo": "../../components/subscription/brand-logo",
+    "subscription-row": "../../components/subscription/subscription-row",
+    "uni-icons": "../../uni_modules/uni-icons/components/uni-icons/uni-icons"
+  }
+}
