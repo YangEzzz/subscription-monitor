@@ -1,4 +1,4 @@
-.brand-logo.data-v-a931edbf { flex: 0 0 auto; width: 72rpx; height: 72rpx; border-radius: 18rpx; display: flex; align-items: center; justify-content: center; color: #fff; box-shadow: inset 0 0 0 1rpx rgba(255,255,255,.14);
+.brand-logo.data-v-a931edbf { flex: 0 0 auto; width: 68rpx; height: 68rpx; border-radius: 15rpx; display: flex; align-items: center; justify-content: center; color: #fff; box-shadow: inset 0 0 0 1rpx rgba(255,255,255,.16);
 }
-.brand-logo text.data-v-a931edbf { font-size: 30rpx; font-weight: 800;
+.brand-logo text.data-v-a931edbf { font-size: 28rpx; font-weight: 800;
 }

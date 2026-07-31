@@ -1,1 +1,0 @@
-<view><page-head wx:if="{{a}}" u-i="e3e01b58-0" bind:__l="__l" u-p="{{a}}"></page-head></view>

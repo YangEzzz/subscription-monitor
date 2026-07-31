@@ -27,13 +27,13 @@
 </script>
 
 <style scoped>
-	.renewal-row { min-height: 112rpx; display: flex; align-items: center; }
-	.renewal-main { flex: 1; min-width: 0; margin-left: 22rpx; }
-	.renewal-name { display: block; overflow: hidden; color: #171b18; font-size: 28rpx; font-weight: 650; text-overflow: ellipsis; white-space: nowrap; }
-	.renewal-date { display: block; margin-top: 7rpx; color: #818781; font-size: 23rpx; }
+	.renewal-row { min-height: 108rpx; display: flex; align-items: center; }
+	.renewal-main { flex: 1; min-width: 0; margin-left: 18rpx; }
+	.renewal-name { display: block; overflow: hidden; color: #171b18; font-size: 27rpx; font-weight: 680; text-overflow: ellipsis; white-space: nowrap; }
+	.renewal-date { display: block; margin-top: 6rpx; color: #7b847e; font-size: 21rpx; }
 	.renewal-side { text-align: right; }
-	.renewal-price { display: block; font-size: 26rpx; font-weight: 650; }
-	.days { display: block; margin-top: 7rpx; font-size: 23rpx; white-space: nowrap; }
+	.renewal-price { display: block; font-size: 24rpx; font-weight: 700; }
+	.days { display: block; margin-top: 6rpx; font-size: 21rpx; font-weight: 600; white-space: nowrap; }
 	.days.urgent { color: #f0444d; }
 	.days.normal { color: #ff7b2f; }
 	.row-status { display: block; margin-top: 4rpx; color: #727b75; font-size: 18rpx; }

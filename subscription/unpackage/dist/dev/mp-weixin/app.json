@@ -11,10 +11,5 @@
     "backgroundColorTop": "#ffffff",
     "backgroundColorBottom": "#f4f7f5"
   },
-  "permission": {
-    "scope.userLocation": {
-      "desc": "演示定位能力"
-    }
-  },
   "usingComponents": {}
 }

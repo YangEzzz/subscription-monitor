@@ -1,6 +1,0 @@
-{
-  "navigationBarTitleText": "vuex-vue",
-  "usingComponents": {
-    "page-head": "../../../components/page-head/page-head"
-  }
-}
