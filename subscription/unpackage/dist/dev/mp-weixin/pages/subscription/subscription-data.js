@@ -86,7 +86,12 @@ function createSeedSubscriptions() {
     { id: 3, name: "Netflix 高级套餐", plan: "高级套餐", logo: "N", color: "#181818", amount: 108, currency: "CNY", cycle: "每月", nextBillingDate: addDays(today, 10), payment: "信用卡", category: "影音娱乐", status: "active", autoRenew: true, reminders: [7, 3, 1], note: "家庭电视使用", cancelGuide: "Netflix 账户 > 取消会员资格", createdAt: Date.now() - 4e4 },
     { id: 4, name: "腾讯视频 VIP", plan: "连续包月", logo: "视", color: "#19a768", amount: 25, currency: "CNY", cycle: "每月", nextBillingDate: addDays(today, 14), payment: "微信支付", category: "影音娱乐", status: "active", autoRenew: true, reminders: [7, 3, 1], note: "", cancelGuide: "微信支付 > 自动续费 > 腾讯视频", createdAt: Date.now() - 3e4 },
     { id: 5, name: "ChatGPT Plus", plan: "Plus", logo: "AI", color: "#1f9c70", amount: 145, currency: "CNY", cycle: "每月", nextBillingDate: addDays(today, 16), payment: "信用卡", category: "AI 工具", status: "active", autoRenew: true, reminders: [7, 3, 1], note: "工作账号", cancelGuide: "ChatGPT 设置 > Subscription > Manage", createdAt: Date.now() - 2e4 },
-    { id: 6, name: "Adobe Creative Cloud", plan: "摄影计划", logo: "A", color: "#e43c86", amount: 173, currency: "CNY", cycle: "每年", nextBillingDate: addDays(today, 30), payment: "信用卡", category: "效率工具", status: "active", autoRenew: true, reminders: [14, 7, 3], note: "年度订阅", cancelGuide: "Adobe 账户 > 计划 > 管理计划", createdAt: Date.now() - 1e4 }
+    { id: 6, name: "Adobe Creative Cloud", plan: "摄影计划", logo: "A", color: "#e43c86", amount: 173, currency: "CNY", cycle: "每年", nextBillingDate: addDays(today, 30), payment: "信用卡", category: "效率工具", status: "active", autoRenew: true, reminders: [14, 7, 3], note: "年度订阅", cancelGuide: "Adobe 账户 > 计划 > 管理计划", createdAt: Date.now() - 1e4 },
+    { id: 7, name: "百度网盘超级会员", plan: "超级会员", logo: "盘", color: "#3f91ed", amount: 30, currency: "CNY", cycle: "每月", nextBillingDate: addDays(today, -2), payment: "支付宝", category: "云存储", status: "active", autoRenew: true, reminders: [7, 3, 1], note: "演示逾期未确认状态", cancelGuide: "百度网盘 App > 我的 > 续费管理", createdAt: Date.now() - 9e3 },
+    { id: 8, name: "得到听书会员", plan: "年度会员", logo: "得", color: "#c17d2f", amount: null, currency: "CNY", cycle: "每年", nextBillingDate: addDays(today, 21), payment: "微信支付", category: "阅读", status: "active", autoRenew: true, reminders: [14, 7, 3], note: "演示金额待补充状态", cancelGuide: "", createdAt: Date.now() - 8e3 },
+    { id: 9, name: "Keep 会员", plan: "连续包月", logo: "K", color: "#6658d9", amount: 25, currency: "CNY", cycle: "每月", nextBillingDate: addDays(today, 8), payment: "微信支付", category: "其他", status: "paused", autoRenew: true, reminders: [7, 3, 1], note: "暂时不使用，保留记录", cancelGuide: "Keep App > 我的 > 设置 > 自动续费管理", createdAt: Date.now() - 7e3 },
+    { id: 10, name: "知乎盐选会员", plan: "连续包月", logo: "知", color: "#202622", amount: 19, currency: "CNY", cycle: "每月", nextBillingDate: addDays(today, 12), payment: "支付宝", category: "阅读", status: "cancelled", autoRenew: false, reminders: [7, 3, 1], note: "已在原付款渠道取消", cancelGuide: "支付宝 > 支付设置 > 免密支付/自动扣款", createdAt: Date.now() - 6e3 },
+    { id: 11, name: "Notion Plus", plan: "Plus", logo: "N", color: "#202622", amount: 72, currency: "CNY", cycle: "每月", nextBillingDate: addDays(today, 25), payment: "信用卡", category: "效率工具", status: "archived", autoRenew: false, reminders: [7, 3, 1], note: "历史工作项目使用", cancelGuide: "Notion Settings > Billing > Change plan", createdAt: Date.now() - 5e3 }
   ];
 }
 function createDefaultSettings() {
@@ -97,7 +102,12 @@ function createDefaultSettings() {
     defaultCurrency: "CNY",
     defaultReminders: [7, 3, 1],
     reminderTime: "09:00",
-    timezone: "Asia/Shanghai"
+    timezone: "Asia/Shanghai",
+    membership: {
+      status: "free",
+      plan: "免费版",
+      startedAt: null
+    }
   };
 }
 exports.CATEGORY_COLORS = CATEGORY_COLORS;
