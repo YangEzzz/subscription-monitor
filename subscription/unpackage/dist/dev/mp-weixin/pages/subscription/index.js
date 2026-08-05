@@ -22,6 +22,9 @@ const _sfc_main = {
       ],
       subscriptions: [],
       settings: pages_subscription_subscriptionData.createDefaultSettings(),
+      authStatus: "idle",
+      subscribeTemplateIds: [],
+      // 填写微信公众平台中的订阅消息模板 ID
       subscriptionLimit: 5,
       searchKeyword: "",
       activeCategory: "全部",
@@ -245,6 +248,7 @@ const _sfc_main = {
   onLoad() {
     this.initNavigationLayout();
     this.loadLocalData();
+    this.loginWithWechat();
   },
   onBackPress() {
     if (this.sortSheetVisible) {
@@ -305,6 +309,25 @@ const _sfc_main = {
       this.settings = savedSettings ? { ...pages_subscription_subscriptionData.createDefaultSettings(), ...savedSettings } : pages_subscription_subscriptionData.createDefaultSettings();
       this.persist();
     },
+    loginWithWechat() {
+      this.authStatus = "logging-in";
+      common_vendor.index.login({
+        provider: "weixin",
+        success: (result) => {
+          if (!result || !result.code) {
+            this.authStatus = "local";
+            common_vendor.index.__f__("warn", "at pages/subscription/index.vue:437", "[auth] 微信登录未返回 code，继续使用本地模式");
+            return;
+          }
+          this.authStatus = "authenticated";
+          common_vendor.index.__f__("info", "at pages/subscription/index.vue:441", "[auth] uni.login 成功，临时 code:", result.code);
+        },
+        fail: (error) => {
+          this.authStatus = "local";
+          common_vendor.index.__f__("warn", "at pages/subscription/index.vue:446", "[auth] 微信登录失败，继续使用本地模式", error);
+        }
+      });
+    },
     persist() {
       common_vendor.index.setStorageSync(pages_subscription_subscriptionData.STORAGE_KEYS.subscriptions, this.subscriptions);
       common_vendor.index.setStorageSync(pages_subscription_subscriptionData.STORAGE_KEYS.settings, this.settings);
@@ -335,10 +358,32 @@ const _sfc_main = {
       this.persist();
     },
     enableNotification() {
-      common_vendor.index.showModal({ title: "开启续费提醒", content: "当前未接入后端，将在本地模拟“通知已开启”状态。接入微信订阅消息后需由用户主动授权。", confirmText: "模拟开启", success: (res) => {
-        if (res.confirm)
-          this.setNotification(true);
-      } });
+      if (!this.subscribeTemplateIds.length)
+        return common_vendor.index.showModal({ title: "暂未配置通知模板", content: "请先在代码中配置微信订阅消息模板 ID，再发起授权。当前不会修改提醒状态。", showCancel: false });
+      if (typeof common_vendor.index.requestSubscribeMessage !== "function")
+        return common_vendor.index.showModal({ title: "当前平台不支持", content: "请在微信小程序真机或微信开发者工具中发起订阅消息授权。", showCancel: false });
+      common_vendor.index.requestSubscribeMessage({
+        tmplIds: this.subscribeTemplateIds,
+        success: (result) => {
+          const statuses = this.subscribeTemplateIds.map((templateId) => ({ templateId, status: result[templateId] || "unknown", updatedAt: Date.now() }));
+          const accepted = statuses.some((item) => item.status === "accept");
+          this.settings.notificationAuthorization = statuses;
+          this.settings.notificationEnabled = accepted;
+          this.persist();
+          common_vendor.index.showToast({ title: accepted ? "授权成功" : "未获得授权", icon: "none" });
+          common_vendor.index.__f__("info", "at pages/subscription/index.vue:468", "[notification] 订阅消息授权结果:", statuses);
+        },
+        fail: (error) => {
+          common_vendor.index.__f__("warn", "at pages/subscription/index.vue:471", "[notification] 订阅消息授权失败:", error);
+          common_vendor.index.showToast({ title: "授权未完成", icon: "none" });
+        }
+      });
+    },
+    handleNotificationSwitch(value) {
+      if (value)
+        this.enableNotification();
+      else
+        this.setNotification(false);
     },
     setNotification(value) {
       this.settings.notificationEnabled = value;
@@ -687,7 +732,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       size: "20",
       color: "#a86210"
     }),
-    m: common_vendor.o((...args) => $options.enableNotification && $options.enableNotification(...args), "a8"),
+    m: common_vendor.o((...args) => $options.enableNotification && $options.enableNotification(...args), "d0"),
     n: common_vendor.o((...args) => $options.enableNotification && $options.enableNotification(...args), "a9")
   } : {}, {
     o: common_vendor.t($options.activeSubscriptions.length),
@@ -696,7 +741,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       size: "14",
       color: "#747b76"
     }),
-    q: common_vendor.o(($event) => $options.switchTab("all"), "b5"),
+    q: common_vendor.o(($event) => $options.switchTab("all"), "cf"),
     r: $options.upcoming7.length
   }, $options.upcoming7.length ? {
     s: common_vendor.t($options.upcoming7.length)
@@ -727,12 +772,12 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     }),
     y: !$options.next30Subscriptions.length
   }, !$options.next30Subscriptions.length ? {
-    z: common_vendor.o(($event) => $options.openForm(), "e1")
+    z: common_vendor.o(($event) => $options.openForm(), "26")
   } : {}, {
     A: $options.next30Subscriptions.length > 4
   }, $options.next30Subscriptions.length > 4 ? {
     B: common_vendor.t($options.next30Subscriptions.length),
-    C: common_vendor.o(($event) => $options.switchTab("all"), "16")
+    C: common_vendor.o(($event) => $options.switchTab("all"), "b8")
   } : {}, {
     D: common_vendor.t($options.actionableReminders.length),
     E: common_vendor.f($options.actionableReminders, (reminder, k0, i0) => {
@@ -764,7 +809,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       size: "20",
       color: "#ffffff"
     }),
-    G: common_vendor.o(($event) => $options.openForm(), "81")
+    G: common_vendor.o(($event) => $options.openForm(), "88")
   }) : $data.activeView === "all" ? common_vendor.e({
     I: $data.navigationBarHeight + "px",
     J: common_vendor.p({
@@ -775,7 +820,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     K: $data.searchKeyword,
     L: common_vendor.o(common_vendor.m(($event) => $data.searchKeyword = $event.detail.value, {
       trim: true
-    }), "7d"),
+    }), "f3"),
     M: $data.searchKeyword
   }, $data.searchKeyword ? {
     N: common_vendor.p({
@@ -783,7 +828,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       size: "18",
       color: "#9ca19d"
     }),
-    O: common_vendor.o(($event) => $data.searchKeyword = "", "b4")
+    O: common_vendor.o(($event) => $data.searchKeyword = "", "2b")
   } : {}, {
     P: common_vendor.f($options.categoryFilters, (filter, k0, i0) => {
       return {
@@ -809,7 +854,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       size: "15",
       color: "#89938c"
     }),
-    U: common_vendor.o((...args) => $options.chooseSort && $options.chooseSort(...args), "e2"),
+    U: common_vendor.o((...args) => $options.chooseSort && $options.chooseSort(...args), "5f"),
     V: $options.visibleSubscriptions.length
   }, $options.visibleSubscriptions.length ? {
     W: common_vendor.f($options.visibleSubscriptions, (item, k0, i0) => {
@@ -846,16 +891,16 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     aa: common_vendor.t($data.subscriptions.length ? "调整搜索词或筛选条件，也可以新增一条订阅" : "添加第一条订阅后，这里会显示所有续费项目"),
     ab: $data.subscriptions.length
   }, $data.subscriptions.length ? {
-    ac: common_vendor.o((...args) => $options.resetFilters && $options.resetFilters(...args), "02")
+    ac: common_vendor.o((...args) => $options.resetFilters && $options.resetFilters(...args), "6d")
   } : {
-    ad: common_vendor.o(($event) => $options.openForm(), "04")
+    ad: common_vendor.o(($event) => $options.openForm(), "ab")
   }), {
     ae: common_vendor.p({
       type: "plus",
       size: "27",
       color: "#ffffff"
     }),
-    af: common_vendor.o(($event) => $options.openForm(), "c5")
+    af: common_vendor.o(($event) => $options.openForm(), "ee")
   }) : $data.activeView === "calendar" ? common_vendor.e({
     ah: $data.navigationBarHeight + "px",
     ai: common_vendor.p({
@@ -863,15 +908,15 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       size: "19",
       color: "#5d655f"
     }),
-    aj: common_vendor.o(($event) => $options.changeMonth(-1), "84"),
+    aj: common_vendor.o(($event) => $options.changeMonth(-1), "52"),
     ak: common_vendor.t($options.calendarTitle),
     al: common_vendor.p({
       type: "right",
       size: "19",
       color: "#5d655f"
     }),
-    am: common_vendor.o(($event) => $options.changeMonth(1), "8b"),
-    an: common_vendor.o((...args) => $options.goToday && $options.goToday(...args), "1c"),
+    am: common_vendor.o(($event) => $options.changeMonth(1), "1c"),
+    an: common_vendor.o((...args) => $options.goToday && $options.goToday(...args), "4b"),
     ao: common_vendor.f($data.weekdays, (day, k0, i0) => {
       return {
         a: common_vendor.t(day),
@@ -917,7 +962,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       };
     })
   } : {
-    ax: common_vendor.o(($event) => $options.openForm($data.selectedDate), "95")
+    ax: common_vendor.o(($event) => $options.openForm($data.selectedDate), "8b")
   }) : $data.activeView === "stats" ? {
     az: $data.navigationBarHeight + "px",
     aA: common_vendor.t($options.statsLabel),
@@ -995,15 +1040,15 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     })
   } : {}, {
     ba: $options.isMember ? 1 : "",
-    bb: common_vendor.o((...args) => $options.openMembership && $options.openMembership(...args), "dd"),
+    bb: common_vendor.o((...args) => $options.openMembership && $options.openMembership(...args), "f3"),
     bc: common_vendor.p({
       type: "notification",
       size: "18",
       color: "#177e4b"
     }),
-    bd: common_vendor.t($data.settings.notificationEnabled ? "已模拟开启" : "未开启"),
+    bd: common_vendor.t($data.settings.notificationEnabled ? "授权状态已保存" : "未开启"),
     be: $data.settings.notificationEnabled,
-    bf: common_vendor.o(($event) => $options.setNotification($event.detail.value), "5b"),
+    bf: common_vendor.o(($event) => $options.handleNotificationSwitch($event.detail.value), "ba"),
     bg: common_vendor.p({
       type: "calendar",
       size: "18",
@@ -1016,14 +1061,14 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       size: "17",
       color: "#aab0ac"
     }),
-    bk: common_vendor.o((...args) => $options.openReminderSettings && $options.openReminderSettings(...args), "6f"),
+    bk: common_vendor.o((...args) => $options.openReminderSettings && $options.openReminderSettings(...args), "0b"),
     bl: common_vendor.p({
       type: "email",
       size: "18",
       color: "#3c7fc1"
     }),
     bm: $data.settings.weeklySummary,
-    bn: common_vendor.o(($event) => $options.updateSetting("weeklySummary", $event.detail.value), "b4"),
+    bn: common_vendor.o(($event) => $options.updateSetting("weeklySummary", $event.detail.value), "d6"),
     bo: common_vendor.p({
       type: "wallet",
       size: "18",
@@ -1036,7 +1081,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       color: "#aab0ac"
     }),
     br: $data.currencies,
-    bs: common_vendor.o(($event) => $options.updateSetting("defaultCurrency", $data.currencies[$event.detail.value]), "6e"),
+    bs: common_vendor.o(($event) => $options.updateSetting("defaultCurrency", $data.currencies[$event.detail.value]), "74"),
     bt: common_vendor.p({
       type: "download",
       size: "18",
@@ -1047,7 +1092,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       size: "17",
       color: "#aab0ac"
     }),
-    bw: common_vendor.o((...args) => $options.exportData && $options.exportData(...args), "1f"),
+    bw: common_vendor.o((...args) => $options.exportData && $options.exportData(...args), "e1"),
     bx: common_vendor.p({
       type: "locked",
       size: "18",
@@ -1058,7 +1103,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       size: "17",
       color: "#aab0ac"
     }),
-    bz: common_vendor.o((...args) => $options.showPrivacy && $options.showPrivacy(...args), "81"),
+    bz: common_vendor.o((...args) => $options.showPrivacy && $options.showPrivacy(...args), "d2"),
     bA: common_vendor.p({
       type: "refresh",
       size: "18",
@@ -1069,14 +1114,14 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       size: "17",
       color: "#aab0ac"
     }),
-    bC: common_vendor.o((...args) => $options.resetDemoData && $options.resetDemoData(...args), "c1")
+    bC: common_vendor.o((...args) => $options.resetDemoData && $options.resetDemoData(...args), "20")
   }) : $data.activeView === "membership" ? common_vendor.e({
     bE: common_vendor.p({
       type: "left",
       size: "24",
       color: "#202622"
     }),
-    bF: common_vendor.o(($event) => $options.goBackView("profile"), "97"),
+    bF: common_vendor.o(($event) => $options.goBackView("profile"), "8b"),
     bG: common_vendor.p({
       type: $options.isMember ? "checkbox-filled" : "vip-filled",
       size: "36",
@@ -1113,7 +1158,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       size: "18",
       color: "rgba(255,255,255,.7)"
     }),
-    bR: common_vendor.o((...args) => $options.activateMembership && $options.activateMembership(...args), "1d")
+    bR: common_vendor.o((...args) => $options.activateMembership && $options.activateMembership(...args), "a9")
   } : {}, {
     bS: common_vendor.p({
       type: "list",
@@ -1153,7 +1198,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     cd: common_vendor.t($options.isMember ? "不受数量限制" : "5 条免费上限"),
     ce: $options.isMember
   }, $options.isMember ? {
-    cf: common_vendor.o((...args) => $options.restoreFreePlan && $options.restoreFreePlan(...args), "d4")
+    cf: common_vendor.o((...args) => $options.restoreFreePlan && $options.restoreFreePlan(...args), "25")
   } : {}, {
     cg: common_vendor.p({
       type: "locked",
@@ -1176,7 +1221,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       size: "24",
       color: "#202622"
     }),
-    cl: common_vendor.o(($event) => $options.goBackView("all"), "6f"),
+    cl: common_vendor.o(($event) => $options.goBackView("all"), "14"),
     cm: common_vendor.p({
       item: $options.selectedSubscription
     }),
@@ -1243,7 +1288,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       size: "20",
       color: "#8a9590"
     }),
-    cT: common_vendor.o((...args) => $options.confirmRenewal && $options.confirmRenewal(...args), "74")
+    cT: common_vendor.o((...args) => $options.confirmRenewal && $options.confirmRenewal(...args), "5e")
   } : {
     cU: common_vendor.t($options.daysUntil($options.selectedSubscription.nextBillingDate) === 0 ? "今天扣费" : $options.daysUntil($options.selectedSubscription.nextBillingDate) > 0 ? `${$options.daysUntil($options.selectedSubscription.nextBillingDate)} 天后扣费` : `已逾期 ${Math.abs($options.daysUntil($options.selectedSubscription.nextBillingDate))} 天未确认`),
     cV: common_vendor.p({
@@ -1251,7 +1296,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       size: "20",
       color: "#177e4b"
     }),
-    cW: common_vendor.o((...args) => $options.confirmRenewal && $options.confirmRenewal(...args), "a5")
+    cW: common_vendor.o((...args) => $options.confirmRenewal && $options.confirmRenewal(...args), "22")
   }, {
     cP: $options.daysUntil($options.selectedSubscription.nextBillingDate) > 7,
     cX: $options.renewalLocked ? 1 : ""
@@ -1261,20 +1306,20 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       size: "19",
       color: "#177e4b"
     }),
-    cZ: common_vendor.o((...args) => $options.showMoreActions && $options.showMoreActions(...args), "a4"),
+    cZ: common_vendor.o((...args) => $options.showMoreActions && $options.showMoreActions(...args), "ad"),
     da: common_vendor.p({
       type: "compose",
       size: "19",
       color: "#ffffff"
     }),
-    db: common_vendor.o(($event) => $options.openForm(null, $options.selectedSubscription), "51")
+    db: common_vendor.o(($event) => $options.openForm(null, $options.selectedSubscription), "ae")
   }) : $data.activeView === "form" ? common_vendor.e({
     dd: common_vendor.p({
       type: "left",
       size: "24",
       color: "#202622"
     }),
-    de: common_vendor.o(($event) => $options.goBackView($data.editingId ? "detail" : "home"), "d7"),
+    de: common_vendor.o(($event) => $options.goBackView($data.editingId ? "detail" : "home"), "32"),
     df: common_vendor.t($data.editingId ? "编辑订阅" : "新增订阅"),
     dg: !$data.editingId
   }, !$data.editingId ? {
@@ -1296,11 +1341,11 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     di: $data.form.name,
     dj: common_vendor.o(common_vendor.m(($event) => $data.form.name = $event.detail.value, {
       trim: true
-    }), "28"),
+    }), "23"),
     dk: $data.form.plan,
     dl: common_vendor.o(common_vendor.m(($event) => $data.form.plan = $event.detail.value, {
       trim: true
-    }), "4c"),
+    }), "72"),
     dm: common_vendor.t($data.form.category),
     dn: common_vendor.p({
       type: "right",
@@ -1308,7 +1353,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       color: "#a2a7a3"
     }),
     dp: $data.categories,
-    dq: common_vendor.o(($event) => $data.form.category = $data.categories[$event.detail.value], "67"),
+    dq: common_vendor.o(($event) => $data.form.category = $data.categories[$event.detail.value], "83"),
     dr: common_vendor.f($data.logoColors, (color, k0, i0) => {
       return {
         a: color,
@@ -1319,7 +1364,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       };
     }),
     ds: $data.form.amount,
-    dt: common_vendor.o(($event) => $data.form.amount = $event.detail.value, "05"),
+    dt: common_vendor.o(($event) => $data.form.amount = $event.detail.value, "f4"),
     dv: common_vendor.t($data.form.cycle),
     dw: common_vendor.p({
       type: "right",
@@ -1327,7 +1372,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       color: "#a2a7a3"
     }),
     dx: $data.cycles,
-    dy: common_vendor.o(($event) => $data.form.cycle = $data.cycles[$event.detail.value], "13"),
+    dy: common_vendor.o(($event) => $data.form.cycle = $data.cycles[$event.detail.value], "fb"),
     dz: common_vendor.t($data.form.payment),
     dA: common_vendor.p({
       type: "right",
@@ -1335,7 +1380,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       color: "#a2a7a3"
     }),
     dB: $data.payments,
-    dC: common_vendor.o(($event) => $data.form.payment = $data.payments[$event.detail.value], "30"),
+    dC: common_vendor.o(($event) => $data.form.payment = $data.payments[$event.detail.value], "4a"),
     dD: common_vendor.t($options.formatDate($data.form.nextBillingDate)),
     dE: common_vendor.p({
       type: "right",
@@ -1344,9 +1389,9 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     }),
     dF: $options.todayKey,
     dG: $data.form.nextBillingDate,
-    dH: common_vendor.o(($event) => $data.form.nextBillingDate = $event.detail.value, "c1"),
+    dH: common_vendor.o(($event) => $data.form.nextBillingDate = $event.detail.value, "02"),
     dI: $data.form.autoRenew,
-    dJ: common_vendor.o(($event) => $data.form.autoRenew = $event.detail.value, "0b"),
+    dJ: common_vendor.o(($event) => $data.form.autoRenew = $event.detail.value, "3d"),
     dK: common_vendor.f($data.reminderOptions, (option, k0, i0) => {
       return common_vendor.e({
         a: $data.form.reminders.includes(option.value)
@@ -1373,11 +1418,11 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     dN: $data.form.note,
     dO: common_vendor.o(common_vendor.m(($event) => $data.form.note = $event.detail.value, {
       trim: true
-    }), "d1"),
+    }), "2f"),
     dP: $data.form.cancelGuide,
     dQ: common_vendor.o(common_vendor.m(($event) => $data.form.cancelGuide = $event.detail.value, {
       trim: true
-    }), "48"),
+    }), "2a"),
     dR: $data.formError
   }, $data.formError ? {
     dS: common_vendor.p({
@@ -1393,14 +1438,14 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       color: "#ffffff"
     }),
     dV: common_vendor.t($data.editingId ? "保存修改" : "保存订阅"),
-    dW: common_vendor.o((...args) => $options.saveSubscription && $options.saveSubscription(...args), "68")
+    dW: common_vendor.o((...args) => $options.saveSubscription && $options.saveSubscription(...args), "c0")
   }) : $data.activeView === "reminder-settings" ? {
     dY: common_vendor.p({
       type: "left",
       size: "24",
       color: "#202622"
     }),
-    dZ: common_vendor.o(($event) => $options.goBackView("profile"), "62"),
+    dZ: common_vendor.o(($event) => $options.goBackView("profile"), "7a"),
     ea: common_vendor.p({
       type: "notification-filled",
       size: "24",
@@ -1432,8 +1477,8 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       color: "#a2a7a3"
     }),
     ef: $data.settings.reminderTime,
-    eg: common_vendor.o(($event) => $options.updateSetting("reminderTime", $event.detail.value), "92"),
-    eh: common_vendor.o(($event) => $options.goBackView("profile"), "e2")
+    eg: common_vendor.o(($event) => $options.updateSetting("reminderTime", $event.detail.value), "52"),
+    eh: common_vendor.o(($event) => $options.goBackView("profile"), "ef")
   } : {}, {
     H: $data.activeView === "all",
     ag: $data.activeView === "calendar",
@@ -1452,7 +1497,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       size: "21",
       color: "#5f6862"
     }),
-    em: common_vendor.o((...args) => $options.closeSortSheet && $options.closeSortSheet(...args), "6a"),
+    em: common_vendor.o((...args) => $options.closeSortSheet && $options.closeSortSheet(...args), "18"),
     en: common_vendor.f($data.sortOptions, (option, k0, i0) => {
       return common_vendor.e({
         a: "3fa108be-75-" + i0,
@@ -1479,10 +1524,10 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       });
     }),
     eo: common_vendor.o(() => {
-    }, "d6"),
-    ep: common_vendor.o((...args) => $options.closeSortSheet && $options.closeSortSheet(...args), "aa"),
+    }, "25"),
+    ep: common_vendor.o((...args) => $options.closeSortSheet && $options.closeSortSheet(...args), "e0"),
     eq: common_vendor.o(() => {
-    }, "db")
+    }, "01")
   } : {}, {
     er: $options.showTabBar
   }, $options.showTabBar ? {

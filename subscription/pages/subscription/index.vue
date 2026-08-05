@@ -18,7 +18,7 @@
 
 				<view v-if="!settings.notificationEnabled" class="notice-banner" @tap="enableNotification">
 					<view class="notice-icon"><uni-icons type="notification" size="20" color="#a86210" /></view>
-					<view class="notice-copy"><text class="notice-title">续费提醒尚未开启</text><text class="notice-desc">当前为本地演示，开启后模拟通知授权状态</text></view>
+					<view class="notice-copy"><text class="notice-title">续费提醒尚未开启</text><text class="notice-desc">点击后申请微信订阅消息授权</text></view>
 					<button class="notice-action" @tap.stop="enableNotification">开启</button>
 				</view>
 
@@ -84,7 +84,7 @@
 						</view>
 						<view v-if="!isMember" class="membership-quota"><view class="membership-quota-line"><text>免费额度</text><text>{{ freeQuotaText }}</text></view><view class="membership-progress"><view class="membership-progress-fill" :style="{ width: membershipQuotaPercent + '%' }"></view></view><view class="membership-benefits"><text><uni-icons type="checkmarkempty" size="13" color="#8b641f" /> 无限订阅</text><text><uni-icons type="checkmarkempty" size="13" color="#8b641f" /> 高级统计</text><text><uni-icons type="checkmarkempty" size="13" color="#8b641f" /> 续费提醒</text></view></view>
 					</view>
-					<view class="settings-section"><text class="settings-title">提醒设置</text><view class="settings-card"><view class="setting-row"><view class="setting-icon green-bg"><uni-icons type="notification" size="18" color="#177e4b" /></view><view class="setting-copy"><text>续费通知</text><text>{{ settings.notificationEnabled ? '已模拟开启' : '未开启' }}</text></view><switch :checked="settings.notificationEnabled" color="#16834d" @change="setNotification($event.detail.value)" /></view><view class="setting-row" @tap="openReminderSettings"><view class="setting-icon orange-bg"><uni-icons type="calendar" size="18" color="#bb6b18" /></view><view class="setting-copy"><text>默认提醒规则</text><text>提前 {{ settings.defaultReminders.join('、') }} 天 · {{ settings.reminderTime }}</text></view><uni-icons type="right" size="17" color="#aab0ac" /></view><view class="setting-row"><view class="setting-icon blue-bg"><uni-icons type="email" size="18" color="#3c7fc1" /></view><view class="setting-copy"><text>每周订阅摘要</text><text>每周一汇总未来扣费</text></view><switch :checked="settings.weeklySummary" color="#16834d" @change="updateSetting('weeklySummary', $event.detail.value)" /></view></view></view>
+					<view class="settings-section"><text class="settings-title">提醒设置</text><view class="settings-card"><view class="setting-row"><view class="setting-icon green-bg"><uni-icons type="notification" size="18" color="#177e4b" /></view><view class="setting-copy"><text>续费通知</text><text>{{ settings.notificationEnabled ? '授权状态已保存' : '未开启' }}</text></view><switch :checked="settings.notificationEnabled" color="#16834d" @change="handleNotificationSwitch($event.detail.value)" /></view><view class="setting-row" @tap="openReminderSettings"><view class="setting-icon orange-bg"><uni-icons type="calendar" size="18" color="#bb6b18" /></view><view class="setting-copy"><text>默认提醒规则</text><text>提前 {{ settings.defaultReminders.join('、') }} 天 · {{ settings.reminderTime }}</text></view><uni-icons type="right" size="17" color="#aab0ac" /></view><view class="setting-row"><view class="setting-icon blue-bg"><uni-icons type="email" size="18" color="#3c7fc1" /></view><view class="setting-copy"><text>每周订阅摘要</text><text>每周一汇总未来扣费</text></view><switch :checked="settings.weeklySummary" color="#16834d" @change="updateSetting('weeklySummary', $event.detail.value)" /></view></view></view>
 				<view class="settings-section"><text class="settings-title">数据与偏好</text><view class="settings-card"><picker :range="currencies" @change="updateSetting('defaultCurrency', currencies[$event.detail.value])"><view class="setting-row"><view class="setting-icon violet-bg"><uni-icons type="wallet" size="18" color="#6458c9" /></view><view class="setting-copy"><text>默认币种</text><text>{{ settings.defaultCurrency }}</text></view><uni-icons type="right" size="17" color="#aab0ac" /></view></picker><view class="setting-row" @tap="exportData"><view class="setting-icon green-bg"><uni-icons type="download" size="18" color="#177e4b" /></view><view class="setting-copy"><text>导出订阅数据</text><text>生成 CSV 或复制表格数据</text></view><uni-icons type="right" size="17" color="#aab0ac" /></view><view class="setting-row" @tap="showPrivacy"><view class="setting-icon blue-bg"><uni-icons type="locked" size="18" color="#3c7fc1" /></view><view class="setting-copy"><text>隐私与数据说明</text><text>了解本地演示的数据边界</text></view><uni-icons type="right" size="17" color="#aab0ac" /></view><view class="setting-row" @tap="resetDemoData"><view class="setting-icon red-bg"><uni-icons type="refresh" size="18" color="#cc4b52" /></view><view class="setting-copy"><text>恢复演示数据</text><text>覆盖当前本地订阅与设置</text></view><uni-icons type="right" size="17" color="#aab0ac" /></view></view></view>
 					<text class="version-text">续订清单 · 本地交互原型 v0.2</text>
 				</view>
@@ -290,14 +290,16 @@
 			return {
 				activeView: 'home', viewStack: [], scrollTop: 0,
 				statusBarHeight: 20, navigationBarHeight: 44,
-				tabs: [
+						tabs: [
 					{ key: 'home', label: '首页', icon: 'home', activeIcon: 'home-filled' },
 					{ key: 'all', label: '订阅', icon: 'list', activeIcon: 'list' },
 					{ key: 'calendar', label: '日历', icon: 'calendar', activeIcon: 'calendar-filled' },
 					{ key: 'stats', label: '统计', icon: 'wallet', activeIcon: 'wallet-filled' },
 					{ key: 'profile', label: '我的', icon: 'person', activeIcon: 'person-filled' }
-				],
-				subscriptions: [], settings: createDefaultSettings(),
+					],
+					subscriptions: [], settings: createDefaultSettings(),
+					authStatus: 'idle',
+					subscribeTemplateIds: [], // 填写微信公众平台中的订阅消息模板 ID
 				subscriptionLimit: 5,
 				searchKeyword: '', activeCategory: '全部', activeStatus: 'default', sortMode: 'date', sortSheetVisible: false,
 				sortOptions: [
@@ -392,7 +394,7 @@
 			},
 			formReminderPreview() { if (!this.form.nextBillingDate || !this.form.reminders || !this.form.reminders.length) return '未设置提醒'; const maxDay = Math.max(...this.form.reminders); return `${formatDate(addDays(this.form.nextBillingDate, -maxDay))} ${this.settings.reminderTime}` }
 		},
-		onLoad() { this.initNavigationLayout(); this.loadLocalData() },
+		onLoad() { this.initNavigationLayout(); this.loadLocalData(); this.loginWithWechat() },
 		onBackPress() {
 			if (this.sortSheetVisible) { this.closeSortSheet(); return true }
 			if (this.showTabBar) return false
@@ -425,13 +427,53 @@
 			decorateItem(item) { return { ...item, shortDate: formatDate(item.nextBillingDate, false), days: daysUntil(item.nextBillingDate), displayStatus: this.statusText(item) } },
 			daysText(item) { const days = daysUntil(item.nextBillingDate); return days < 0 ? `已逾期 ${Math.abs(days)} 天` : days === 0 ? '今天扣费' : `${days} 天后` },
 			loadLocalData() { const saved = uni.getStorageSync(STORAGE_KEYS.subscriptions), savedSettings = uni.getStorageSync(STORAGE_KEYS.settings); this.subscriptions = Array.isArray(saved) ? saved : createSeedSubscriptions(); this.settings = savedSettings ? { ...createDefaultSettings(), ...savedSettings } : createDefaultSettings(); this.persist() },
+			loginWithWechat() {
+				this.authStatus = 'logging-in'
+				uni.login({
+					provider: 'weixin',
+					success: result => {
+						if (!result || !result.code) {
+							this.authStatus = 'local'
+							console.warn('[auth] 微信登录未返回 code，继续使用本地模式')
+							return
+						}
+						this.authStatus = 'authenticated'
+						console.info('[auth] uni.login 成功，临时 code:', result.code)
+						// code 只能短暂使用，正式接入时应立即发送给服务端，不要写入本地存储。
+					},
+					fail: error => {
+						this.authStatus = 'local'
+						console.warn('[auth] 微信登录失败，继续使用本地模式', error)
+					}
+				})
+			},
 			persist() { uni.setStorageSync(STORAGE_KEYS.subscriptions, this.subscriptions); uni.setStorageSync(STORAGE_KEYS.settings, this.settings) },
 			navigateToView(view) { if (view === this.activeView) return; this.viewStack.push(this.activeView); this.activeView = view; this.scrollToTop() },
 			goBackView(fallback = 'home') { this.activeView = this.viewStack.length ? this.viewStack.pop() : fallback; this.formError = ''; this.scrollToTop() },
 			switchTab(tab) { this.sortSheetVisible = false; this.viewStack = []; this.activeView = tab; this.scrollToTop() },
 			scrollToTop() { this.scrollTop = this.scrollTop === 0 ? 1 : 0 },
 			toggleAmount() { this.settings.amountVisible = !this.settings.amountVisible; this.persist() },
-			enableNotification() { uni.showModal({ title: '开启续费提醒', content: '当前未接入后端，将在本地模拟“通知已开启”状态。接入微信订阅消息后需由用户主动授权。', confirmText: '模拟开启', success: res => { if (res.confirm) this.setNotification(true) } }) },
+			enableNotification() {
+				if (!this.subscribeTemplateIds.length) return uni.showModal({ title: '暂未配置通知模板', content: '请先在代码中配置微信订阅消息模板 ID，再发起授权。当前不会修改提醒状态。', showCancel: false })
+				if (typeof uni.requestSubscribeMessage !== 'function') return uni.showModal({ title: '当前平台不支持', content: '请在微信小程序真机或微信开发者工具中发起订阅消息授权。', showCancel: false })
+				uni.requestSubscribeMessage({
+					tmplIds: this.subscribeTemplateIds,
+					success: result => {
+						const statuses = this.subscribeTemplateIds.map(templateId => ({ templateId, status: result[templateId] || 'unknown', updatedAt: Date.now() }))
+						const accepted = statuses.some(item => item.status === 'accept')
+						this.settings.notificationAuthorization = statuses
+						this.settings.notificationEnabled = accepted
+						this.persist()
+						uni.showToast({ title: accepted ? '授权成功' : '未获得授权', icon: 'none' })
+						console.info('[notification] 订阅消息授权结果:', statuses)
+					},
+					fail: error => {
+						console.warn('[notification] 订阅消息授权失败:', error)
+						uni.showToast({ title: '授权未完成', icon: 'none' })
+					}
+				})
+			},
+			handleNotificationSwitch(value) { if (value) this.enableNotification(); else this.setNotification(false) },
 			setNotification(value) { this.settings.notificationEnabled = value; this.persist(); uni.showToast({ title: value ? '提醒状态已开启' : '提醒状态已关闭', icon: 'none' }) },
 			updateSetting(key, value) { this.settings[key] = value; this.persist() },
 			handleReminder(item) { if (item.action === 'notification') this.enableNotification(); else if (item.action === 'overdue') { this.activeStatus = 'overdue'; this.switchTab('all') } else if (item.action === 'incomplete') { this.activeStatus = 'incomplete'; this.switchTab('all') } },

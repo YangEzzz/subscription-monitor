@@ -107,6 +107,7 @@ export function createDefaultSettings() {
 	return {
 		amountVisible: true,
 		notificationEnabled: false,
+		notificationAuthorization: [],
 		weeklySummary: true,
 		defaultCurrency: 'CNY',
 		defaultReminders: [7, 3, 1],
