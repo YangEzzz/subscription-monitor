@@ -1,0 +1,7 @@
+{
+  "component": true,
+  "usingComponents": {
+    "brand-logo": "./brand-logo",
+    "uni-icons": "../../uni_modules/uni-icons/components/uni-icons/uni-icons"
+  }
+}

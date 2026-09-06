@@ -15,10 +15,17 @@ const CATEGORY_COLORS = {
 const STATUS_LABELS = {
   active: "正常",
   upcoming: "即将到期",
+  trial: "试用中",
   pending: "待处理",
   paused: "已暂停",
   cancelled: "已取消",
   archived: "已归档"
+};
+const CURRENCY_SYMBOLS = {
+  CNY: "¥",
+  USD: "$",
+  HKD: "HK$",
+  JPY: "JP¥"
 };
 function pad(value) {
   return String(value).padStart(2, "0");
@@ -46,8 +53,12 @@ function daysUntil(dateKey) {
 function getDisplayStatus(item) {
   if (["paused", "cancelled", "archived"].includes(item.status))
     return item.status;
+  if (item.status === "pending")
+    return "pending";
+  if (item.trialEndDate && daysUntil(item.trialEndDate) >= 0)
+    return "trial";
   const days = daysUntil(item.nextBillingDate);
-  if (item.status === "pending" || days < 0)
+  if (days < 0)
     return "pending";
   if (days <= Math.max(...item.reminders || [3]))
     return "upcoming";
@@ -59,16 +70,18 @@ function getCycleMonths(cycle) {
 function getMonthlyEquivalent(item) {
   if (item.amount === null || item.amount === "" || item.status === "cancelled" || item.status === "paused" || item.status === "archived")
     return 0;
-  const months = getCycleMonths(item.cycle);
+  const months = item.cycle === "自定义天数" ? Number(item.cycleValue || 0) / 30.4375 : getCycleMonths(item.cycle);
   if (!months)
     return 0;
   return Number(item.amount) / months;
 }
-function getNextBillingDate(dateKey, cycle) {
+function getNextBillingDate(dateKey, cycle, originalAnchorDay, cycleValue) {
   const date = parseDate(dateKey);
-  const anchorDay = date.getDate();
+  const anchorDay = Number(originalAnchorDay) || date.getDate();
   if (cycle === "每周")
     date.setDate(date.getDate() + 7);
+  else if (cycle === "自定义天数")
+    date.setDate(date.getDate() + Math.max(1, Number(cycleValue) || 1));
   else if (cycle === "每月" || cycle === "每季度" || cycle === "每半年" || cycle === "每年") {
     const months = { "每月": 1, "每季度": 3, "每半年": 6, "每年": 12 }[cycle];
     date.setDate(1);
@@ -92,7 +105,7 @@ function createSeedSubscriptions() {
     { id: 9, name: "Keep 会员", plan: "连续包月", logo: "K", color: "#6658d9", amount: 25, currency: "CNY", cycle: "每月", nextBillingDate: addDays(today, 8), payment: "微信支付", category: "其他", status: "paused", autoRenew: true, reminders: [7, 3, 1], note: "暂时不使用，保留记录", cancelGuide: "Keep App > 我的 > 设置 > 自动续费管理", createdAt: Date.now() - 7e3 },
     { id: 10, name: "知乎盐选会员", plan: "连续包月", logo: "知", color: "#202622", amount: 19, currency: "CNY", cycle: "每月", nextBillingDate: addDays(today, 12), payment: "支付宝", category: "阅读", status: "cancelled", autoRenew: false, reminders: [7, 3, 1], note: "已在原付款渠道取消", cancelGuide: "支付宝 > 支付设置 > 免密支付/自动扣款", createdAt: Date.now() - 6e3 },
     { id: 11, name: "Notion Plus", plan: "Plus", logo: "N", color: "#202622", amount: 72, currency: "CNY", cycle: "每月", nextBillingDate: addDays(today, 25), payment: "信用卡", category: "效率工具", status: "archived", autoRenew: false, reminders: [7, 3, 1], note: "历史工作项目使用", cancelGuide: "Notion Settings > Billing > Change plan", createdAt: Date.now() - 5e3 }
-  ];
+  ].map((item) => ({ ...item, isDemo: true }));
 }
 function createDefaultSettings() {
   return {
@@ -112,6 +125,7 @@ function createDefaultSettings() {
   };
 }
 exports.CATEGORY_COLORS = CATEGORY_COLORS;
+exports.CURRENCY_SYMBOLS = CURRENCY_SYMBOLS;
 exports.STATUS_LABELS = STATUS_LABELS;
 exports.STORAGE_KEYS = STORAGE_KEYS;
 exports.addDays = addDays;

@@ -6,7 +6,7 @@
 			<text class="renewal-date">{{ item.shortDate }} 续费</text>
 		</view>
 		<view class="renewal-side">
-			<text class="renewal-price">{{ item.amount === null ? '待补充' : '¥' + Number(item.amount).toFixed(2) }}</text>
+			<text class="renewal-price">{{ item.amountText }}</text>
 			<text class="days" :class="item.days <= 7 ? 'urgent' : 'normal'">{{ item.days }}天后</text>
 			<text v-if="item.displayStatus" class="row-status">{{ item.displayStatus }}</text>
 		</view>

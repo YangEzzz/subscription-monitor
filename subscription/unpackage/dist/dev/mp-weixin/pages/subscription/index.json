@@ -4,8 +4,16 @@
   "backgroundColor": "#f4f7f5",
   "enablePullDownRefresh": false,
   "usingComponents": {
-    "brand-logo": "../../components/subscription/brand-logo",
-    "subscription-row": "../../components/subscription/subscription-row",
-    "uni-icons": "../../uni_modules/uni-icons/components/uni-icons/uni-icons"
+    "subscription-home-view": "../../components/subscription/SubscriptionHomeView",
+    "subscription-list-view": "../../components/subscription/SubscriptionListView",
+    "subscription-calendar-view": "../../components/subscription/SubscriptionCalendarView",
+    "subscription-stats-view": "../../components/subscription/SubscriptionStatsView",
+    "subscription-profile-view": "../../components/subscription/SubscriptionProfileView",
+    "membership-view": "../../components/subscription/MembershipView",
+    "subscription-detail-view": "../../components/subscription/SubscriptionDetailView",
+    "subscription-form-view": "../../components/subscription/SubscriptionFormView",
+    "reminder-settings-view": "../../components/subscription/ReminderSettingsView",
+    "subscription-sort-sheet": "../../components/subscription/SubscriptionSortSheet",
+    "subscription-tab-bar": "../../components/subscription/SubscriptionTabBar"
   }
 }

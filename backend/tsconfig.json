@@ -19,5 +19,15 @@
     "noFallthroughCasesInSwitch": false,
     "esModuleInterop": true
   },
-  "include": ["src/**/*", "test/**/*", ".install-scripts/**/*"]
+  "include": [
+    "src/main.ts",
+    "src/app.module.ts",
+    "src/config/app.config.ts",
+    "src/config/app-config.type.ts",
+    "src/utils/validate-config.ts",
+    "src/utils/validation-options.ts",
+    "src/health/**/*",
+    "src/subscriptions/**/*",
+    "src/**/*.spec.ts"
+  ]
 }

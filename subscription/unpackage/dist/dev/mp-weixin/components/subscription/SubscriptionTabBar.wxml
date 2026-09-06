@@ -1,0 +1,1 @@
+<view class="tab-bar"><button wx:for="{{a}}" wx:for-item="tab" wx:key="d" class="{{['tab-item', tab.e && 'active']}}" bindtap="{{tab.f}}"><uni-icons wx:if="{{tab.b}}" u-i="{{tab.a}}" bind:__l="__l" u-p="{{tab.b}}"/><text>{{tab.c}}</text></button></view>

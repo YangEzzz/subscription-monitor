@@ -65,7 +65,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     b: common_vendor.n("uniui-" + $props.type),
     c: common_vendor.n($props.customPrefix),
     d: common_vendor.n($props.customPrefix ? $props.type : ""),
-    e: common_vendor.o((...args) => $options._onClick && $options._onClick(...args), "03")
+    e: common_vendor.o((...args) => $options._onClick && $options._onClick(...args), "dd")
   };
 }
 const Component = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render]]);

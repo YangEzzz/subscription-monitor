@@ -20,14 +20,14 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     }),
     b: common_vendor.t($props.item.name),
     c: common_vendor.t($props.item.shortDate),
-    d: common_vendor.t($props.item.amount === null ? "待补充" : "¥" + Number($props.item.amount).toFixed(2)),
+    d: common_vendor.t($props.item.amountText),
     e: common_vendor.t($props.item.days),
     f: common_vendor.n($props.item.days <= 7 ? "urgent" : "normal"),
     g: $props.item.displayStatus
   }, $props.item.displayStatus ? {
     h: common_vendor.t($props.item.displayStatus)
   } : {}, {
-    i: common_vendor.o(($event) => _ctx.$emit("tap"), "34")
+    i: common_vendor.o(($event) => _ctx.$emit("tap"), "60")
   });
 }
 const Component = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-b2ba1050"]]);

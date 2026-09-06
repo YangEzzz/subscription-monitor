@@ -1,0 +1,8 @@
+{
+  "component": true,
+  "usingComponents": {
+    "brand-logo": "./brand-logo",
+    "empty-state-view": "./EmptyStateView",
+    "uni-icons": "../../uni_modules/uni-icons/components/uni-icons/uni-icons"
+  }
+}

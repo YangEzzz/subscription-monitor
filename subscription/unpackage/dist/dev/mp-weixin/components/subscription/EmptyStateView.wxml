@@ -1,0 +1,1 @@
+<view class="empty-state"><view class="empty-icon"><uni-icons wx:if="{{a}}" u-i="0a82c983-0" bind:__l="__l" u-p="{{a}}"/></view><text class="empty-title">{{b}}</text><text class="empty-desc">{{c}}</text><button wx:if="{{d}}" class="{{['empty-action', f]}}" bindtap="{{g}}">{{e}}</button></view>

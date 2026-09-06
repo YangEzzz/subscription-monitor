@@ -5172,9 +5172,11 @@ var plugin = {
     initApp(app);
     app.config.globalProperties.pruneComponentPropsCache = pruneComponentPropsCache;
     const oldMount = app.mount;
-    app.mount = function mount(rootContainer) {
-      const instance = oldMount.call(app, rootContainer);
-      const createApp2 = getCreateApp();
+    app.mount = function mount(rootContainer, subpackageRoot, options) {
+      const hasSubpackageRoot = typeof subpackageRoot === "string";
+      const root = hasSubpackageRoot ? subpackageRoot : void 0;
+      const instance = hasSubpackageRoot ? oldMount.call(app, rootContainer) : oldMount.apply(app, arguments);
+      const createApp2 = getCreateApp(root, options);
       if (createApp2) {
         createApp2(instance);
       } else {
@@ -5186,13 +5188,24 @@ var plugin = {
     };
   }
 };
-function getCreateApp() {
-  const method = "createApp";
+function getCreateApp(subpackageRoot, options) {
+  const root = normalizeSubpackageRoot$1(subpackageRoot);
+  const method = root && (options === null || options === void 0 ? void 0 : options.independent) ? "createIndependentSubpackageApp" : root || "" ? "createSubpackageApp" : "createApp";
+  const createApp2 = method === "createIndependentSubpackageApp" && (options === null || options === void 0 ? void 0 : options.createApp) ? options.createApp : getGlobalCreateApp(method);
+  if (createApp2 && root && (method === "createSubpackageApp" || method === "createIndependentSubpackageApp")) {
+    return (instance) => createApp2(instance, root);
+  }
+  return createApp2;
+}
+function getGlobalCreateApp(method) {
   if (typeof global !== "undefined" && typeof global[method] !== "undefined") {
     return global[method];
   } else if (typeof my !== "undefined") {
     return my[method];
   }
+}
+function normalizeSubpackageRoot$1(root) {
+  return typeof root === "string" ? root.replace(/^\/+|\/+$/g, "") : void 0;
 }
 function stringifyStyle(value) {
   if (isString(value)) {
@@ -5274,6 +5287,8 @@ const bubbles = [
 ];
 function patchMPEvent(event, instance) {
   if (event.type && event.target) {
+    event.target;
+    event.currentTarget;
     event.preventDefault = NOOP;
     event.stopPropagation = NOOP;
     event.stopImmediatePropagation = NOOP;
@@ -6305,9 +6320,9 @@ function populateParameters(fromRes, toRes) {
     appVersion: "1.0.0",
     appVersionCode: "100",
     appLanguage: getAppLanguage(hostLanguage),
-    uniCompileVersion: "5.15",
-    uniCompilerVersion: "5.15",
-    uniRuntimeVersion: "5.15",
+    uniCompileVersion: "5.24",
+    uniCompilerVersion: "5.24",
+    uniRuntimeVersion: "5.24",
     uniPlatform: "mp-weixin",
     deviceBrand,
     deviceModel: model,
@@ -6467,9 +6482,9 @@ const getAppBaseInfo = {
       hostTheme: theme,
       isUniAppX: false,
       uniPlatform: "mp-weixin",
-      uniCompileVersion: "5.15",
-      uniCompilerVersion: "5.15",
-      uniRuntimeVersion: "5.15"
+      uniCompileVersion: "5.24",
+      uniCompilerVersion: "5.24",
+      uniRuntimeVersion: "5.24"
     };
     try {
       if (typeof wx.getAccountInfoSync === "function") {
@@ -6568,6 +6583,9 @@ const baseApis = {
   invokePushCallback,
   __f__
 };
+function normalizeApi(name, api) {
+  return api;
+}
 function initUni(api, protocols2, platform = wx) {
   const wrapper = initWrapper(protocols2);
   const UniProxyHandlers = {
@@ -6576,12 +6594,12 @@ function initUni(api, protocols2, platform = wx) {
         return target[key];
       }
       if (hasOwn(api, key)) {
-        return promisify(key, api[key]);
+        return normalizeApi(key, promisify(key, api[key]));
       }
       if (hasOwn(baseApis, key)) {
-        return promisify(key, baseApis[key]);
+        return normalizeApi(key, promisify(key, baseApis[key]));
       }
-      return promisify(key, wrapper(key, platform[key]));
+      return normalizeApi(key, promisify(key, wrapper(key, platform[key])));
     }
   };
   return new Proxy({}, UniProxyHandlers);
@@ -7259,10 +7277,34 @@ function isConsoleWritable() {
   console.log = value;
   return isWritable;
 }
+const UNI_CONSOLE_RUNTIME_PROMISE = "__uni_console_runtime_promise__";
 function initRuntimeSocketService() {
-  const hosts = "127.0.0.1,169.254.156.49,172.31.61.18";
+  const hosts = "192.168.3.2,192.168.106.1,192.168.154.1,127.0.0.1";
   const port = "8090";
-  const id = "mp-weixin_8yAvs-";
+  const id = "mp-weixin_WNydWl";
+  const runtimeGlobal = getRuntimeGlobal();
+  const existingPromise = runtimeGlobal === null || runtimeGlobal === void 0 ? void 0 : runtimeGlobal[UNI_CONSOLE_RUNTIME_PROMISE];
+  if (existingPromise) {
+    return existingPromise;
+  }
+  let runtimePromise = initRuntimeSocketServiceOnce(hosts, port, id);
+  if (runtimeGlobal) {
+    runtimePromise = runtimePromise.then((success) => {
+      if (!success && runtimeGlobal[UNI_CONSOLE_RUNTIME_PROMISE] === runtimePromise) {
+        delete runtimeGlobal[UNI_CONSOLE_RUNTIME_PROMISE];
+      }
+      return success;
+    }, (error) => {
+      if (runtimeGlobal[UNI_CONSOLE_RUNTIME_PROMISE] === runtimePromise) {
+        delete runtimeGlobal[UNI_CONSOLE_RUNTIME_PROMISE];
+      }
+      throw error;
+    });
+    runtimeGlobal[UNI_CONSOLE_RUNTIME_PROMISE] = runtimePromise;
+  }
+  return runtimePromise;
+}
+function initRuntimeSocketServiceOnce(hosts, port, id) {
   const lazy = typeof swan !== "undefined";
   let restoreError = lazy ? () => {
   } : initOnError();
@@ -7312,27 +7354,42 @@ const ERROR_CHAR = "‌";
 function wrapError(error) {
   return `${ERROR_CHAR}${error}${ERROR_CHAR}`;
 }
-function initMiniProgramGlobalFlag() {
+function getRuntimeGlobal() {
+  const miniProgramGlobal = getMiniProgramGlobal();
+  if (miniProgramGlobal) {
+    return miniProgramGlobal;
+  }
+  if (typeof globalThis !== "undefined") {
+    return globalThis;
+  }
+}
+function getMiniProgramGlobal() {
   if (typeof wx$1 !== "undefined") {
-    wx$1.__uni_console__ = true;
+    return wx$1;
   } else if (typeof my !== "undefined") {
-    my.__uni_console__ = true;
+    return my;
   } else if (typeof tt !== "undefined") {
-    tt.__uni_console__ = true;
+    return tt;
   } else if (typeof swan !== "undefined") {
-    swan.__uni_console__ = true;
+    return swan;
   } else if (typeof qq !== "undefined") {
-    qq.__uni_console__ = true;
+    return qq;
   } else if (typeof ks !== "undefined") {
-    ks.__uni_console__ = true;
+    return ks;
   } else if (typeof jd !== "undefined") {
-    jd.__uni_console__ = true;
+    return jd;
   } else if (typeof xhs !== "undefined") {
-    xhs.__uni_console__ = true;
+    return xhs;
   } else if (typeof has !== "undefined") {
-    has.__uni_console__ = true;
+    return has;
   } else if (typeof qa !== "undefined") {
-    qa.__uni_console__ = true;
+    return qa;
+  }
+}
+function initMiniProgramGlobalFlag() {
+  const miniProgramGlobal = getMiniProgramGlobal();
+  if (miniProgramGlobal) {
+    miniProgramGlobal.__uni_console__ = true;
   }
 }
 initRuntimeSocketService();
@@ -7613,6 +7670,45 @@ const findMixinRuntimeHooks = /* @__PURE__ */ once(() => {
 function initMixinRuntimeHooks(mpOptions) {
   initHooks(mpOptions, findMixinRuntimeHooks());
 }
+let runtimeSubpackageRoot;
+const runtimeSubpackages = /* @__PURE__ */ Object.create(null);
+function resolveSubpackageRoot(root) {
+  return normalizeSubpackageRoot(root) || normalizeSubpackageRoot("");
+}
+function setRuntimeSubpackageRoot(root) {
+  runtimeSubpackageRoot = normalizeSubpackageRoot(root);
+}
+function getRuntimeSubpackageRoot() {
+  return runtimeSubpackageRoot;
+}
+function setSubpackageAppVm(root, vm, independent) {
+  const subpackageRoot = normalizeSubpackageRoot(root);
+  if (!subpackageRoot) {
+    return;
+  }
+  setRuntimeSubpackageRoot(subpackageRoot);
+  if (independent) {
+    runtimeSubpackages[subpackageRoot] = {
+      $vm: vm
+    };
+  } else {
+    const globalObject = wx;
+    (globalObject.$subpackages || (globalObject.$subpackages = {}))[subpackageRoot] = {
+      $vm: vm
+    };
+  }
+}
+function getSubpackageAppVm() {
+  var _a, _b, _c;
+  const subpackageRoot = getRuntimeSubpackageRoot();
+  if (!subpackageRoot) {
+    return;
+  }
+  return ((_a = runtimeSubpackages[subpackageRoot]) === null || _a === void 0 ? void 0 : _a.$vm) || ((_c = (_b = wx.$subpackages) === null || _b === void 0 ? void 0 : _b[subpackageRoot]) === null || _c === void 0 ? void 0 : _c.$vm);
+}
+function normalizeSubpackageRoot(root) {
+  return typeof root === "string" ? root.replace(/^\/+|\/+$/g, "") : void 0;
+}
 const HOOKS = [
   ON_SHOW,
   ON_HIDE,
@@ -7665,7 +7761,7 @@ function initCreateApp(parseAppOptions) {
   };
 }
 function initCreateSubpackageApp(parseAppOptions) {
-  return function createApp2(vm) {
+  return function createApp2(vm, root) {
     const appOptions = parseApp(vm);
     const app = isFunction(getApp) && getApp({
       allowDefault: true
@@ -7687,6 +7783,12 @@ function initCreateSubpackageApp(parseAppOptions) {
       }
     });
     initAppLifecycle(appOptions, vm);
+    setSubpackageAppVm(resolveSubpackageRoot(root), vm);
+  };
+}
+function initCreateIndependentSubpackageApp() {
+  return function createApp2(vm, root) {
+    setSubpackageAppVm(resolveSubpackageRoot(root), vm, true);
   };
 }
 function initAppLifecycle(appOptions, vm) {
@@ -8025,21 +8127,44 @@ function initCreateComponent(parseOptions2) {
 }
 let $createComponentFn;
 let $destroyComponentFn;
+let $createComponentAppVm;
+let $destroyComponentAppVm;
+const componentAppVmMap = /* @__PURE__ */ new WeakMap();
 function getAppVm() {
+  const subpackageAppVm = getSubpackageAppVm();
+  if (subpackageAppVm) {
+    return subpackageAppVm;
+  }
   return getApp().$vm;
 }
 function $createComponent(initialVNode, options) {
-  if (!$createComponentFn) {
-    $createComponentFn = getAppVm().$createComponent;
+  const appVm = getAppVm();
+  if (!$createComponentFn || $createComponentAppVm !== appVm) {
+    $createComponentAppVm = appVm;
+    $createComponentFn = appVm.$createComponent;
   }
   const proxy = $createComponentFn(initialVNode, options);
-  return getExposeProxy(proxy.$) || proxy;
+  const exposeProxy = getComponentExposeProxy(proxy);
+  componentAppVmMap.set(proxy, appVm);
+  if (exposeProxy && typeof exposeProxy === "object") {
+    componentAppVmMap.set(exposeProxy, appVm);
+  }
+  return exposeProxy || proxy;
 }
 function $destroyComponent(instance) {
-  if (!$destroyComponentFn) {
-    $destroyComponentFn = getAppVm().$destroyComponent;
+  const appVm = componentAppVmMap.get(instance) || getAppVm();
+  if (!$destroyComponentFn || $destroyComponentAppVm !== appVm) {
+    $destroyComponentAppVm = appVm;
+    $destroyComponentFn = appVm.$destroyComponent;
   }
-  return $destroyComponentFn(instance);
+  try {
+    return $destroyComponentFn(instance);
+  } finally {
+    componentAppVmMap.delete(instance);
+  }
+}
+function getComponentExposeProxy(proxy) {
+  return typeof getExposeProxy === "function" ? getExposeProxy(proxy.$) : void 0;
 }
 function parsePage(vueOptions, parseOptions2) {
   const { parse, mocks: mocks2, isPage: isPage2, initRelation: initRelation2, handleLink: handleLink2, initLifetimes: initLifetimes2 } = parseOptions2;
@@ -8202,12 +8327,17 @@ const createPage = initCreatePage(parseOptions);
 const createComponent = initCreateComponent(parseOptions);
 const createPluginApp = initCreatePluginApp();
 const createSubpackageApp = initCreateSubpackageApp();
+const createIndependentSubpackageApp = initCreateIndependentSubpackageApp();
+const isIndependentRuntime = typeof __UNI_MP_INDEPENDENT_RUNTIME__ !== "undefined" && __UNI_MP_INDEPENDENT_RUNTIME__ === true;
 {
-  wx.createApp = global.createApp = createApp;
-  wx.createPage = createPage;
-  wx.createComponent = createComponent;
-  wx.createPluginApp = global.createPluginApp = createPluginApp;
-  wx.createSubpackageApp = global.createSubpackageApp = createSubpackageApp;
+  if (!isIndependentRuntime) {
+    wx.createApp = global.createApp = createApp;
+    wx.createPage = createPage;
+    wx.createComponent = createComponent;
+    wx.createPluginApp = global.createPluginApp = createPluginApp;
+    wx.createSubpackageApp = global.createSubpackageApp = createSubpackageApp;
+    wx.createIndependentSubpackageApp = global.createIndependentSubpackageApp = createIndependentSubpackageApp;
+  }
 }
 /*!
  * vuex v4.1.0

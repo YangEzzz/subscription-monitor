@@ -10,6 +10,7 @@
 	@import '@/uni_modules/uni-scss/index.scss';
 	@import './common/uni.css';
 	@import '@/static/customicons.css';
+	@import './styles/subscription.scss';
 
 	page {
 		min-height: 100%;
