@@ -3,6 +3,14 @@ const common_vendor = require("../../common/vendor.js");
 const _sfc_main = {
   name: "SubscriptionSortSheet",
   emits: ["close", "select"],
+  mounted() {
+  },
+  beforeUnmount() {
+  },
+  methods: {
+    onKeydown(event) {
+    }
+  },
   props: {
     sortOptions: { type: Array, default: () => [] },
     sortMode: { type: String, default: "date" }
@@ -23,10 +31,10 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       size: "21",
       color: "#5f6862"
     }),
-    b: common_vendor.o(($event) => _ctx.$emit("close"), "01"),
+    b: common_vendor.o(($event) => _ctx.$emit("close"), "39"),
     c: common_vendor.f($props.sortOptions, (option, k0, i0) => {
       return common_vendor.e({
-        a: "0e7d40ba-1-" + i0,
+        a: "c186b446-1-" + i0,
         b: common_vendor.p({
           type: option.icon,
           size: "20",
@@ -36,7 +44,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
         d: common_vendor.t(option.desc),
         e: $props.sortMode === option.value
       }, $props.sortMode === option.value ? {
-        f: "0e7d40ba-2-" + i0,
+        f: "c186b446-2-" + i0,
         g: common_vendor.p({
           type: "checkmarkempty",
           size: "15",
@@ -50,10 +58,10 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       });
     }),
     d: common_vendor.o(() => {
-    }, "0d"),
-    e: common_vendor.o(($event) => _ctx.$emit("close"), "c0"),
+    }, "d9"),
+    e: common_vendor.o(($event) => _ctx.$emit("close"), "06"),
     f: common_vendor.o(() => {
-    }, "bd")
+    }, "e6")
   };
 }
 const Component = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render]]);

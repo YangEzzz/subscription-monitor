@@ -1,0 +1,1 @@
+{"version":3,"file":"config.js","sources":["api/config.js"],"sourcesContent":["// 真机联调请改为电脑的局域网地址；部署时改为已配置的小程序 HTTPS 域名。\nexport const API_CONFIG = {\n\tbaseUrl: 'http://localhost:3001/api/v1',\n\ttimeout: 10000,\n\t// 仅用于当前内存 mock 的用户隔离，不代表登录凭证。\n\tdemoUserId: 'demo-user'\n}\n"],"names":[],"mappings":";AACY,MAAC,aAAa;AAAA,EACzB,SAAS;AAAA,EACT,SAAS;AAAA;AAAA,EAET,YAAY;AACb;;"}

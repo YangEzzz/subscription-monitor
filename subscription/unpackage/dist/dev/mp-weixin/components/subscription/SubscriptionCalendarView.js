@@ -37,15 +37,15 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       size: "19",
       color: "#5d655f"
     }),
-    c: common_vendor.o(($event) => _ctx.$emit("change-month", -1), "1e"),
+    c: common_vendor.o(($event) => _ctx.$emit("change-month", -1), "d9"),
     d: common_vendor.t($props.calendarTitle),
     e: common_vendor.p({
       type: "right",
       size: "19",
       color: "#5d655f"
     }),
-    f: common_vendor.o(($event) => _ctx.$emit("change-month", 1), "65"),
-    g: common_vendor.o(($event) => _ctx.$emit("today"), "39"),
+    f: common_vendor.o(($event) => _ctx.$emit("change-month", 1), "ba"),
+    g: common_vendor.o(($event) => _ctx.$emit("today"), "d0"),
     h: common_vendor.f($props.weekdays, (day, k0, i0) => {
       return {
         a: common_vendor.t(day),
@@ -78,7 +78,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   }, $props.selectedDateSubscriptions.length ? {
     o: common_vendor.f($props.selectedDateSubscriptions, (item, k0, i0) => {
       return {
-        a: "1803f78c-2-" + i0,
+        a: "64d86837-2-" + i0,
         b: common_vendor.p({
           item
         }),
@@ -91,7 +91,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       };
     })
   } : {
-    p: common_vendor.o(($event) => _ctx.$emit("open-form", $props.selectedDate), "12")
+    p: common_vendor.o(($event) => _ctx.$emit("open-form", $props.selectedDate), "ef")
   });
 }
 const Component = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render]]);

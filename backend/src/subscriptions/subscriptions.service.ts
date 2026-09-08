@@ -58,9 +58,9 @@ function uniqueReminders(reminders?: number[] | null): number[] {
     .sort((left, right) => right - left);
 }
 
-function addCycle(dateKey: string, cycle: BillingCycle, cycleValue: number | null): string {
+function addCycle(dateKey: string, cycle: BillingCycle, cycleValue: number | null, originalAnchorDay?: number): string {
   if (cycle === 'one_off') {
-    throw new BadRequestException('One-off subscriptions cannot be renewed');
+    return dateKey;
   }
 
   if (cycle === 'weekly') return addDays(dateKey, 7);
@@ -74,7 +74,7 @@ function addCycle(dateKey: string, cycle: BillingCycle, cycleValue: number | nul
   };
   const months = monthsByCycle[cycle] ?? 1;
   const current = dateAtNoon(dateKey);
-  const anchorDay = current.getUTCDate();
+  const anchorDay = originalAnchorDay ?? current.getUTCDate();
   current.setUTCDate(1);
   current.setUTCMonth(current.getUTCMonth() + months);
   const lastDay = new Date(
@@ -135,6 +135,7 @@ function createSeedRecord(
   return {
     id: input.id,
     userId: input.userId ?? DEFAULT_USER_ID,
+    anchorDay: input.anchorDay ?? Number((input.nextBillingDate || todayKey()).slice(8, 10)),
     name: input.name,
     plan: input.plan ?? null,
     logo: input.logo ?? null,
@@ -475,6 +476,9 @@ export class SubscriptionsService {
     if (typeof values.name === 'string' && !values.name.trim()) {
       throw new BadRequestException('Subscription name cannot be empty');
     }
+    if (dto.nextBillingDate && dto.nextBillingDate !== record.nextBillingDate) {
+      record.anchorDay = Number(dto.nextBillingDate.slice(8, 10));
+    }
     const allowedKeys = [
       'name',
       'plan',
@@ -530,8 +534,15 @@ export class SubscriptionsService {
     return this.toPublic(record);
   }
 
-  renew(userId: string | undefined, id: string) {
+  renew(userId: string | undefined, id: string, billingDate?: string) {
     const record = this.findRecord(this.normalizeUserId(userId), id);
+    if (billingDate) {
+      const previous = record.renewalHistory.find(event => event.previousNextBillingDate === billingDate);
+      if (previous) return { subscription: this.toPublic(record), renewal: clone(previous) };
+      if (billingDate !== record.nextBillingDate) {
+        throw new ConflictException({ code: 'BILLING_PERIOD_CHANGED', message: 'Billing period has changed; refresh the subscription' });
+      }
+    }
     if (record.deletedAt) throw new BadRequestException('Restore the subscription before renewing');
     if (['cancelled', 'archived', 'paused'].includes(record.status)) {
       throw new BadRequestException('This subscription cannot be renewed in its current state');
@@ -553,6 +564,7 @@ export class SubscriptionsService {
       record.nextBillingDate,
       record.cycle,
       record.cycleValue,
+      record.anchorDay,
     );
     const event = {
       id: 'renewal_' + Date.now(),
@@ -565,7 +577,7 @@ export class SubscriptionsService {
     };
     record.renewalHistory.push(event);
     record.nextBillingDate = nextBillingDate;
-    record.status = 'active';
+    record.status = record.cycle === 'one_off' ? 'archived' : 'active';
     record.lastRenewedAt = renewedAt;
     record.lastRenewalNextBillingDate = nextBillingDate;
     record.updatedAt = renewedAt;

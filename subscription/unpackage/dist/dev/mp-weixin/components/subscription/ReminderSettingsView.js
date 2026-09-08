@@ -23,7 +23,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       size: "24",
       color: "#202622"
     }),
-    b: common_vendor.o(($event) => _ctx.$emit("back"), "50"),
+    b: common_vendor.o(($event) => _ctx.$emit("back"), "a5"),
     c: common_vendor.p({
       type: "notification-filled",
       size: "24",
@@ -35,7 +35,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
         b: common_vendor.t(option.desc),
         c: $props.settings.defaultReminders.includes(option.value)
       }, $props.settings.defaultReminders.includes(option.value) ? {
-        d: "7f3fee74-2-" + i0,
+        d: "63844e1e-2-" + i0,
         e: common_vendor.p({
           type: "checkmarkempty",
           size: "16",
@@ -58,8 +58,8 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     i: common_vendor.o(($event) => _ctx.$emit("update-setting", {
       key: "reminderTime",
       value: $event.detail.value
-    }), "26"),
-    j: common_vendor.o(($event) => _ctx.$emit("back"), "88")
+    }), "69"),
+    j: common_vendor.o(($event) => _ctx.$emit("back"), "cc")
   };
 }
 const Component = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render]]);

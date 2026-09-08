@@ -2,7 +2,20 @@
 const common_vendor = require("../../common/vendor.js");
 const _sfc_main = {
   name: "SubscriptionFormView",
-  emits: ["back", "apply-template", "category-change", "currency-change", "change-cycle", "payment-change", "billing-date-change", "auto-renew-change", "set-trial", "trial-date-change", "toggle-reminder", "save"],
+  emits: [
+    "back",
+    "apply-template",
+    "category-change",
+    "currency-change",
+    "change-cycle",
+    "payment-change",
+    "billing-date-change",
+    "auto-renew-change",
+    "set-trial",
+    "trial-date-change",
+    "toggle-reminder",
+    "save"
+  ],
   props: {
     editingId: { type: [String, Number], default: null },
     form: { type: Object, required: true },
@@ -35,13 +48,13 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       size: "24",
       color: "#202622"
     }),
-    b: common_vendor.o(($event) => _ctx.$emit("back"), "33"),
+    b: common_vendor.o(($event) => _ctx.$emit("back"), "df"),
     c: common_vendor.t($props.editingId ? "编辑订阅" : "新增订阅"),
     d: !$props.editingId
   }, !$props.editingId ? {
     e: common_vendor.f($props.serviceTemplates, (item, k0, i0) => {
       return {
-        a: "ce39d180-1-" + i0,
+        a: "303dfc86-1-" + i0,
         b: common_vendor.p({
           type: item.icon,
           size: "26",
@@ -57,11 +70,11 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     f: $props.form.name,
     g: common_vendor.o(common_vendor.m(($event) => $props.form.name = $event.detail.value, {
       trim: true
-    }), "45"),
+    }), "9e"),
     h: $props.form.plan,
     i: common_vendor.o(common_vendor.m(($event) => $props.form.plan = $event.detail.value, {
       trim: true
-    }), "9e"),
+    }), "67"),
     j: common_vendor.t($props.form.category),
     k: common_vendor.p({
       type: "right",
@@ -69,7 +82,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       color: "#a2a7a3"
     }),
     l: $props.categories,
-    m: common_vendor.o(($event) => _ctx.$emit("category-change", $props.categories[$event.detail.value]), "33"),
+    m: common_vendor.o(($event) => _ctx.$emit("category-change", $props.categories[$event.detail.value]), "3f"),
     n: common_vendor.f($props.logoColors, (color, k0, i0) => {
       return {
         a: color,
@@ -82,9 +95,9 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     o: common_vendor.t($props.form.currency),
     p: $props.currencies,
     q: $props.currencies.indexOf($props.form.currency),
-    r: common_vendor.o(($event) => _ctx.$emit("currency-change", $props.currencies[$event.detail.value]), "07"),
+    r: common_vendor.o(($event) => _ctx.$emit("currency-change", $props.currencies[$event.detail.value]), "f8"),
     s: $props.form.amount,
-    t: common_vendor.o(($event) => $props.form.amount = $event.detail.value, "fd"),
+    t: common_vendor.o(($event) => $props.form.amount = $event.detail.value, "d9"),
     v: common_vendor.t($props.cycleText($props.form)),
     w: common_vendor.p({
       type: "right",
@@ -92,11 +105,11 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       color: "#a2a7a3"
     }),
     x: $props.cycles,
-    y: common_vendor.o(($event) => _ctx.$emit("change-cycle", $props.cycles[$event.detail.value]), "4a"),
+    y: common_vendor.o(($event) => _ctx.$emit("change-cycle", $props.cycles[$event.detail.value]), "87"),
     z: $props.form.cycle === "自定义天数"
   }, $props.form.cycle === "自定义天数" ? {
     A: $props.form.cycleValue,
-    B: common_vendor.o(($event) => $props.form.cycleValue = $event.detail.value, "b4")
+    B: common_vendor.o(($event) => $props.form.cycleValue = $event.detail.value, "1c")
   } : {}, {
     C: common_vendor.t($props.form.payment),
     D: common_vendor.p({
@@ -105,7 +118,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       color: "#a2a7a3"
     }),
     E: $props.payments,
-    F: common_vendor.o(($event) => _ctx.$emit("payment-change", $props.payments[$event.detail.value]), "58"),
+    F: common_vendor.o(($event) => _ctx.$emit("payment-change", $props.payments[$event.detail.value]), "8b"),
     G: common_vendor.t($props.form.autoRenew ? "扣费" : "到期"),
     H: common_vendor.t($props.formatDate($props.form.nextBillingDate)),
     I: common_vendor.p({
@@ -115,13 +128,13 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     }),
     J: $props.todayKey,
     K: $props.form.nextBillingDate,
-    L: common_vendor.o(($event) => _ctx.$emit("billing-date-change", $event.detail.value), "a9"),
+    L: common_vendor.o(($event) => _ctx.$emit("billing-date-change", $event.detail.value), "d0"),
     M: common_vendor.t($props.form.autoRenew ? "按预计扣费提醒" : "仅作为普通到期待办"),
     N: $props.form.autoRenew,
-    O: common_vendor.o(($event) => _ctx.$emit("auto-renew-change", $event.detail.value), "89"),
+    O: common_vendor.o(($event) => _ctx.$emit("auto-renew-change", $event.detail.value), "cc"),
     P: common_vendor.t($props.form.trial ? "试用期内显示试用中" : "非试用订阅"),
     Q: $props.form.trial,
-    R: common_vendor.o(($event) => _ctx.$emit("set-trial", $event.detail.value), "1a"),
+    R: common_vendor.o(($event) => _ctx.$emit("set-trial", $event.detail.value), "bf"),
     S: $props.form.trial
   }, $props.form.trial ? {
     T: common_vendor.t($props.form.trialEndDate ? $props.formatDate($props.form.trialEndDate) : "请选择"),
@@ -132,13 +145,13 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     }),
     V: $props.todayKey,
     W: $props.form.trialEndDate,
-    X: common_vendor.o(($event) => _ctx.$emit("trial-date-change", $event.detail.value), "32")
+    X: common_vendor.o(($event) => _ctx.$emit("trial-date-change", $event.detail.value), "3d")
   } : {}, {
     Y: common_vendor.f($props.reminderOptions, (option, k0, i0) => {
       return common_vendor.e({
         a: $props.form.reminders.includes(option.value)
       }, $props.form.reminders.includes(option.value) ? {
-        b: "ce39d180-7-" + i0,
+        b: "303dfc86-7-" + i0,
         c: common_vendor.p({
           type: "checkmarkempty",
           size: "12",
@@ -160,11 +173,11 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     ab: $props.form.note,
     ac: common_vendor.o(common_vendor.m(($event) => $props.form.note = $event.detail.value, {
       trim: true
-    }), "7a"),
+    }), "db"),
     ad: $props.form.cancelGuide,
     ae: common_vendor.o(common_vendor.m(($event) => $props.form.cancelGuide = $event.detail.value, {
       trim: true
-    }), "76"),
+    }), "b8"),
     af: $props.formError
   }, $props.formError ? {
     ag: common_vendor.p({
@@ -180,7 +193,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       color: "#ffffff"
     }),
     aj: common_vendor.t($props.editingId ? "保存修改" : "保存订阅"),
-    ak: common_vendor.o(($event) => _ctx.$emit("save"), "31")
+    ak: common_vendor.o(($event) => _ctx.$emit("save"), "dd")
   });
 }
 const Component = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render]]);

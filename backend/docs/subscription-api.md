@@ -86,7 +86,11 @@ displayStatus 是结合周期、提醒窗口和到期日计算的展示状态；
 
 ### POST /subscriptions/:id/renew
 
-按当前周期推进 nextBillingDate，并追加一条 renewalHistory。十分钟内重复调用会返回 409 RENEWAL_ALREADY_APPLIED。
+可选请求体：`{ "billingDate": "2028-01-31" }`，表示用户正在确认的原账期。客户端应始终携带此字段；若该账期已有历史，返回已处理结果而不再次推进日期；若与当前账期不匹配且无对应历史，返回 409 BILLING_PERIOD_CHANGED。
+
+按周期推进 nextBillingDate，并追加 renewalHistory。自然月周期保存原始 anchorDay，确保 1 月 31 日 → 2 月末 → 3 月 31 日；编辑扣费日时重设锚点。一次性项目保持扣费日并归档，也支持十分钟内撤销。
+
+兼容未传账期的旧请求：十分钟内再次调用仍返回 409 RENEWAL_ALREADY_APPLIED。以上幂等记录目前只存在于演示进程内。
 
 ### POST /subscriptions/:id/undo-renewal
 

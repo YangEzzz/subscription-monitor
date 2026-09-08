@@ -3,6 +3,17 @@ const common_vendor = require("../../common/vendor.js");
 const _sfc_main = {
   name: "SettingsRow",
   emits: ["tap", "change"],
+  data() {
+    return { switchRevision: 0 };
+  },
+  methods: {
+    changeSwitch(event) {
+      this.$emit("change", event.detail.value);
+      this.$nextTick(() => {
+        this.switchRevision++;
+      });
+    }
+  },
   props: {
     icon: { type: String, required: true },
     iconClass: { type: String, default: "" },
@@ -34,17 +45,18 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     d: common_vendor.t($props.description),
     e: $props.switchable
   }, $props.switchable ? {
-    f: $props.checked,
-    g: common_vendor.o(($event) => _ctx.$emit("change", $event.detail.value), "fb")
+    f: $data.switchRevision,
+    g: $props.checked,
+    h: common_vendor.o((...args) => $options.changeSwitch && $options.changeSwitch(...args), "54")
   } : $props.action ? {
-    i: common_vendor.p({
+    j: common_vendor.p({
       type: "right",
       size: "17",
       color: "#aab0ac"
     })
   } : {}, {
-    h: $props.action,
-    j: common_vendor.o(($event) => _ctx.$emit("tap"), "34")
+    i: $props.action,
+    k: common_vendor.o(($event) => _ctx.$emit("tap"), "cb")
   });
 }
 const Component = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render]]);

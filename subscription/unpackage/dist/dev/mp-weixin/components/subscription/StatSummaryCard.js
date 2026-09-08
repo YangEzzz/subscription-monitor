@@ -12,6 +12,12 @@ const _sfc_main = {
     statsTotal: { type: Number, default: 0 },
     statsSubscriptionCount: { type: Number, default: 0 },
     formatMoney: { type: Function, required: true }
+  },
+  methods: {
+    changeCurrency(event) {
+      const currency = this.currencies[event.detail.value];
+      this.$emit("currency-change", currency);
+    }
   }
 };
 if (!Array) {
@@ -33,18 +39,19 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     }),
     d: $props.currencies,
     e: $props.currencies.indexOf($props.statsCurrency),
-    f: common_vendor.o(($event) => _ctx.$emit("currency-change", $props.currencies[$event.detail.value]), "42"),
-    g: common_vendor.f($props.statPeriods, (period, k0, i0) => {
+    f: common_vendor.o((...args) => $options.changeCurrency && $options.changeCurrency(...args), "d7"),
+    g: common_vendor.t($props.formatMoney($props.statsTotal, $props.statsCurrency)),
+    h: common_vendor.t($props.statsSubscriptionCount),
+    i: common_vendor.t($props.statsCurrency),
+    j: common_vendor.f($props.statPeriods, (period, k0, i0) => {
       return {
         a: common_vendor.t(period.label),
         b: period.value,
-        c: $props.statsPeriod === period.value ? 1 : "",
-        d: common_vendor.o(($event) => _ctx.$emit("period-change", period.value), period.value)
+        c: $props.statsPeriod === period.value,
+        d: $props.statsPeriod === period.value ? 1 : "",
+        e: common_vendor.o(($event) => _ctx.$emit("period-change", period.value), period.value)
       };
-    }),
-    h: common_vendor.t($props.formatMoney($props.statsTotal, $props.statsCurrency)),
-    i: common_vendor.t($props.statsSubscriptionCount),
-    j: common_vendor.t($props.statsCurrency)
+    })
   };
 }
 const Component = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render]]);

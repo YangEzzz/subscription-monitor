@@ -84,16 +84,32 @@ describe('SubscriptionsService', () => {
     ).toBe(before.nextBillingDate);
   });
 
-  it('should reject renewal for one-off subscriptions', () => {
+  it('should complete and archive one-off subscriptions, and allow undo', () => {
     const service = new SubscriptionsService();
     const created = service.create('one-off-user', {
       ...createInput(1),
       cycle: 'one_off',
     }) as { id: string };
 
-    expect(() => service.renew('one-off-user', created.id)).toThrow(
-      'One-off subscriptions cannot be renewed',
-    );
+    const result = service.renew('one-off-user', created.id);
+    expect(result.subscription.status).toBe('archived');
+    expect(result.subscription.renewalHistory).toHaveLength(1);
+    expect(service.undoRenewal('one-off-user', created.id).status).toBe('active');
+  });
+
+  it('should preserve the month-end anchor and accept retries of an old period', () => {
+    jest.useFakeTimers().setSystemTime(new Date('2028-01-01T12:00:00Z'));
+    try {
+      const service = new SubscriptionsService();
+      const created = service.create('month-end-user', { ...createInput(1), nextBillingDate: '2028-01-31' }) as { id: string };
+      expect(service.renew('month-end-user', created.id, '2028-01-31').subscription.nextBillingDate).toBe('2028-02-29');
+      jest.advanceTimersByTime(11 * 60 * 1000);
+      const retried = service.renew('month-end-user', created.id, '2028-01-31');
+      expect(retried.subscription.nextBillingDate).toBe('2028-02-29');
+      expect(retried.subscription.renewalHistory).toHaveLength(1);
+      expect(service.renew('month-end-user', created.id, '2028-02-29').subscription.nextBillingDate).toBe('2028-03-31');
+      expect(() => service.renew('month-end-user', created.id, '2028-03-30')).toThrow('Billing period has changed');
+    } finally { jest.useRealTimers(); }
   });
 
   it('should return stats and reminders from the same in-memory state', () => {

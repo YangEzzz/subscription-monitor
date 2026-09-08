@@ -20,7 +20,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   return {
     a: common_vendor.f($props.tabs, (tab, k0, i0) => {
       return {
-        a: "711ff735-0-" + i0,
+        a: "1ea05cf2-0-" + i0,
         b: common_vendor.p({
           type: $props.activeView === tab.key ? tab.activeIcon : tab.icon,
           size: "23",

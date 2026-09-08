@@ -20,6 +20,7 @@ import {
 import { CreateSubscriptionDto } from './dto/create-subscription.dto';
 import { QuerySubscriptionDto } from './dto/query-subscription.dto';
 import { UpdateSubscriptionDto } from './dto/update-subscription.dto';
+import { RenewSubscriptionDto } from './dto/renew-subscription.dto';
 import { SubscriptionsService } from './subscriptions.service';
 
 @ApiTags('Subscriptions')
@@ -95,8 +96,9 @@ export class SubscriptionsController {
   renew(
     @Headers('x-demo-user-id') userId: string | undefined,
     @Param('id') id: string,
+    @Body() body: RenewSubscriptionDto,
   ) {
-    return this.subscriptionsService.renew(userId, id);
+    return this.subscriptionsService.renew(userId, id, body?.billingDate);
   }
 
   @Post(':id/undo-renewal')

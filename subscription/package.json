@@ -5,7 +5,8 @@
   "version": "3.4.9",
   "description": "基于 uni-app 的订阅续费管理小程序",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node --test tests/api.test.mjs",
+    "test:integration": "node --test tests/api-integration.test.mjs"
   },
   "keywords": ["uni-app", "subscription", "renewal"],
   "author": "",

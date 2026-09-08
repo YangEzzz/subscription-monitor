@@ -1,0 +1,23 @@
+{
+  "profile": "product-admin",
+  "sourceRoots": [
+    "subscription/components/subscription",
+    "subscription/pages/subscription",
+    "subscription/styles"
+  ],
+  "canonicalMap": "UX-CONTRACT.md",
+  "requiredCapabilities": [
+    "Select/Listbox",
+    "Date",
+    "Form",
+    "Scrollbar",
+    "Toast",
+    "CRUD"
+  ],
+  "commands": {
+    "unit": "pnpm --dir subscription test",
+    "integration": "pnpm --dir subscription test:integration",
+    "designLint": "npx -p @google/design.md designmd lint DESIGN.md"
+  },
+  "evidence": { "runtime": ["subscription/docs/ui-verification.md"] }
+}

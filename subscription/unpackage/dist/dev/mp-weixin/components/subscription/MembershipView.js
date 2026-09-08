@@ -23,7 +23,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       size: "24",
       color: "#202622"
     }),
-    b: common_vendor.o(($event) => _ctx.$emit("back"), "09"),
+    b: common_vendor.o(($event) => _ctx.$emit("back"), "bf"),
     c: common_vendor.p({
       type: $props.isMember ? "checkbox-filled" : "vip-filled",
       size: "36",
@@ -60,7 +60,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       size: "18",
       color: "rgba(255,255,255,.7)"
     }),
-    n: common_vendor.o(($event) => _ctx.$emit("activate"), "e1")
+    n: common_vendor.o(($event) => _ctx.$emit("activate"), "50")
   } : {}, {
     o: common_vendor.p({
       type: "list",
@@ -100,7 +100,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     A: common_vendor.t($props.isMember ? "不受数量限制" : "5 条免费上限"),
     B: $props.isMember
   }, $props.isMember ? {
-    C: common_vendor.o(($event) => _ctx.$emit("restore"), "02")
+    C: common_vendor.o(($event) => _ctx.$emit("restore"), "48")
   } : {}, {
     D: common_vendor.p({
       type: "locked",

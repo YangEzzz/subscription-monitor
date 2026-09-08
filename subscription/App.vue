@@ -14,8 +14,8 @@
 
 	page {
 		min-height: 100%;
-		background: #f4f7f5;
-		color: #18201b;
+		background: $bg;
+		color: $text;
 		font-size: 28rpx;
 	}
 

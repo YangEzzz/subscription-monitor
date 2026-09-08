@@ -80,6 +80,7 @@ export interface SubscriptionRecord {
   cycleValue: number | null;
   nextBillingDate: string;
   payment: PaymentMethod;
+  anchorDay: number;
   category: SubscriptionCategory;
   status: SubscriptionStatus;
   autoRenew: boolean;

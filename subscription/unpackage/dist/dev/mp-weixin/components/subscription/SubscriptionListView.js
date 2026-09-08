@@ -5,12 +5,32 @@ const EmptyStateView = () => "./EmptyStateView.js";
 const _sfc_main = {
   name: "SubscriptionListView",
   components: { BrandLogo, EmptyStateView },
-  emits: ["search", "clear-search", "category", "status", "choose-sort", "open-detail", "reset-filters", "open-form"],
+  emits: [
+    "search",
+    "clear-search",
+    "category",
+    "status",
+    "choose-sort",
+    "open-detail",
+    "reset-filters",
+    "open-form"
+  ],
   data() {
-    return { searchDraft: this.searchKeyword };
+    return {
+      searchDraft: this.searchKeyword,
+      displayLimit: 20,
+      searchFocused: false
+    };
   },
   watch: {
+    activeCategory() {
+      this.displayLimit = 20;
+    },
+    activeStatus() {
+      this.displayLimit = 20;
+    },
     searchKeyword(value) {
+      this.displayLimit = 20;
       if (value !== this.searchDraft)
         this.searchDraft = value;
     }
@@ -24,6 +44,10 @@ const _sfc_main = {
     },
     clearSearch() {
       this.searchDraft = "";
+      this.searchFocused = false;
+      this.$nextTick(() => {
+        this.searchFocused = true;
+      });
       this.$emit("clear-search");
     }
   },
@@ -64,18 +88,19 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       size: "19",
       color: "#8c938e"
     }),
-    c: common_vendor.o([($event) => $data.searchDraft = $event.detail.value, (...args) => $options.handleSearchInput && $options.handleSearchInput(...args)], "b3"),
-    d: $data.searchDraft,
-    e: $data.searchDraft
+    c: $data.searchFocused,
+    d: common_vendor.o([($event) => $data.searchDraft = $event.detail.value, (...args) => $options.handleSearchInput && $options.handleSearchInput(...args)], "b3"),
+    e: $data.searchDraft,
+    f: $data.searchDraft
   }, $data.searchDraft ? {
-    f: common_vendor.p({
+    g: common_vendor.p({
       type: "clear",
       size: "18",
       color: "#9ca19d"
     }),
-    g: common_vendor.o((...args) => $options.clearSearch && $options.clearSearch(...args), "12")
+    h: common_vendor.o((...args) => $options.clearSearch && $options.clearSearch(...args), "ca")
   } : {}, {
-    h: common_vendor.f($props.categoryFilters, (filter, k0, i0) => {
+    i: common_vendor.f($props.categoryFilters, (filter, k0, i0) => {
       return {
         a: common_vendor.t(filter.name),
         b: common_vendor.t(filter.count),
@@ -84,7 +109,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
         e: common_vendor.o(($event) => _ctx.$emit("category", filter.name), filter.name)
       };
     }),
-    i: common_vendor.f($props.statusFilters, (status, k0, i0) => {
+    j: common_vendor.f($props.statusFilters, (status, k0, i0) => {
       return {
         a: common_vendor.t(status.label),
         b: status.value,
@@ -92,19 +117,19 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
         d: common_vendor.o(($event) => _ctx.$emit("status", status.value), status.value)
       };
     }),
-    j: common_vendor.t($props.sortLabel),
-    k: common_vendor.t($props.activeStatusLabel),
-    l: common_vendor.p({
+    k: common_vendor.t($props.sortLabel),
+    l: common_vendor.t($props.activeStatusLabel),
+    m: common_vendor.p({
       type: "right",
       size: "15",
       color: "#89938c"
     }),
-    m: common_vendor.o(($event) => _ctx.$emit("choose-sort"), "7a"),
-    n: $props.visibleSubscriptions.length
+    n: common_vendor.o(($event) => _ctx.$emit("choose-sort"), "f2"),
+    o: $props.visibleSubscriptions.length
   }, $props.visibleSubscriptions.length ? {
-    o: common_vendor.f($props.visibleSubscriptions, (item, k0, i0) => {
+    p: common_vendor.f($props.visibleSubscriptions.slice(0, $data.displayLimit), (item, k0, i0) => {
       return {
-        a: "4bd9411a-3-" + i0,
+        a: "ca51a8d2-3-" + i0,
         b: common_vendor.p({
           item
         }),
@@ -116,21 +141,27 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
         h: common_vendor.t(item.payment),
         i: common_vendor.t($props.formatDate(item.nextBillingDate)),
         j: common_vendor.t($props.daysText(item)),
-        k: "4bd9411a-4-" + i0,
+        k: "ca51a8d2-4-" + i0,
         l: item.id,
         m: common_vendor.o(($event) => _ctx.$emit("open-detail", item), item.id)
       };
     }),
-    p: common_vendor.p({
+    q: common_vendor.p({
       type: "right",
       size: "17",
       color: "#b0b5b1"
     })
   } : {}, {
-    q: !$props.visibleSubscriptions.length && $props.liveSubscriptions.length
+    r: $props.visibleSubscriptions.length > $data.displayLimit
+  }, $props.visibleSubscriptions.length > $data.displayLimit ? {
+    s: common_vendor.t($data.displayLimit),
+    t: common_vendor.t($props.visibleSubscriptions.length),
+    v: common_vendor.o(($event) => $data.displayLimit += 20, "20")
+  } : {}, {
+    w: !$props.visibleSubscriptions.length && $props.liveSubscriptions.length
   }, !$props.visibleSubscriptions.length && $props.liveSubscriptions.length ? {
-    r: common_vendor.o(($event) => _ctx.$emit("reset-filters"), "7c"),
-    s: common_vendor.p({
+    x: common_vendor.o(($event) => _ctx.$emit("reset-filters"), "f4"),
+    y: common_vendor.p({
       icon: "search",
       title: "没有匹配的订阅",
       description: "调整搜索词或筛选条件，也可以新增一条订阅",
@@ -138,8 +169,8 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       ["action-class"]: "secondary-button"
     })
   } : !$props.liveSubscriptions.length ? {
-    v: common_vendor.o(($event) => _ctx.$emit("open-form"), "f2"),
-    w: common_vendor.p({
+    A: common_vendor.o(($event) => _ctx.$emit("open-form"), "2f"),
+    B: common_vendor.p({
       icon: "plus",
       title: "还没有添加订阅",
       description: "添加第一条订阅后，这里会显示所有续费项目",
@@ -147,13 +178,13 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       ["action-class"]: "primary-button empty-add"
     })
   } : {}, {
-    t: !$props.liveSubscriptions.length,
-    x: common_vendor.p({
+    z: !$props.liveSubscriptions.length,
+    C: common_vendor.p({
       type: "plus",
       size: "27",
       color: "#ffffff"
     }),
-    y: common_vendor.o(($event) => _ctx.$emit("open-form"), "d1")
+    D: common_vendor.o(($event) => _ctx.$emit("open-form"), "08")
   });
 }
 const Component = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render]]);

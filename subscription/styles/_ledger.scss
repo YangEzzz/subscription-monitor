@@ -1,0 +1,955 @@
+// Shared ledger appearance. Structural geometry lives in subscription.scss.
+page,
+.app-shell,
+.safe-top,
+.page {
+  background: $bg;
+  color: $text;
+  font-family: $body-font;
+}
+.page {
+  padding: 0 32rpx 176rpx;
+}
+.primary-titlebar {
+  padding-left: 0;
+}
+.primary-titlebar > .page-title {
+  transform: none;
+}
+.page-title {
+  font-size: 40rpx;
+  font-weight: 700;
+  letter-spacing: -1rpx;
+}
+.home-lead,
+.page-lead {
+  display: block;
+  margin: 4rpx 0 28rpx;
+  color: $muted;
+  font-size: 24rpx;
+  line-height: 1.6;
+}
+button {
+  box-sizing: border-box;
+  font-family: inherit;
+}
+button::after,
+.renewal-row::after,
+.list-item::after,
+.reminder-row::after {
+  border: 0;
+}
+.icon-button,
+.summary-eye,
+.text-button,
+.month-arrow,
+.clear-search,
+.sheet-close {
+  min-width: 88rpx;
+  min-height: 88rpx;
+  box-shadow: none;
+}
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+[role="button"]:focus-visible {
+  outline: 2px solid $green;
+  outline-offset: 3px;
+}
+button:active {
+  opacity: 0.75;
+}
+button[disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.section-card,
+.chart-card,
+.trend-card,
+.settings-card,
+.detail-block,
+.process-card,
+.form-card,
+.calendar-card,
+.calendar-detail,
+.detail-grid,
+.subscription-list,
+.profile-head,
+.membership-entry,
+.membership-entry.active,
+.membership-hero,
+.membership-hero.active,
+.benefit-list,
+.status-card,
+.status-card.status-card-active,
+.reminder-check-list {
+  border: 1rpx solid $line;
+  border-radius: 24rpx;
+  background: $surface;
+  box-shadow: none;
+}
+.section-card,
+.trend-card,
+.detail-block,
+.process-card,
+.calendar-detail {
+  margin-top: 32rpx;
+  padding: 28rpx;
+}
+.section-title,
+.membership-section-title {
+  font-size: 30rpx;
+  font-weight: 700;
+}
+.section-caption,
+.text-button,
+.group-title,
+.list-detail,
+.list-date,
+.setting-copy text:last-child,
+.form-hint,
+.stats-compare,
+.trend-sub,
+.block-note,
+.process-desc,
+.benefit-desc,
+.membership-status-note {
+  color: $muted;
+  font-size: 24rpx;
+  line-height: 1.5;
+}
+.summary-card {
+  margin-top: 0;
+  padding: 28rpx 32rpx;
+  border-radius: 24rpx;
+  background: $deep;
+  box-shadow: none;
+}
+.summary-top {
+  justify-content: space-between;
+  font-size: 24rpx;
+  font-weight: 400;
+}
+.summary-eye {
+  margin: -16rpx -16rpx -16rpx 0;
+}
+.summary-amount,
+.summary-amount.compact-total {
+  min-height: 78rpx;
+  margin: 20rpx 0 24rpx;
+  font: 600 64rpx/1.2 $number-font;
+  letter-spacing: -1rpx;
+  overflow-wrap: anywhere;
+}
+.summary-meta {
+  padding-top: 22rpx;
+  border-top: 1rpx solid rgba(255, 255, 255, 0.2);
+  font-size: 24rpx;
+  flex-wrap: wrap;
+  gap: 12rpx;
+  opacity: 1;
+  color: #e0eee6;
+}
+.summary-meta .divider {
+  margin: 0 6rpx;
+}
+.overview-metrics {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20rpx;
+  margin-top: 20rpx;
+}
+.overview-metric {
+  padding: 24rpx;
+  border: 1rpx solid $line;
+  border-radius: 20rpx;
+  background: $surface;
+}
+.overview-metric-label {
+  display: block;
+  color: $muted;
+  font-size: 24rpx;
+}
+.overview-metric-value {
+  display: block;
+  margin-top: 12rpx;
+  font: 600 36rpx/1.2 $number-font;
+  color: $text;
+}
+.overview-metric-value text {
+  margin-left: 8rpx;
+  font: 400 22rpx $body-font;
+  color: $muted;
+}
+.notice-banner {
+  min-height: 88rpx;
+  padding: 12rpx 0;
+  margin-top: 16rpx;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.notice-icon {
+  width: 48rpx;
+  height: 48rpx;
+  background: $tint;
+  margin-right: 12rpx;
+}
+.notice-title {
+  font-size: 24rpx;
+  color: $muted;
+  font-weight: 400;
+}
+.notice-desc {
+  color: $muted;
+  font-size: 22rpx;
+  line-height: 1.5;
+}
+.notice-action {
+  min-width: 88rpx;
+  height: 88rpx;
+  background: transparent;
+  color: $green;
+  line-height: 88rpx;
+  font-size: 24rpx;
+  padding: 0;
+}
+.group-title {
+  margin: 16rpx 0 0;
+  padding: 16rpx 0;
+  font-size: 24rpx;
+  font-weight: 500;
+}
+.count-dot.red,
+.count-dot.orange {
+  color: $muted;
+  background: $tint;
+  min-width: 36rpx;
+  height: 36rpx;
+  line-height: 36rpx;
+  font-size: 22rpx;
+}
+.renewal-row {
+  width: 100%;
+  min-height: 132rpx;
+  margin: 0;
+  padding: 20rpx 0;
+  display: flex;
+  align-items: center;
+  border-bottom: 1rpx solid $line;
+  border-radius: 0;
+  color: $text;
+  background: transparent;
+  text-align: left;
+  line-height: 1.4;
+}
+.renewal-row:last-child {
+  border-bottom: 0;
+}
+.date-stamp {
+  width: 76rpx;
+  flex-shrink: 0;
+  padding: 10rpx 0;
+  border: 1rpx solid $line;
+  border-top: 5rpx solid $green;
+  border-radius: 12rpx;
+  text-align: center;
+  background: $bg;
+}
+.date-stamp-month {
+  display: block;
+  color: $muted;
+  font-size: 20rpx;
+}
+.date-stamp-day {
+  display: block;
+  font: 600 36rpx/1.2 $number-font;
+}
+.renewal-main {
+  flex: 1;
+  min-width: 0;
+  margin: 0 18rpx;
+}
+.renewal-name {
+  display: block;
+  font-size: 28rpx;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.renewal-date {
+  display: block;
+  margin-top: 8rpx;
+  font-size: 22rpx;
+  color: $muted;
+}
+.renewal-side {
+  flex-shrink: 0;
+  max-width: 45%;
+  text-align: right;
+}
+.renewal-price {
+  display: block;
+  font: 600 30rpx/1.4 $number-font;
+  overflow-wrap: anywhere;
+}
+.days {
+  display: block;
+  margin-top: 6rpx;
+  font-size: 22rpx;
+  color: $muted;
+}
+.days.urgent {
+  color: $amber;
+}
+.reminder-row {
+  width: 100%;
+  margin: 0;
+  padding: 18rpx 0;
+  border-bottom: 1rpx solid $line;
+  border-radius: 0;
+  background: transparent;
+  text-align: left;
+  line-height: 1.5;
+}
+.reminder-row:last-child {
+  border-bottom: 0;
+}
+.reminder-icon {
+  border-radius: 12rpx;
+  box-shadow: none;
+}
+.reminder-icon.warning {
+  background: $amber;
+}
+.reminder-icon.danger {
+  background: $danger;
+}
+.reminder-icon.info {
+  background: $muted;
+}
+.reminder-icon.success {
+  background: $green;
+}
+.reminder-desc {
+  white-space: normal;
+  color: $muted;
+  font-size: 24rpx;
+}
+.primary-button,
+.secondary-button,
+.membership-cta,
+.membership-secondary-cta {
+  min-height: 96rpx;
+  border-radius: 16rpx;
+  box-shadow: none;
+  font-size: 28rpx;
+}
+.primary-button,
+.membership-cta {
+  background: $green;
+}
+.search-box {
+  height: 96rpx;
+  padding: 0 24rpx;
+  border-color: $line;
+  border-radius: 16rpx;
+  box-shadow: none;
+}
+.search-box input {
+  height: 96rpx;
+  font-size: 28rpx;
+}
+.filter-scroll,
+.status-scroll {
+  width: calc(100% + 64rpx);
+  margin-left: -32rpx;
+  margin-right: -32rpx;
+}
+.filter-row,
+.status-row {
+  padding: 0 32rpx;
+}
+.filter-pill,
+.status-pill {
+  min-height: 88rpx;
+  line-height: 1.2;
+  border-radius: 16rpx;
+  padding: 0 22rpx;
+  font-size: 24rpx;
+  box-shadow: none;
+}
+.filter-pill.active,
+.status-pill.active {
+  border-color: $green;
+  background: $tint;
+  color: $deep;
+}
+.filter-count,
+.filter-pill .filter-count {
+  font-size: 22rpx;
+  color: $muted;
+}
+.sort-summary {
+  min-height: 88rpx;
+  color: $muted;
+  font-size: 24rpx;
+}
+.subscription-list {
+  margin: 0;
+}
+.list-item {
+  width: 100%;
+  margin: 0;
+  min-height: 164rpx;
+  padding: 24rpx;
+  border-radius: 0;
+  color: $text;
+  background: $surface;
+  text-align: left;
+  line-height: 1.5;
+}
+.list-item:last-child {
+  border-bottom: 0;
+}
+.list-name {
+  font-size: 28rpx;
+}
+.status-badge {
+  font-size: 20rpx;
+  border-radius: 6rpx;
+}
+.load-more {
+  width: 100%;
+}
+.float-add {
+  width: 96rpx;
+  height: 96rpx;
+  background: $green;
+  box-shadow: 0 4px 12px rgba(16, 78, 55, 0.18);
+}
+.month-nav {
+  margin: 16rpx 0;
+  gap: 8rpx;
+}
+.month-arrow {
+  background: $surface;
+  border-radius: 16rpx;
+  border: 1rpx solid $line;
+}
+.month-name {
+  font-size: 30rpx;
+}
+.today-button {
+  min-height: 88rpx;
+  min-width: 88rpx;
+  line-height: 86rpx;
+  border-radius: 16rpx;
+  background: $tint;
+}
+.week-grid {
+  color: $muted;
+  font-size: 24rpx;
+}
+.date-cell {
+  height: 104rpx;
+  border-radius: 12rpx;
+}
+.day-number {
+  width: 48rpx;
+  height: 48rpx;
+  line-height: 48rpx;
+  font-size: 28rpx;
+  font-family: $number-font;
+}
+.date-cell.selected {
+  background: $tint;
+}
+.date-cell.selected .day-number {
+  background: $green;
+}
+.tiny-price {
+  color: $muted;
+  font-size: 18rpx;
+}
+.calendar-subscription {
+  padding: 16rpx 0;
+}
+.detail-total {
+  font-size: 24rpx;
+  color: $green;
+}
+.stats-summary {
+  padding: 28rpx;
+  margin-top: 16rpx;
+  border: 1rpx solid $line;
+  border-radius: 24rpx;
+  background: $surface;
+}
+.stats-summary-head {
+  gap: 16rpx;
+}
+.stats-label {
+  font-size: 26rpx;
+}
+.stats-period-switch {
+  width: 100%;
+  height: auto;
+  margin-top: 28rpx;
+  padding: 6rpx;
+  border: 0;
+  border-radius: 16rpx;
+  background: $bg;
+}
+.stats-period-switch button {
+  min-height: 88rpx;
+  height: auto;
+  font-size: 24rpx;
+  line-height: 1.3;
+}
+.stats-total {
+  font: 600 64rpx/1.3 $number-font;
+  margin-top: 24rpx;
+  overflow-wrap: anywhere;
+}
+.currency-filter {
+  min-height: 88rpx;
+  display: flex;
+  align-items: center;
+  font-size: 24rpx;
+}
+.stats-compare {
+  font-size: 22rpx;
+}
+.chart-card {
+  margin-top: 32rpx;
+  padding: 28rpx;
+}
+.legend-row {
+  min-height: 48rpx;
+  font-size: 22rpx;
+  gap: 10rpx;
+}
+.category-chart-body {
+  flex-direction: column;
+  gap: 28rpx;
+}
+.category-chart-body .legend {
+  width: 100%;
+  margin-left: 0;
+}
+.category-chart-body .legend-row {
+  min-height: 56rpx;
+  font-size: 24rpx;
+}
+.category-chart-body .legend-percent {
+  width: 90rpx;
+}
+.legend {
+  margin-left: 20rpx;
+}
+.legend-value {
+  width: auto;
+  min-width: 76rpx;
+}
+.legend-percent {
+  width: 64rpx;
+}
+.bar-fill {
+  background: $green;
+}
+.bar-value,
+.bar-column {
+  font-size: 20rpx;
+}
+.insight-card {
+  background: $tint;
+  border-color: $line;
+  box-shadow: none;
+}
+.insight-desc {
+  color: $muted;
+  font-size: 24rpx;
+}
+.profile-head {
+  color: $text;
+  padding: 28rpx;
+}
+.avatar {
+  background: $tint;
+  color: $green;
+  border-radius: 20rpx;
+  box-shadow: none;
+}
+.profile-sub {
+  color: $muted;
+  font-size: 24rpx;
+  opacity: 1;
+}
+.local-badge {
+  background: $tint;
+  color: $green;
+  font-size: 22rpx;
+}
+.profile-metrics {
+  border-top-color: $line;
+}
+.profile-metrics > view + view {
+  border-left-color: $line;
+}
+.profile-metrics text:first-child {
+  font-size: 24rpx;
+  color: $muted;
+  opacity: 1;
+}
+.profile-metrics text:last-child {
+  font-size: 30rpx;
+  overflow-wrap: anywhere;
+}
+.settings-title {
+  font-size: 24rpx;
+  color: $muted;
+}
+.setting-row {
+  min-height: 120rpx;
+}
+.setting-copy text:first-child {
+  font-size: 28rpx;
+}
+.setting-copy text:last-child {
+  white-space: normal;
+  font-size: 22rpx;
+}
+.green-bg,
+.orange-bg,
+.blue-bg,
+.violet-bg,
+.red-bg {
+  background: $bg;
+}
+.version-text {
+  color: $muted;
+  font-size: 22rpx;
+}
+.detail-amount-card,
+.detail-page .detail-amount-card {
+  border-radius: 24rpx;
+  background: $deep;
+  box-shadow: none;
+}
+.detail-amount {
+  font-family: $number-font;
+  font-size: 56rpx;
+}
+.detail-grid text:first-child,
+.block-head text:last-child,
+.process-note {
+  font-size: 24rpx;
+}
+.detail-grid text:last-child {
+  font-size: 26rpx;
+}
+.detail-name,
+.text-info text:last-child {
+  overflow-wrap: anywhere;
+}
+.process-button {
+  min-height: 108rpx;
+  font-size: 24rpx;
+}
+.template-scroll {
+  width: calc(100% + 64rpx);
+  margin-left: -32rpx;
+  margin-right: -32rpx;
+}
+.template-row {
+  padding: 0 32rpx;
+}
+.template-chip {
+  border-radius: 16rpx;
+  box-shadow: none;
+}
+.form-section {
+  margin-top: 32rpx;
+}
+.form-section-title {
+  color: $text;
+  font-size: 28rpx;
+  margin-bottom: 16rpx;
+}
+.form-row {
+  min-height: 112rpx;
+  gap: 12rpx;
+}
+.form-label {
+  font-size: 26rpx;
+}
+.form-input {
+  font-size: 28rpx;
+  min-width: 0;
+}
+.form-value {
+  font-size: 26rpx;
+  color: $text;
+}
+.money-input input {
+  width: 170rpx;
+  font-family: $number-font;
+  font-size: 30rpx;
+}
+.color-options {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  max-width: 75%;
+}
+.brand-color-row {
+  flex-direction: column;
+  align-items: stretch;
+  padding: 20rpx 0;
+}
+.brand-color-row .color-options {
+  max-width: 100%;
+  justify-content: space-between;
+}
+.color-options button {
+  width: 88rpx;
+  height: 88rpx;
+  border-width: 22rpx;
+  box-shadow: none;
+  margin: 0;
+}
+.color-options button.selected {
+  box-shadow: inset 0 0 0 3rpx $text;
+}
+.textarea-row {
+  flex-direction: column;
+  align-items: stretch;
+  padding: 24rpx 0;
+}
+.textarea-row textarea {
+  flex: auto;
+  width: 100%;
+  height: 144rpx;
+  margin: 16rpx 0 0;
+  text-align: left;
+  font-size: 26rpx;
+  resize: none;
+}
+.reminder-options {
+  gap: 12rpx;
+  margin-top: 16rpx;
+}
+.reminder-options button {
+  min-height: 88rpx;
+  line-height: 86rpx;
+  font-size: 24rpx;
+  margin: 0;
+}
+.form-preview {
+  display: flex;
+  gap: 8rpx;
+  margin-top: 16rpx;
+  font-size: 24rpx;
+  color: $muted;
+  line-height: 1.5;
+}
+.form-error {
+  font-size: 26rpx;
+}
+.settings-intro {
+  background: $tint;
+}
+.settings-intro text:last-child {
+  font-size: 24rpx;
+  line-height: 1.6;
+}
+.membership-entry {
+  margin-top: 24rpx;
+  padding: 28rpx;
+}
+.membership-entry.active {
+  background: $tint;
+}
+.membership-icon,
+.membership-entry.active .membership-icon {
+  background: $green;
+  box-shadow: none;
+}
+.membership-title,
+.membership-entry.active .membership-title,
+.membership-hero-title,
+.hero-benefit-label {
+  color: $text;
+}
+.membership-kicker,
+.membership-desc,
+.membership-entry.active .membership-desc,
+.membership-hero-desc,
+.membership-hero-tag,
+.hero-benefit-sub {
+  color: $muted;
+}
+.membership-desc,
+.membership-hero-desc {
+  font-size: 24rpx;
+}
+.membership-progress {
+  background: $line;
+}
+.membership-progress-fill {
+  background: $green;
+}
+.membership-benefits {
+  display: none;
+}
+.membership-hero {
+  padding: 32rpx 28rpx;
+}
+.membership-hero-deco,
+.membership-hero-deco2 {
+  display: none;
+}
+.membership-hero-icon,
+.hero-benefit-icon,
+.benefit-icon-wrap.gold,
+.benefit-icon-wrap.green,
+.status-card-icon-wrap.gold {
+  background: $tint;
+  box-shadow: none;
+}
+.membership-hero-title {
+  font-size: 36rpx;
+}
+.hero-benefits {
+  border-top-color: $line;
+}
+.membership-trust {
+  background: $tint;
+  border-color: $line;
+  box-shadow: none;
+}
+.membership-footnote {
+  font-size: 24rpx;
+  color: $muted;
+}
+.tab-bar {
+  max-width: 480px;
+  height: calc(120rpx + env(safe-area-inset-bottom));
+  padding-top: 8rpx;
+  background: $surface;
+  box-shadow: none;
+  border-top-color: $line;
+}
+.tab-item {
+  height: 104rpx;
+  font-size: 22rpx;
+  color: $muted;
+  border-radius: 16rpx;
+}
+.tab-item.active {
+  background: $tint;
+  color: $green;
+}
+.sheet-close {
+  border-radius: 16rpx;
+}
+.sort-sheet {
+  max-width: 480px;
+}
+.sort-option-copy text:last-child,
+.sheet-subtitle {
+  font-size: 24rpx;
+}
+.initial-loading {
+  padding: 48rpx 32rpx;
+}
+.skeleton-title {
+  width: 40%;
+  height: 48rpx;
+  margin-bottom: 28rpx;
+  background: $line;
+  border-radius: 12rpx;
+}
+.skeleton-card {
+  height: 240rpx;
+  margin-bottom: 28rpx;
+  background: $line;
+  border-radius: 24rpx;
+}
+.skeleton-row {
+  height: 96rpx;
+  margin-bottom: 20rpx;
+  background: $line;
+  border-radius: 16rpx;
+}
+.loading-caption {
+  font-size: 26rpx;
+  color: $muted;
+}
+.sync-indicator {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 80;
+  height: 4rpx;
+  background: transparent;
+  pointer-events: none;
+}
+.sync-indicator.busy {
+  background: $green;
+}
+/* #ifdef H5 */
+@media screen and (min-width: 480px) {
+  .app-shell {
+    max-width: 480px;
+    margin: 0 auto;
+    border-left: 1px solid $line;
+    border-right: 1px solid $line;
+  }
+  .float-add {
+    right: calc((100vw - 480px) / 2 + 16px);
+  }
+}
+@media (hover: hover) {
+  button:hover {
+    filter: brightness(0.96);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}
+@media (forced-colors: active) {
+  button {
+    border: 1px solid ButtonText;
+  }
+  button:focus-visible {
+    outline: 2px solid Highlight;
+  }
+}
+/* #endif */
+/* #ifdef H5 */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #65766d #f3f5f4;
+}
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-thumb {
+  background: $muted;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-track {
+  background: $bg;
+}
+/* #endif */

@@ -32,7 +32,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   }, $props.actionLabel ? {
     e: common_vendor.t($props.actionLabel),
     f: common_vendor.n($props.actionClass),
-    g: common_vendor.o(($event) => _ctx.$emit("action"), "35")
+    g: common_vendor.o(($event) => _ctx.$emit("action"), "6b")
   } : {});
 }
 const Component = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render]]);

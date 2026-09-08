@@ -1,4 +1,10 @@
-# hello-uniapp
+# 续订清单
+
+订阅业务页面已接入 `../backend` 的 NestJS API。请求地址在 `api/config.js` 配置，默认 `http://localhost:3001/api/v1`。
+
+启动、真机配置、接口映射和验证方法见 [前后端联调说明](docs/前后端联调说明.md)。当前后端仍为内存演示服务，未接入真实登录、数据库、支付或微信消息发送。
+
+## 原始 hello-uniapp 模板说明
 
 `uni-app`框架示例，一套代码，同时发行到iOS、Android、H5、小程序等多个平台，请使用手机在下方扫码快速体验`uni-app`的强大功能。[官方文档](https://uniapp.dcloud.net.cn/)
 

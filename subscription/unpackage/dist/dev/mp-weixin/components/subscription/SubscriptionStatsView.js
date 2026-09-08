@@ -33,8 +33,8 @@ if (!Math) {
 function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   return {
     a: $props.navigationBarHeight + "px",
-    b: common_vendor.o(($event) => _ctx.$emit("currency-change", $event), "1d"),
-    c: common_vendor.o(($event) => _ctx.$emit("period-change", $event), "86"),
+    b: common_vendor.o(($event) => _ctx.$emit("currency-change", $event), "9b"),
+    c: common_vendor.o(($event) => _ctx.$emit("period-change", $event), "2f"),
     d: common_vendor.p({
       currencies: $props.currencies,
       ["stats-currency"]: $props.statsCurrency,

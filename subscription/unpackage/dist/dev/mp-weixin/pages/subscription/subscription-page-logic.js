@@ -1,5 +1,6 @@
 "use strict";
 const common_vendor = require("../../common/vendor.js");
+const pages_subscription_subscriptionRemote = require("./subscription-remote.js");
 const pages_subscription_subscriptionData = require("./subscription-data.js");
 function createSubscriptionPageState() {
   const today = pages_subscription_subscriptionData.toDateKey(/* @__PURE__ */ new Date());
@@ -18,7 +19,17 @@ function createSubscriptionPageState() {
     ],
     subscriptions: [],
     settings: pages_subscription_subscriptionData.createDefaultSettings(),
-    authStatus: "idle",
+    authStatus: "demo",
+    loading: false,
+    mutating: false,
+    dataReady: false,
+    loadError: "",
+    serverStats: {},
+    serverReminders: [],
+    statsRequestId: 0,
+    statsLoading: false,
+    statsError: "",
+    trashPage: 0,
     subscribeTemplateIds: [],
     // 填写微信公众平台中的订阅消息模板 ID
     subscriptionLimit: 5,
@@ -42,6 +53,7 @@ function createSubscriptionPageState() {
     editingId: null,
     originalBillingDate: null,
     formError: "",
+    formBaseline: "",
     categories: ["影音娱乐", "音乐", "云存储", "AI 工具", "效率工具", "阅读", "其他"],
     cycles: ["每周", "每月", "每季度", "每半年", "每年", "自定义天数", "一次性"],
     payments: ["微信支付", "支付宝", "App Store", "信用卡", "官网", "其他"],
@@ -58,6 +70,7 @@ function createSubscriptionPageState() {
   };
 }
 const subscriptionComputed = {
+  ...pages_subscription_subscriptionRemote.remoteComputed,
   todayKey() {
     return pages_subscription_subscriptionData.toDateKey(/* @__PURE__ */ new Date());
   },
@@ -120,15 +133,15 @@ const subscriptionComputed = {
     return this.formatCurrencyTotals(this.next30Subscriptions, (item) => Number(item.amount || 0));
   },
   monthlyAverage() {
-    return this.liveSubscriptions.filter((item) => item.currency === this.statsCurrency).reduce((sum, item) => sum + pages_subscription_subscriptionData.getMonthlyEquivalent(item), 0);
+    return this.liveSubscriptions.filter((item) => item.currency === this.statsCurrency).reduce((sum, item) => sum + (item.monthlyEquivalent ?? pages_subscription_subscriptionData.getMonthlyEquivalent(item)), 0);
   },
   monthlyAverageText() {
-    return this.formatCurrencyTotals(this.liveSubscriptions, (item) => pages_subscription_subscriptionData.getMonthlyEquivalent(item));
+    return this.formatCurrencyTotals(this.liveSubscriptions, (item) => item.monthlyEquivalent ?? pages_subscription_subscriptionData.getMonthlyEquivalent(item));
   },
   actionableReminders() {
     const list = [];
     if (!this.settings.notificationEnabled)
-      list.push({ key: "notification", tone: "warning", icon: "notification", title: "开启续费提醒", desc: "当前只能在小程序内查看到期待办", action: "notification" });
+      list.push({ key: "notification", tone: "warning", icon: "notification", title: "当前仅支持站内提醒", desc: "当前只能在小程序内查看到期待办", action: "notification" });
     const overdue = this.liveSubscriptions.filter((item) => !["cancelled", "archived", "paused"].includes(item.status) && pages_subscription_subscriptionData.daysUntil(item.nextBillingDate) < 0);
     if (overdue.length)
       list.push({ key: "overdue", tone: "danger", icon: "info-filled", title: `${overdue.length} 项订阅已逾期未确认`, desc: "请确认是否已完成续费", action: "overdue" });
@@ -167,7 +180,7 @@ const subscriptionComputed = {
     else if (this.activeStatus === "overdue")
       list = list.filter((item) => !["cancelled", "archived", "paused"].includes(item.status) && pages_subscription_subscriptionData.daysUntil(item.nextBillingDate) < 0);
     else if (this.activeStatus !== "all")
-      list = list.filter((item) => pages_subscription_subscriptionData.getDisplayStatus(item) === this.activeStatus);
+      list = list.filter((item) => this.getStatus(item) === this.activeStatus);
     if (this.searchKeyword) {
       const word = this.searchKeyword.toLowerCase();
       list = list.filter((item) => `${item.name} ${item.plan || ""}`.toLowerCase().includes(word));
@@ -200,29 +213,8 @@ const subscriptionComputed = {
   selectedWeekday() {
     return `星期${this.weekdays[pages_subscription_subscriptionData.parseDate(this.selectedDate).getDay()]}`;
   },
-  statsTotal() {
-    if (this.statsPeriod === "year")
-      return this.monthlyAverage * 12;
-    if (this.statsPeriod === "next")
-      return this.next30Total;
-    return this.monthlyAverage;
-  },
   statsLabel() {
     return { month: "月均订阅支出（估算）", year: "年度预计支出", next: "未来 30 天预计扣费" }[this.statsPeriod];
-  },
-  statsSubscriptionCount() {
-    const source = this.statsPeriod === "next" ? this.next30Subscriptions : this.liveSubscriptions;
-    return source.filter((item) => item.currency === this.statsCurrency && (this.statsPeriod === "next" ? item.amount !== null && item.amount !== "" : pages_subscription_subscriptionData.getMonthlyEquivalent(item) > 0)).length;
-  },
-  categoryStats() {
-    const map = {}, factor = this.statsPeriod === "year" ? 12 : 1;
-    this.liveSubscriptions.filter((item) => item.currency === this.statsCurrency).forEach((item) => {
-      const value = this.statsPeriod === "next" ? this.next30Subscriptions.includes(item) ? Number(item.amount || 0) : 0 : pages_subscription_subscriptionData.getMonthlyEquivalent(item) * factor;
-      if (value)
-        map[item.category] = (map[item.category] || 0) + value;
-    });
-    const total = Object.values(map).reduce((sum, value) => sum + value, 0) || 1;
-    return Object.keys(map).sort((a, b) => map[b] - map[a]).map((name) => ({ name, value: map[name], percent: Math.round(map[name] / total * 100), color: pages_subscription_subscriptionData.CATEGORY_COLORS[name] || pages_subscription_subscriptionData.CATEGORY_COLORS["其他"] }));
   },
   donutBackground() {
     let start = 0;
@@ -234,28 +226,6 @@ const subscriptionComputed = {
     });
     return stops.length ? `conic-gradient(${stops.join(",")})` : "#e7ece8";
   },
-  trendData() {
-    const cursor = pages_subscription_subscriptionData.parseDate(this.todayKey), values = [];
-    for (let offset = 0; offset < 6; offset++) {
-      const monthDate = new Date(cursor.getFullYear(), cursor.getMonth() + offset, 1);
-      const monthEnd = new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 0);
-      let value = 0;
-      this.liveSubscriptions.filter((item) => item.currency === this.statsCurrency && !["cancelled", "archived", "paused"].includes(item.status)).forEach((item) => {
-        let billing = pages_subscription_subscriptionData.parseDate(item.nextBillingDate), guard = 0;
-        while (billing <= monthEnd && guard < 24) {
-          if (billing >= monthDate)
-            value += Number(item.amount || 0);
-          if (item.cycle === "一次性")
-            break;
-          billing = pages_subscription_subscriptionData.parseDate(pages_subscription_subscriptionData.getNextBillingDate(pages_subscription_subscriptionData.toDateKey(billing), item.cycle, item.anchorDay, item.cycleValue));
-          guard++;
-        }
-      });
-      values.push({ month: `${monthDate.getMonth() + 1}月`, value });
-    }
-    const max = Math.max(...values.map((item) => item.value), 1);
-    return values.map((item) => ({ ...item, height: Math.max(8, Math.round(item.value / max * 100)) }));
-  },
   formReminderPreview() {
     if (!this.form.nextBillingDate || !this.form.reminders || !this.form.reminders.length)
       return "未设置提醒";
@@ -266,8 +236,7 @@ const subscriptionComputed = {
 const subscriptionLifecycle = {
   onLoad() {
     this.initNavigationLayout();
-    this.loadLocalData();
-    this.loginWithWechat();
+    this.refreshData();
   },
   onBackPress() {
     if (this.sortSheetVisible) {
@@ -281,8 +250,11 @@ const subscriptionLifecycle = {
   }
 };
 const subscriptionMethods = {
+  ...pages_subscription_subscriptionRemote.remoteMethods,
   formatDate: pages_subscription_subscriptionData.formatDate,
-  getStatus: pages_subscription_subscriptionData.getDisplayStatus,
+  getStatus(item) {
+    return item.displayStatus || pages_subscription_subscriptionData.getDisplayStatus(item);
+  },
   cycleText(item) {
     if (!item)
       return "";
@@ -334,11 +306,13 @@ const subscriptionMethods = {
     const number = Number(value || 0);
     return number >= 1e3 ? `${(number / 1e3).toFixed(1)}k` : Math.round(number);
   },
+  handleKeyboardAction(event) {
+  },
   daysUntil(dateKey) {
     return pages_subscription_subscriptionData.daysUntil(dateKey);
   },
   statusText(item) {
-    return pages_subscription_subscriptionData.STATUS_LABELS[pages_subscription_subscriptionData.getDisplayStatus(item)];
+    return pages_subscription_subscriptionData.STATUS_LABELS[this.getStatus(item)] || "逾期未确认";
   },
   decorateItem(item) {
     return { ...item, shortDate: pages_subscription_subscriptionData.formatDate(item.nextBillingDate, false), days: pages_subscription_subscriptionData.daysUntil(item.nextBillingDate), amountText: item.amount === null ? "待补充" : this.formatMoney(item.amount, item.currency), displayStatus: this.statusText(item) };
@@ -346,38 +320,6 @@ const subscriptionMethods = {
   daysText(item) {
     const days = pages_subscription_subscriptionData.daysUntil(item.nextBillingDate);
     return days < 0 ? `已逾期 ${Math.abs(days)} 天` : days === 0 ? "今天扣费" : `${days} 天后`;
-  },
-  loadLocalData() {
-    const saved = common_vendor.index.getStorageSync(pages_subscription_subscriptionData.STORAGE_KEYS.subscriptions), savedSettings = common_vendor.index.getStorageSync(pages_subscription_subscriptionData.STORAGE_KEYS.settings);
-    const source = Array.isArray(saved) ? saved : pages_subscription_subscriptionData.createSeedSubscriptions();
-    const demoNames = new Set(pages_subscription_subscriptionData.createSeedSubscriptions().map((item) => item.name));
-    this.subscriptions = source.map((item) => ({ ...item, isDemo: item.isDemo || Number(item.id) <= 11 && demoNames.has(item.name), currency: item.currency || "CNY", anchorDay: item.anchorDay || pages_subscription_subscriptionData.parseDate(item.nextBillingDate).getDate(), cycleValue: item.cycleValue || null, trial: Boolean(item.trialEndDate), trialEndDate: item.trialEndDate || null, renewalHistory: item.renewalHistory || [] }));
-    this.settings = savedSettings ? { ...pages_subscription_subscriptionData.createDefaultSettings(), ...savedSettings } : pages_subscription_subscriptionData.createDefaultSettings();
-    this.statsCurrency = this.settings.defaultCurrency || "CNY";
-    this.persist();
-  },
-  loginWithWechat() {
-    this.authStatus = "logging-in";
-    common_vendor.index.login({
-      provider: "weixin",
-      success: (result) => {
-        if (!result || !result.code) {
-          this.authStatus = "local";
-          common_vendor.index.__f__("warn", "at pages/subscription/subscription-page-logic.js:209", "[auth] 微信登录未返回 code，继续使用本地模式");
-          return;
-        }
-        this.authStatus = "authenticated";
-        common_vendor.index.__f__("info", "at pages/subscription/subscription-page-logic.js:213", "[auth] uni.login 成功，临时 code:", result.code);
-      },
-      fail: (error) => {
-        this.authStatus = "local";
-        common_vendor.index.__f__("warn", "at pages/subscription/subscription-page-logic.js:218", "[auth] 微信登录失败，继续使用本地模式", error);
-      }
-    });
-  },
-  persist() {
-    common_vendor.index.setStorageSync(pages_subscription_subscriptionData.STORAGE_KEYS.subscriptions, this.subscriptions);
-    common_vendor.index.setStorageSync(pages_subscription_subscriptionData.STORAGE_KEYS.settings, this.settings);
   },
   navigateToView(view) {
     if (view === this.activeView)
@@ -387,6 +329,15 @@ const subscriptionMethods = {
     this.scrollToTop();
   },
   goBackView(fallback = "home") {
+    if (this.activeView === "form" && this.formBaseline && JSON.stringify(this.form) !== this.formBaseline) {
+      common_vendor.index.showModal({ title: "放弃未保存的修改？", content: "返回后，本次修改不会保存。", confirmText: "放弃修改", cancelText: "继续编辑", success: (result) => {
+        if (result.confirm) {
+          this.formBaseline = "";
+          this.goBackView(fallback);
+        }
+      } });
+      return;
+    }
     this.activeView = this.viewStack.length ? this.viewStack.pop() : fallback;
     this.formError = "";
     this.scrollToTop();
@@ -399,52 +350,6 @@ const subscriptionMethods = {
   },
   scrollToTop() {
     this.scrollTop = this.scrollTop === 0 ? 1 : 0;
-  },
-  toggleAmount() {
-    this.settings.amountVisible = !this.settings.amountVisible;
-    this.persist();
-  },
-  enableNotification() {
-    if (!this.subscribeTemplateIds.length)
-      return common_vendor.index.showModal({ title: "暂未配置通知模板", content: "请先在代码中配置微信订阅消息模板 ID，再发起授权。当前不会修改提醒状态。", showCancel: false });
-    if (typeof common_vendor.index.requestSubscribeMessage !== "function")
-      return common_vendor.index.showModal({ title: "当前平台不支持", content: "请在微信小程序真机或微信开发者工具中发起订阅消息授权。", showCancel: false });
-    common_vendor.index.requestSubscribeMessage({
-      tmplIds: this.subscribeTemplateIds,
-      success: (result) => {
-        const statuses = this.subscribeTemplateIds.map((templateId) => ({ templateId, status: result[templateId] || "unknown", updatedAt: Date.now() }));
-        const accepted = statuses.some((item) => item.status === "accept");
-        this.settings.notificationAuthorization = statuses;
-        this.settings.notificationEnabled = accepted;
-        this.persist();
-        common_vendor.index.showToast({ title: accepted ? "授权成功" : "未获得授权", icon: "none" });
-        common_vendor.index.__f__("info", "at pages/subscription/subscription-page-logic.js:240", "[notification] 订阅消息授权结果:", statuses);
-      },
-      fail: (error) => {
-        common_vendor.index.__f__("warn", "at pages/subscription/subscription-page-logic.js:243", "[notification] 订阅消息授权失败:", error);
-        common_vendor.index.showToast({ title: "授权未完成", icon: "none" });
-      }
-    });
-  },
-  handleNotificationSwitch(value) {
-    if (value)
-      this.enableNotification();
-    else
-      this.setNotification(false);
-  },
-  setNotification(value) {
-    this.settings.notificationEnabled = value;
-    this.persist();
-    common_vendor.index.showToast({ title: value ? "提醒状态已开启" : "提醒状态已关闭", icon: "none" });
-  },
-  updateSetting(key, value) {
-    this.settings[key] = value;
-    this.persist();
-  },
-  updateDefaultCurrency(value) {
-    this.settings.defaultCurrency = value;
-    this.statsCurrency = value;
-    this.persist();
   },
   handleReminder(item) {
     if (item.action === "notification")
@@ -491,10 +396,6 @@ const subscriptionMethods = {
     if (key.slice(0, 7) !== this.calendarCursor.slice(0, 7))
       this.calendarCursor = key.slice(0, 7) + "-01";
   },
-  openDetail(item) {
-    this.selectedId = item.id;
-    this.navigateToView("detail");
-  },
   createEmptyForm(date) {
     const nextBillingDate = date || pages_subscription_subscriptionData.addDays(this.todayKey, 7);
     return { name: "", plan: "", logo: "订", color: "#16834d", amount: "", currency: this.settings.defaultCurrency, cycle: "每月", cycleValue: "", nextBillingDate, anchorDay: pages_subscription_subscriptionData.parseDate(nextBillingDate).getDate(), payment: "微信支付", category: "其他", status: "active", autoRenew: true, trial: false, trialEndDate: null, reminders: this.settings.defaultReminders.slice(), note: "", cancelGuide: "" };
@@ -517,10 +418,11 @@ const subscriptionMethods = {
     this.editingId = item ? item.id : null;
     this.originalBillingDate = item ? item.nextBillingDate : null;
     this.form = item ? { ...item, amount: item.amount === null ? "" : String(item.amount), cycleValue: item.cycleValue || "", trial: Boolean(item.trialEndDate), trialEndDate: item.trialEndDate || null, reminders: (item.reminders || []).slice() } : this.createEmptyForm(date);
+    this.formBaseline = JSON.stringify(this.form);
     this.navigateToView("form");
   },
   applyTemplate(template) {
-    Object.assign(this.form, { ...template, amount: String(template.amount), cycle: "每月" });
+    Object.assign(this.form, { ...template, amount: template.amount == null ? "" : String(template.amount) });
     common_vendor.index.showToast({ title: `已选择${template.short}`, icon: "none" });
   },
   toggleReminder(value) {
@@ -569,126 +471,11 @@ const subscriptionMethods = {
       return "请至少选择一个提醒节点";
     return "";
   },
-  saveSubscription(force = false) {
-    if (!this.editingId && !this.canCreateSubscription) {
-      this.showMembershipLimit();
-      return;
-    }
-    this.formError = this.validateForm();
-    if (this.formError) {
-      common_vendor.index.showToast({ title: this.formError, icon: "none" });
-      return;
-    }
-    const duplicate = !this.editingId && this.liveSubscriptions.find((item) => item.name === this.form.name && Number(item.amount) === Number(this.form.amount || 0) && Math.abs(pages_subscription_subscriptionData.daysUntil(item.nextBillingDate) - pages_subscription_subscriptionData.daysUntil(this.form.nextBillingDate)) <= 3);
-    if (duplicate && !force) {
-      common_vendor.index.showModal({ title: "可能重复录入", content: `已有“${duplicate.name}”在相近日期扣费，仍要继续保存吗？`, confirmText: "继续保存", success: (res) => {
-        if (res.confirm)
-          this.saveSubscription(true);
-      } });
-      return;
-    }
-    const wasEditing = Boolean(this.editingId);
-    if (this.form.cycle === "一次性") {
-      this.form.autoRenew = false;
-      this.form.trial = false;
-      this.form.trialEndDate = null;
-    }
-    const billingDateChanged = this.editingId && this.originalBillingDate !== this.form.nextBillingDate;
-    const payload = { ...this.form, isDemo: this.editingId ? Boolean(this.form.isDemo) : false, cycleValue: this.form.cycle === "自定义天数" ? Number(this.form.cycleValue) : null, trial: Boolean(this.form.trial), trialEndDate: this.form.trial ? this.form.trialEndDate : null, amount: this.form.amount === "" ? null : Number(Number(this.form.amount).toFixed(2)), anchorDay: billingDateChanged || !this.editingId ? pages_subscription_subscriptionData.parseDate(this.form.nextBillingDate).getDate() : this.form.anchorDay, logo: this.form.logo || this.form.name.slice(0, 2), updatedAt: Date.now() };
-    if (this.editingId) {
-      const index = this.subscriptions.findIndex((item) => item.id === this.editingId);
-      payload.id = this.editingId;
-      payload.createdAt = this.subscriptions[index].createdAt;
-      this.subscriptions.splice(index, 1, payload);
-      this.selectedId = payload.id;
-    } else {
-      payload.id = Date.now();
-      payload.createdAt = Date.now();
-      this.subscriptions.push(payload);
-      this.selectedId = payload.id;
-    }
-    this.persist();
-    common_vendor.index.vibrateShort({ type: "light" });
-    common_vendor.index.showToast({ title: wasEditing ? "修改已保存" : "订阅已添加", icon: "success" });
-    if (wasEditing && this.viewStack[this.viewStack.length - 1] === "detail")
-      this.viewStack.pop();
-    this.activeView = "detail";
-    this.editingId = null;
-    this.originalBillingDate = null;
-    this.scrollToTop();
-  },
-  confirmRenewal() {
-    const item = this.selectedSubscription;
-    if (!item || this.renewalLocked)
-      return;
-    const currentBillingDate = item.nextBillingDate;
-    const nextBillingDate = pages_subscription_subscriptionData.getNextBillingDate(currentBillingDate, item.cycle, item.anchorDay, item.cycleValue);
-    const isEarly = pages_subscription_subscriptionData.daysUntil(currentBillingDate) > 7;
-    const isOneOff = item.cycle === "一次性";
-    const content = isOneOff ? `确认 ${pages_subscription_subscriptionData.formatDate(currentBillingDate)} 已完成付款吗？确认后将自动归档。` : isEarly ? `扣费日为 ${pages_subscription_subscriptionData.formatDate(currentBillingDate)}，确认已提前完成续费吗？下次扣费日将更新为 ${pages_subscription_subscriptionData.formatDate(nextBillingDate)}。` : `确认 ${pages_subscription_subscriptionData.formatDate(currentBillingDate)} 已完成续费吗？下次扣费日将更新为 ${pages_subscription_subscriptionData.formatDate(nextBillingDate)}。`;
-    common_vendor.index.showModal({ title: "确认本次续费", content, confirmText: "确认续费", success: (res) => {
-      if (res.confirm)
-        this.processSubscription("renewed");
-    } });
-  },
-  processSubscription(action) {
-    const item = this.selectedSubscription;
-    if (!item)
-      return;
-    if (action === "renewed") {
-      if (this.renewalLocked)
-        return common_vendor.index.showToast({ title: "本期续费已经确认", icon: "none" });
-      const billingDate = item.nextBillingDate;
-      const renewedAt = Date.now();
-      const nextBillingDate = pages_subscription_subscriptionData.getNextBillingDate(billingDate, item.cycle, item.anchorDay, item.cycleValue);
-      item.renewalHistory = (item.renewalHistory || []).concat({ billingDate, amount: item.amount, currency: item.currency, nextBillingDate, confirmedAt: renewedAt });
-      item.lastRenewedBillingDate = billingDate;
-      item.lastRenewedAt = renewedAt;
-      item.lastRenewalNextBillingDate = nextBillingDate;
-      item.nextBillingDate = nextBillingDate;
-      item.status = item.cycle === "一次性" ? "archived" : "active";
-      item.snoozedUntil = null;
-      common_vendor.index.showToast({ title: item.cycle === "一次性" ? "已完成并归档" : "本期续费已确认", icon: "success" });
-    }
-    item.updatedAt = Date.now();
-    this.persist();
-  },
-  undoRenewal() {
-    const item = this.selectedSubscription;
-    if (!item || !this.renewalLocked || !(item.renewalHistory || []).length)
-      return;
-    common_vendor.index.showModal({ title: "撤销本次确认", content: `扣费日将恢复为 ${pages_subscription_subscriptionData.formatDate(item.lastRenewedBillingDate)}，本次历史记录会移除。`, confirmText: "确认撤销", success: (res) => {
-      if (!res.confirm)
-        return;
-      item.renewalHistory.pop();
-      item.nextBillingDate = item.lastRenewedBillingDate;
-      item.lastRenewedAt = null;
-      item.lastRenewedBillingDate = null;
-      item.lastRenewalNextBillingDate = null;
-      item.status = "active";
-      item.updatedAt = Date.now();
-      this.persist();
-      common_vendor.index.showToast({ title: "已撤销", icon: "success" });
-    } });
-  },
   processTitle(item) {
     if (item.status === "pending")
       return "等待你处理";
     const days = pages_subscription_subscriptionData.daysUntil(item.nextBillingDate), subject = item.cycle === "一次性" ? "付款" : item.autoRenew ? "扣费" : "到期";
     return days === 0 ? `今天${subject}` : days > 0 ? `${days} 天后${subject}` : `已逾期 ${Math.abs(days)} 天未确认`;
-  },
-  snoozeSubscription() {
-    const item = this.selectedSubscription;
-    if (!item)
-      return;
-    common_vendor.index.showActionSheet({ itemList: ["今天晚些时候", "明天"], success: (res) => {
-      const tomorrow = res.tapIndex === 1;
-      item.status = "pending";
-      item.snoozedUntil = tomorrow ? pages_subscription_subscriptionData.addDays(this.todayKey, 1) + " " + this.settings.reminderTime : this.todayKey + " 18:00";
-      item.updatedAt = Date.now();
-      this.persist();
-      common_vendor.index.showModal({ title: "已加入待办", content: this.settings.notificationEnabled ? `将在 ${item.snoozedUntil} 再次提醒。` : `已保留为站内待办。当前没有可用的微信通知，不会承诺发送。`, showCancel: false });
-    } });
   },
   showMoreActions() {
     const item = this.selectedSubscription;
@@ -705,130 +492,13 @@ const subscriptionMethods = {
     actions.push({ label: "删除订阅", key: "delete" });
     common_vendor.index.showActionSheet({ itemList: actions.map((action) => action.label), success: (res) => this.handleSubscriptionAction(actions[res.tapIndex].key) });
   },
-  handleSubscriptionAction(action) {
-    const item = this.selectedSubscription;
-    if (!item)
-      return;
-    if (action === "cancel")
-      return this.cancelSubscription();
-    if (action === "delete")
-      return this.deleteSubscription();
-    if (action === "copy") {
-      if (!this.canCreateSubscription) {
-        this.showMembershipLimit();
-        return;
-      }
-      const copy = { ...item, id: Date.now(), name: `${item.name} 副本`, isDemo: false, status: "active", renewalHistory: [], lastRenewedAt: null, lastRenewedBillingDate: null, lastRenewalNextBillingDate: null, deletedAt: null, createdAt: Date.now() };
-      this.subscriptions.push(copy);
-      this.persist();
-      return common_vendor.index.showToast({ title: "已复制订阅", icon: "success" });
-    }
-    if (action === "pause")
-      item.status = "paused";
-    else if (action === "resume" || action === "restore") {
-      if (pages_subscription_subscriptionData.daysUntil(item.nextBillingDate) < 0)
-        return common_vendor.index.showModal({ title: "需要更新日期", content: "原扣费日已过，请先选择新的未来扣费日再恢复。", confirmText: "去修改", success: (res) => {
-          if (res.confirm)
-            this.openForm(null, item);
-        } });
-      item.status = "active";
-      item.snoozedUntil = null;
-    } else if (action === "archive")
-      item.status = "archived";
-    item.updatedAt = Date.now();
-    this.persist();
-    common_vendor.index.showToast({ title: { pause: "订阅已暂停", resume: "订阅已恢复", restore: "已恢复为有效订阅", archive: "订阅已归档" }[action], icon: "none" });
-  },
-  cancelSubscription() {
-    const item = this.selectedSubscription;
-    const guide = item.cancelGuide ? `
-
-取消路径：${item.cancelGuide}` : "";
-    common_vendor.index.showModal({ title: `标记“${item.name}”已取消`, content: `请先确认你已在原付款渠道完成取消。本工具只更新清单状态，不会代替你向服务商取消。${guide}`, confirmText: "我已取消", confirmColor: "#c5444c", success: (res) => {
-      if (res.confirm) {
-        item.status = "cancelled";
-        item.autoRenew = false;
-        item.snoozedUntil = null;
-        item.updatedAt = Date.now();
-        this.persist();
-        common_vendor.index.showToast({ title: "已停止后续提醒", icon: "success" });
-      }
-    } });
-  },
-  deleteSubscription() {
-    const item = this.selectedSubscription;
-    common_vendor.index.showModal({ title: `删除“${item.name}”`, content: "订阅将移入回收站并释放免费额度，之后可在“我的”中恢复。", confirmText: "移入回收站", confirmColor: "#c5444c", success: (res) => {
-      if (res.confirm) {
-        item.deletedAt = Date.now();
-        item.updatedAt = Date.now();
-        this.persist();
-        this.selectedId = null;
-        this.switchTab("all");
-        common_vendor.index.showToast({ title: "已移入回收站", icon: "success" });
-      }
-    } });
-  },
-  openTrash() {
-    if (!this.deletedSubscriptions.length)
-      return common_vendor.index.showToast({ title: "回收站是空的", icon: "none" });
-    const items = this.deletedSubscriptions.slice(0, 6);
-    common_vendor.index.showActionSheet({ itemList: items.map((item) => `恢复 ${item.name}`), success: (res) => {
-      const item = items[res.tapIndex];
-      if (!item)
-        return;
-      if (!item.isDemo && !this.isMember && this.quotaSubscriptions.length >= this.subscriptionLimit)
-        return this.showMembershipLimit();
-      item.deletedAt = null;
-      item.updatedAt = Date.now();
-      this.persist();
-      common_vendor.index.showToast({ title: "订阅已恢复", icon: "success" });
-    } });
-  },
-  nextReminderText(item) {
-    if (!item.reminders || !item.reminders.length)
-      return "未设置";
-    const future = item.reminders.map((days) => ({ days, date: pages_subscription_subscriptionData.addDays(item.nextBillingDate, -days) })).filter((row) => pages_subscription_subscriptionData.daysUntil(row.date) >= 0).sort((a, b) => a.date.localeCompare(b.date));
-    if (!future.length)
-      return "提醒节点已过，将保留站内待办";
-    return `${pages_subscription_subscriptionData.formatDate(future[0].date)} ${this.settings.reminderTime}`;
-  },
   openReminderSettings() {
     this.navigateToView("reminder-settings");
-  },
-  activateMembership() {
-    common_vendor.index.showModal({ title: "本地模拟开通", content: "当前仅修改本地会员状态，不会产生真实扣款。确定开通吗？", confirmText: "确认开通", success: (res) => {
-      if (res.confirm) {
-        this.settings.membership = { status: "active", plan: "会员版", startedAt: Date.now() };
-        this.persist();
-        common_vendor.index.showToast({ title: "会员已开通", icon: "success" });
-      }
-    } });
-  },
-  restoreFreePlan() {
-    common_vendor.index.showModal({ title: "恢复免费版", content: "恢复后新增订阅将受 5 条额度限制，已有订阅不会被删除。", confirmText: "确认恢复", success: (res) => {
-      if (res.confirm) {
-        this.settings.membership = { status: "free", plan: "免费版", startedAt: null };
-        this.persist();
-        common_vendor.index.showToast({ title: "已恢复免费版", icon: "none" });
-      }
-    } });
-  },
-  toggleDefaultReminder(value) {
-    const list = this.settings.defaultReminders;
-    const index = list.indexOf(value);
-    if (index >= 0) {
-      if (list.length === 1)
-        return common_vendor.index.showToast({ title: "至少保留一个提醒节点", icon: "none" });
-      list.splice(index, 1);
-    } else
-      list.push(value);
-    list.sort((a, b) => b - a);
-    this.persist();
   },
   exportData() {
     if (!this.liveSubscriptions.length)
       return common_vendor.index.showToast({ title: "暂无可导出的订阅", icon: "none" });
-    common_vendor.index.showModal({ title: "导出订阅数据", content: `将导出 ${this.liveSubscriptions.length} 条订阅记录，金额和备注等本地数据会包含在文件中。`, confirmText: "确认导出", success: (res) => {
+    common_vendor.index.showModal({ title: "导出订阅数据", content: `将导出 ${this.liveSubscriptions.length} 条订阅记录，金额和备注等订阅数据会包含在文件中。`, confirmText: "确认导出", success: (res) => {
       if (res.confirm)
         this.performExport();
     } });
@@ -838,24 +508,6 @@ const subscriptionMethods = {
     const rows = this.liveSubscriptions.map((item) => [item.name, item.plan || "", item.category, item.amount === null ? "" : item.amount, item.currency, this.cycleText(item), item.nextBillingDate, this.statusText(item), item.payment, item.note || ""].map((value) => `"${String(value).replace(/"/g, '""')}"`).join(","));
     const csv = [header].concat(rows).join("\n");
     common_vendor.index.setClipboardData({ data: csv, success: () => common_vendor.index.showToast({ title: "表格数据已复制", icon: "success" }) });
-  },
-  showPrivacy() {
-    common_vendor.index.showModal({ title: "隐私与数据说明", content: "当前版本只把演示数据保存在本机缓存，不会上传服务端，也不会读取支付账户。接入后端后需要补充正式隐私政策与数据删除机制。", showCancel: false });
-  },
-  resetDemoData() {
-    common_vendor.index.showModal({ title: "恢复演示数据", content: "当前本地修改将被覆盖，确定继续吗？", confirmColor: "#c5444c", success: (res) => {
-      if (res.confirm) {
-        this.subscriptions = pages_subscription_subscriptionData.createSeedSubscriptions();
-        this.settings = pages_subscription_subscriptionData.createDefaultSettings();
-        this.statsCurrency = this.settings.defaultCurrency || "CNY";
-        this.searchKeyword = "";
-        this.activeCategory = "全部";
-        this.activeStatus = "default";
-        this.sortMode = "date";
-        this.persist();
-        common_vendor.index.showToast({ title: "演示数据已恢复", icon: "success" });
-      }
-    } });
   }
 };
 exports.createSubscriptionPageState = createSubscriptionPageState;
