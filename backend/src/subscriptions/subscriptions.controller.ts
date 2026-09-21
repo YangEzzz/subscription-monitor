@@ -49,7 +49,7 @@ export class SubscriptionsController {
   }
 
   @Post()
-  @ApiOperation({ summary: 'Create a subscription in the in-memory store' })
+  @ApiOperation({ summary: 'Create a subscription' })
   @ApiCreatedResponse({ description: 'Created subscription' })
   create(
     @Headers('x-demo-user-id') userId: string | undefined,

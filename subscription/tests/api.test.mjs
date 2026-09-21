@@ -26,9 +26,16 @@ test('request encodes query values and does not retry failed writes', async () =
 
 test('network and DTO validation errors reject instead of returning mock success', async () => {
 	globalThis.uni = { request: options => options.fail({ errMsg: 'request:fail timeout' }) }
-	await assert.rejects(request('/settings'), /请求超时/)
-	globalThis.uni.request = options => options.success({ statusCode: 422, data: { errors: { name: 'name should not be empty' } } })
-	await assert.rejects(request('/subscriptions'), error => error.status === 422 && error.details.name.includes('empty'))
+	await assert.rejects(request('/settings'), error => error.code === 'TIMEOUT' && error.retriable === true && /连接超时/.test(error.message))
+	globalThis.uni.request = options => options.success({ statusCode: 422, data: { code: 'VALIDATION_ERROR', errors: { name: 'name should not be empty' }, requestId: 'request-validation-1' } })
+	await assert.rejects(request('/subscriptions'), error => error.status === 422 && error.details.name.includes('empty') && error.requestId === 'request-validation-1')
+})
+
+test('failed writes are marked uncertain and are never retried automatically', async () => {
+	let calls = 0
+	globalThis.uni = { request: options => { calls++; options.fail({ errMsg: 'request:fail timeout' }) } }
+	await assert.rejects(request('/subscriptions', { method: 'POST', data: {} }), error => error.code === 'TIMEOUT' && error.uncertain === true && error.retriable === false)
+	assert.equal(calls, 1)
 })
 
 test('subscription payload preserves unknown versus zero and excludes client-only fields', () => {
@@ -99,9 +106,9 @@ test('failed write preserves existing state and blocks uncertain resubmission', 
 	const page = pageHarness()
 	page.dataReady = true
 	page.subscriptions = [{ id: 'existing' }]
-	assert.equal(await page.mutate(async () => { throw Object.assign(new Error('timeout'), { code: 'NETWORK_ERROR' }) }), false)
+	assert.equal(await page.mutate(async () => { throw Object.assign(new Error('timeout'), { code: 'TIMEOUT', uncertain: true }) }), false)
 	assert.deepEqual(page.subscriptions, [{ id: 'existing' }])
-	assert.match(page.loadError, /请求结果未确认/)
+	assert.match(page.loadError, /操作结果尚未确认/)
 	let called = false
 	await page.mutate(() => { called = true })
 	assert.equal(called, false)

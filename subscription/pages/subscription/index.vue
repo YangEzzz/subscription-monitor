@@ -26,21 +26,25 @@
         ><view v-for="row in 3" :key="row" class="skeleton-row"></view
         ><text class="loading-caption">正在整理你的续订清单…</text></view
       >
-      <view v-if="loadError" class="api-error"
-        ><text
-          >{{ loadError
-          }}{{ dataReady ? "（当前显示上次读取的数据）" : "" }}</text
-        ><button :disabled="loading || mutating" @tap="refreshData">
-          重新加载
-        </button></view
-      >
-      <view
+      <async-state-view
+        v-if="loadError"
+        :compact="dataReady"
+        :title="loadErrorTitle"
+        :description="loadErrorDescription"
+        action-label="重新加载"
+        :busy="loading || mutating"
+        @action="refreshData"
+      />
+      <async-state-view
         v-if="statsError && (activeView === 'stats' || activeView === 'home')"
-        class="api-error"
-        ><text>统计加载失败：{{ statsError }}</text
-        ><button @tap="refreshStats">重试统计</button></view
-      >
-      <view v-if="statsLoading && activeView === 'stats'" class="api-status"
+        compact
+        title="统计暂时不可用"
+        :description="statsErrorDescription"
+        action-label="重试统计"
+        :busy="statsLoading"
+        @action="refreshStats"
+      />
+      <view v-if="statsLoading && activeView === 'stats'" class="api-status" role="status"
         >正在加载统计…</view
       >
       <template v-if="dataReady">
@@ -135,6 +139,7 @@
           :compact-amount="compactAmount"
           @currency-change="changeStatsCurrency"
           @period-change="statsPeriod = $event"
+          @open-form="openForm"
         />
 
         <!-- 我的 -->
@@ -208,6 +213,7 @@
           :logo-colors="logoColors"
           :reminder-options="reminderOptions"
           :form-error="formError"
+          :busy="mutating"
           :today-key="todayKey"
           :form-reminder-preview="formReminderPreview"
           :format-date="formatDate"
@@ -269,6 +275,7 @@ import SubscriptionFormView from "@/components/subscription/SubscriptionFormView
 import ReminderSettingsView from "@/components/subscription/ReminderSettingsView.vue";
 import SubscriptionSortSheet from "@/components/subscription/SubscriptionSortSheet.vue";
 import SubscriptionTabBar from "@/components/subscription/SubscriptionTabBar.vue";
+import AsyncStateView from "@/components/subscription/AsyncStateView.vue";
 import {
   createSubscriptionPageState,
   subscriptionComputed,
@@ -289,6 +296,7 @@ export default {
     ReminderSettingsView,
     SubscriptionSortSheet,
     SubscriptionTabBar,
+    AsyncStateView,
   },
   data() {
     return createSubscriptionPageState();
@@ -316,16 +324,5 @@ export default {
 .api-status button {
   margin: 0;
   font-size: 12px;
-}
-.api-error {
-  margin: 12px 20px;
-  padding: 16px;
-  background: #fff0eb;
-  color: #a13e2a;
-  border-radius: 12px;
-  font-size: 14px;
-}
-.api-error button {
-  margin-top: 12px;
 }
 </style>

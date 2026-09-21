@@ -17,6 +17,11 @@ enum Environment {
   Test = 'test',
 }
 
+enum PersistenceDriver {
+  Memory = 'memory',
+  Prisma = 'prisma',
+}
+
 class EnvironmentVariablesValidator {
   @IsEnum(Environment)
   @IsOptional()
@@ -47,10 +52,27 @@ class EnvironmentVariablesValidator {
   @IsString()
   @IsOptional()
   APP_HEADER_LANGUAGE: string;
+
+  @IsString()
+  @IsOptional()
+  DATABASE_URL: string;
+
+  @IsEnum(PersistenceDriver)
+  @IsOptional()
+  PERSISTENCE_DRIVER: PersistenceDriver;
 }
 
 export default registerAs<AppConfig>('app', () => {
   validateConfig(process.env, EnvironmentVariablesValidator);
+
+  const persistenceDriver =
+    (process.env.PERSISTENCE_DRIVER as PersistenceDriver | undefined) ??
+    PersistenceDriver.Memory;
+  if (persistenceDriver === PersistenceDriver.Prisma && !process.env.DATABASE_URL) {
+    throw new Error(
+      'DATABASE_URL is required when PERSISTENCE_DRIVER is set to prisma',
+    );
+  }
 
   return {
     nodeEnv: process.env.NODE_ENV || 'development',
@@ -66,5 +88,7 @@ export default registerAs<AppConfig>('app', () => {
     apiPrefix: process.env.API_PREFIX || 'api',
     fallbackLanguage: process.env.APP_FALLBACK_LANGUAGE || 'en',
     headerLanguage: process.env.APP_HEADER_LANGUAGE || 'x-custom-lang',
+    databaseUrl: process.env.DATABASE_URL,
+    persistenceDriver,
   };
 });

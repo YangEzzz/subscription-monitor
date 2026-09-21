@@ -5,6 +5,20 @@ const confirm = options => new Promise(resolve => uni.showModal({ ...options, su
 const toast = title => uni.showToast({ title, icon: 'none' })
 
 export const remoteComputed = {
+	loadErrorTitle() {
+		if (this.dataReady) return this.loadErrorCode === 'RESULT_UNKNOWN' ? '请确认刚才的操作' : '同步暂时中断'
+		if (this.loadErrorCode === 'TIMEOUT') return '连接等待时间过长'
+		if (this.loadErrorCode === 'NETWORK_ERROR') return '暂时无法连接'
+		return '数据没有加载完成'
+	},
+	loadErrorDescription() {
+		const stale = this.dataReady && this.loadErrorCode !== 'RESULT_UNKNOWN' ? ' 当前显示上次读取的数据。' : ''
+		const reference = this.loadErrorRequestId ? ` 参考编号：${this.loadErrorRequestId}` : ''
+		return `${this.loadError}${stale}${reference}`
+	},
+	statsErrorDescription() {
+		return `${this.statsError}${this.statsErrorRequestId ? ` 参考编号：${this.statsErrorRequestId}` : ''}`
+	},
 	statsTotal() { return this.currentStats ? this.currentStats.total : 0 },
 	currentStats() { return this.serverStats[this.statsPeriod === 'next' ? 'next30' : this.statsPeriod] || null },
 	statsSubscriptionCount() { return this.currentStats ? this.currentStats.subscriptionCount : 0 },
@@ -37,6 +51,8 @@ export const remoteMethods = {
 		if (this.loading || this.mutating) return false
 		this.loading = true
 		this.loadError = ''
+		this.loadErrorCode = ''
+		this.loadErrorRequestId = ''
 		try {
 			const [subscriptions, settings, membership, catalog, reminders] = await Promise.all([
 				api.listAll(), api.settings(), api.membership(), api.catalog(), api.reminders()
@@ -54,6 +70,8 @@ export const remoteMethods = {
 			return true
 		} catch (error) {
 			this.loadError = error.message
+			this.loadErrorCode = error.code || 'UNKNOWN_ERROR'
+			this.loadErrorRequestId = error.requestId || ''
 			return false
 		} finally { this.loading = false }
 	},
@@ -62,13 +80,19 @@ export const remoteMethods = {
 		const currency = this.statsCurrency
 		this.statsLoading = true
 		this.statsError = ''
+		this.statsErrorCode = ''
+		this.statsErrorRequestId = ''
 		this.serverStats = {}
 		try {
 			const values = await Promise.all(['month', 'year', 'next30'].map(period => api.stats(period, currency)))
 			if (sequence !== this.statsRequestId) return
 			this.serverStats = Object.fromEntries(values.map(value => [value.period, value]))
 		} catch (error) {
-			if (sequence === this.statsRequestId) this.statsError = error.message
+			if (sequence === this.statsRequestId) {
+				this.statsError = error.message
+				this.statsErrorCode = error.code || 'UNKNOWN_ERROR'
+				this.statsErrorRequestId = error.requestId || ''
+			}
 		} finally { if (sequence === this.statsRequestId) this.statsLoading = false }
 	},
 	changeStatsCurrency(currency) { if (currency === this.statsCurrency) return; this.statsCurrency = currency; this.refreshStats() },
@@ -90,7 +114,11 @@ export const remoteMethods = {
 			operationError = error
 			this.formError = error.message
 			// 请求结果不确定时先重新读取，不自动重发写请求。
-			this.loadError = error.code === 'NETWORK_ERROR' ? '请求结果未确认，请刷新数据后再操作' : ''
+			if (error.uncertain) {
+				this.loadError = '操作结果尚未确认，请重新加载后再继续操作'
+				this.loadErrorCode = 'RESULT_UNKNOWN'
+				this.loadErrorRequestId = error.requestId || ''
+			}
 		} finally {
 			if (uni.hideLoading) uni.hideLoading()
 			this.mutating = false

@@ -17,7 +17,16 @@
       @currency-change="$emit('currency-change', $event)"
       @period-change="$emit('period-change', $event)"
     />
-    <view class="chart-card category-chart-card"
+    <empty-state-view
+      v-if="statsSubscriptionCount === 0"
+      icon="wallet"
+      title="暂无可统计的订阅"
+      description="添加包含金额的有效订阅后，这里会显示分类和趋势"
+      action-label="新增订阅"
+      action-class="primary-button empty-add"
+      @action="$emit('open-form')"
+    />
+    <view v-if="statsSubscriptionCount > 0" class="chart-card category-chart-card"
       ><view class="card-heading"
         ><text class="section-title">分类构成</text
         ><text>{{
@@ -53,7 +62,7 @@
         ></view
       ></view
     >
-    <view class="trend-card"
+    <view v-if="statsSubscriptionCount > 0" class="trend-card"
       ><view class="trend-head"
         ><view
           ><text class="section-title">支出趋势</text
@@ -71,7 +80,7 @@
         ></view
       ></view
     >
-    <view class="insight-card"
+    <view v-if="statsSubscriptionCount > 0" class="insight-card"
       ><view class="insight-icon"
         ><uni-icons type="info-filled" size="20" color="#177e4b" /></view
       ><view
@@ -86,11 +95,12 @@
 
 <script>
 import StatSummaryCard from "./StatSummaryCard.vue";
+import EmptyStateView from "./EmptyStateView.vue";
 
 export default {
   name: "SubscriptionStatsView",
-  components: { StatSummaryCard },
-  emits: ["currency-change", "period-change"],
+  components: { StatSummaryCard, EmptyStateView },
+  emits: ["currency-change", "period-change", "open-form"],
   props: {
     navigationBarHeight: { type: Number, default: 0 },
     currencies: { type: Array, default: () => [] },

@@ -248,10 +248,12 @@
       role="button"
       tabindex="0"
       class="primary-button save-button"
+      :disabled="busy"
+      :aria-busy="busy ? 'true' : 'false'"
       @tap="$emit('save')"
     >
       <uni-icons type="checkmarkempty" size="20" color="#ffffff" />{{
-        editingId ? "保存修改" : "保存订阅"
+        busy ? "正在保存" : editingId ? "保存修改" : "保存订阅"
       }}
     </button>
   </view>
@@ -285,6 +287,7 @@ export default {
     logoColors: { type: Array, default: () => [] },
     reminderOptions: { type: Array, default: () => [] },
     formError: { type: String, default: "" },
+    busy: { type: Boolean, default: false },
     todayKey: { type: String, required: true },
     formReminderPreview: { type: String, default: "未设置提醒" },
     formatDate: { type: Function, required: true },

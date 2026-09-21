@@ -29,8 +29,8 @@ export function createSubscriptionPageState() {
 					{ key: 'profile', label: '我的', icon: 'person', activeIcon: 'person-filled' }
 					],
 					subscriptions: [], settings: createDefaultSettings(),
-					authStatus: 'demo', loading: false, mutating: false, dataReady: false, loadError: '',
-					serverStats: {}, serverReminders: [], statsRequestId: 0, statsLoading: false, statsError: '', trashPage: 0,
+					authStatus: 'demo', loading: false, mutating: false, dataReady: false, loadError: '', loadErrorCode: '', loadErrorRequestId: '',
+					serverStats: {}, serverReminders: [], statsRequestId: 0, statsLoading: false, statsError: '', statsErrorCode: '', statsErrorRequestId: '', trashPage: 0,
 					subscribeTemplateIds: [], // 填写微信公众平台中的订阅消息模板 ID
 				subscriptionLimit: 5,
 				searchKeyword: '', activeCategory: '全部', activeStatus: 'default', sortMode: 'date', sortSheetVisible: false,

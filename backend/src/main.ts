@@ -16,7 +16,10 @@ async function bootstrap() {
   const configService = app.get(ConfigService);
 
   app.enableShutdownHooks();
-  app.enableCors({ origin: true });
+  const frontendDomain = configService.get<string>('app.frontendDomain');
+  app.enableCors({
+    origin: frontendDomain ? [frontendDomain] : true,
+  });
   app.setGlobalPrefix(configService.get<string>('app.apiPrefix') || 'api');
   app.enableVersioning({
     type: VersioningType.URI,
@@ -29,7 +32,7 @@ async function bootstrap() {
   const options = new DocumentBuilder()
     .setTitle('Subscription Monitor API')
     .setDescription(
-      'In-memory API for the subscription monitor. It intentionally does not connect to a database.',
+      'Subscription monitor API with configurable memory or PostgreSQL persistence.',
     )
     .setVersion('0.1.0')
     .addGlobalParameters({

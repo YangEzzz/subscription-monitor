@@ -18,6 +18,7 @@
 | Navigation     | SubscriptionTabBar.vue          | pages/subscription/index.vue | 五标签、详情返回         | H5 点击与键盘           |
 | Sort           | SubscriptionSortSheet.vue       | subscription-page-logic.js   | 显式选中、关闭、焦点循环 | H5 键盘验证             |
 | Empty state    | EmptyStateView.vue              | SubscriptionListView.vue     | 未添加、无匹配           | 搜索空态                |
+| Async state    | AsyncStateView.vue              | subscription-remote.js       | 首次失败、过期数据、统计 | API 与浏览器状态测试    |
 
 路径均相对 subscription/components/subscription，除明确标明 pages、styles 或 api 者。
 
@@ -30,8 +31,9 @@ API 分页拉取完整数据供统计；列表仅分批渲染，加载更多属�
 
 ## Async and recovery
 
-初次加载为占位内容；初次失败显示重试；后台刷新保留已读数据并显示同步状态。
-统计失败有单独重试。保存错误保留草稿；批量筛选不存在服务端写入。
+初次加载为占位内容；初次失败显示原因和重试；后台刷新保留已读数据并明确标注内容可能不是最新状态。
+统计失败有单独重试。保存期间锁定提交按钮并保持按钮尺寸；保存错误保留草稿。写请求在断网或超时时不自动重发，界面要求重新读取以确认结果。
+服务端错误显示可执行的中文说明；有 `requestId` 时显示参考编号，供日志定位。字段错误保留在表单内，页面级错误使用 AsyncStateView。
 现有 uni-app 遮罩、模态、选择器沿用平台键盘和焦点行为；H5 按钮具备焦点环。
 
 ## Verification and migration ledger

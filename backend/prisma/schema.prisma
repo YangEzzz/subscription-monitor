@@ -1,0 +1,158 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum SubscriptionStatus {
+  active
+  trial
+  pending
+  paused
+  cancelled
+  archived
+}
+
+enum BillingCycle {
+  weekly
+  monthly
+  quarterly
+  semiannual
+  yearly
+  custom_days
+  one_off
+}
+
+enum SubscriptionCategory {
+  video
+  music
+  cloud
+  ai
+  productivity
+  reading
+  other
+}
+
+enum PaymentMethod {
+  wechat
+  alipay
+  app_store
+  card
+  official_site
+  other
+}
+
+enum MembershipStatus {
+  free
+  active
+}
+
+enum MembershipPlan {
+  free
+  member
+}
+
+model AppUser {
+  id            String         @id @db.VarChar(128)
+  createdAt     DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt     DateTime       @updatedAt @map("updated_at") @db.Timestamptz(3)
+  subscriptions Subscription[]
+  settings      UserSettings?
+  membership    Membership?
+
+  @@map("app_users")
+}
+
+model Subscription {
+  id                         String                 @id @db.VarChar(64)
+  userId                     String                 @map("user_id") @db.VarChar(128)
+  user                       AppUser                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name                       String                 @db.VarChar(120)
+  plan                       String?                @db.VarChar(120)
+  logo                       String?                @db.VarChar(16)
+  color                      String                 @default("#16834d") @db.VarChar(16)
+  amount                     Decimal?               @db.Decimal(12, 2)
+  currency                   String                 @default("CNY") @db.Char(3)
+  cycle                      BillingCycle
+  cycleValue                 Int?                   @map("cycle_value")
+  anchorDay                  Int                    @map("anchor_day")
+  nextBillingDate            DateTime               @map("next_billing_date") @db.Date
+  payment                    PaymentMethod          @default(other)
+  category                   SubscriptionCategory
+  status                     SubscriptionStatus     @default(active)
+  autoRenew                  Boolean                @default(true) @map("auto_renew")
+  trialEndDate               DateTime?              @map("trial_end_date") @db.Date
+  note                       String                 @default("") @db.VarChar(1000)
+  cancelGuide                String                 @default("") @map("cancel_guide") @db.VarChar(1000)
+  isDemo                     Boolean                @default(false) @map("is_demo")
+  lastRenewedAt              DateTime?              @map("last_renewed_at") @db.Timestamptz(3)
+  lastRenewalNextBillingDate DateTime?              @map("last_renewal_next_billing_date") @db.Date
+  createdAt                  DateTime               @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt                  DateTime               @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt                  DateTime?              @map("deleted_at") @db.Timestamptz(3)
+  reminders                  SubscriptionReminder[]
+  renewalHistory             RenewalEvent[]
+
+  @@index([userId, deletedAt], map: "subscriptions_user_deleted_idx")
+  @@index([userId, nextBillingDate], map: "subscriptions_user_billing_idx")
+  @@index([userId, category], map: "subscriptions_user_category_idx")
+  @@index([userId, status], map: "subscriptions_user_status_idx")
+  @@map("subscriptions")
+}
+
+model SubscriptionReminder {
+  subscriptionId String       @map("subscription_id") @db.VarChar(64)
+  offsetDays     Int          @map("offset_days")
+  subscription   Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  @@id([subscriptionId, offsetDays])
+  @@map("subscription_reminders")
+}
+
+model RenewalEvent {
+  id                      String             @id @db.VarChar(64)
+  subscriptionId          String             @map("subscription_id") @db.VarChar(64)
+  subscription            Subscription       @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  renewedAt               DateTime           @map("renewed_at") @db.Timestamptz(3)
+  previousStatus          SubscriptionStatus @map("previous_status")
+  previousNextBillingDate DateTime           @map("previous_next_billing_date") @db.Date
+  nextBillingDate         DateTime           @map("next_billing_date") @db.Date
+  amount                  Decimal?           @db.Decimal(12, 2)
+  currency                String             @db.Char(3)
+
+  @@index([subscriptionId, renewedAt], map: "renewal_events_subscription_time_idx")
+  @@unique([subscriptionId, previousNextBillingDate], map: "renewal_events_period_key")
+  @@map("renewal_events")
+}
+
+model UserSettings {
+  userId                    String   @id @map("user_id") @db.VarChar(128)
+  user                      AppUser  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  amountVisible             Boolean  @default(true) @map("amount_visible")
+  notificationEnabled       Boolean  @default(false) @map("notification_enabled")
+  notificationAuthorization String[] @default([]) @map("notification_authorization")
+  weeklySummary             Boolean  @default(true) @map("weekly_summary")
+  defaultCurrency           String   @default("CNY") @map("default_currency") @db.Char(3)
+  defaultReminders          Int[]    @default([7, 3, 1]) @map("default_reminders")
+  reminderTime              String   @default("09:00") @map("reminder_time") @db.VarChar(5)
+  timezone                  String   @default("Asia/Shanghai") @db.VarChar(64)
+  createdAt                 DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt                 DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@map("user_settings")
+}
+
+model Membership {
+  userId    String           @id @map("user_id") @db.VarChar(128)
+  user      AppUser          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status    MembershipStatus @default(free)
+  plan      MembershipPlan   @default(free)
+  startedAt DateTime?        @map("started_at") @db.Timestamptz(3)
+  createdAt DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime         @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@map("memberships")
+}

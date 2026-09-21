@@ -2,9 +2,11 @@ import {
   BadRequestException,
   ConflictException,
   ForbiddenException,
+  Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { randomUUID } from 'node:crypto';
 import { CreateSubscriptionDto } from './dto/create-subscription.dto';
 import { QuerySubscriptionDto } from './dto/query-subscription.dto';
 import { StatsQueryDto } from './dto/stats-query.dto';
@@ -21,6 +23,10 @@ import {
   SubscriptionRecord,
   UserSettings,
 } from './domain/subscription';
+import {
+  SUBSCRIPTIONS_REPOSITORY,
+  SubscriptionsRepository,
+} from './repositories/subscriptions.repository';
 
 export const DEFAULT_USER_ID = 'demo-user';
 export const FREE_SUBSCRIPTION_LIMIT = 5;
@@ -163,7 +169,7 @@ function createSeedRecord(
   };
 }
 
-function createDemoSubscriptions(): SubscriptionRecord[] {
+export function createDemoSubscriptions(): SubscriptionRecord[] {
   const today = todayKey();
   return [
     createSeedRecord({
@@ -289,10 +295,10 @@ function createDemoSubscriptions(): SubscriptionRecord[] {
 
 @Injectable()
 export class SubscriptionsService {
-  private readonly records = createDemoSubscriptions();
-  private readonly settings = new Map<string, UserSettings>();
-  private readonly memberships = new Map<string, Membership>();
-  private nextId = 2000;
+  constructor(
+    @Inject(SUBSCRIPTIONS_REPOSITORY)
+    private readonly repository: SubscriptionsRepository,
+  ) {}
 
   private normalizeUserId(userId?: string): string {
     return userId?.trim() || DEFAULT_USER_ID;
@@ -302,9 +308,12 @@ export class SubscriptionsService {
     return new Date().toISOString();
   }
 
-  private getSettingsRecord(userId: string): UserSettings {
+  private async getSettingsRecord(
+    userId: string,
+    repository = this.repository,
+  ): Promise<UserSettings> {
     const normalizedUserId = this.normalizeUserId(userId);
-    const current = this.settings.get(normalizedUserId);
+    const current = await repository.findSettings(normalizedUserId);
     if (current) return current;
 
     const created: UserSettings = {
@@ -318,13 +327,16 @@ export class SubscriptionsService {
       reminderTime: '09:00',
       timezone: 'Asia/Shanghai',
     };
-    this.settings.set(normalizedUserId, created);
+    await repository.saveSettings(created);
     return created;
   }
 
-  private getMembershipRecord(userId: string): Membership {
+  private async getMembershipRecord(
+    userId: string,
+    repository = this.repository,
+  ): Promise<Membership> {
     const normalizedUserId = this.normalizeUserId(userId);
-    const current = this.memberships.get(normalizedUserId);
+    const current = await repository.findMembership(normalizedUserId);
     if (current) return current;
 
     const created: Membership = {
@@ -333,25 +345,38 @@ export class SubscriptionsService {
       plan: 'free',
       startedAt: null,
     };
-    this.memberships.set(normalizedUserId, created);
+    await repository.saveMembership(created);
     return created;
   }
 
-  private ownedRecords(userId: string): SubscriptionRecord[] {
+  private ownedRecords(
+    userId: string,
+    repository = this.repository,
+  ): Promise<SubscriptionRecord[]> {
     const normalizedUserId = this.normalizeUserId(userId);
-    return this.records.filter((record) => record.userId === normalizedUserId);
+    return repository.listSubscriptions(normalizedUserId);
   }
 
-  private findRecord(userId: string, id: string): SubscriptionRecord {
-    const record = this.ownedRecords(userId).find((item) => item.id === id);
+  private async findRecord(
+    userId: string,
+    id: string,
+    repository = this.repository,
+  ): Promise<SubscriptionRecord> {
+    const record = await repository.findSubscription(
+      this.normalizeUserId(userId),
+      id,
+    );
     if (!record) throw new NotFoundException('Subscription not found');
     return record;
   }
 
-  private assertQuota(userId: string): void {
-    const membership = this.getMembershipRecord(userId);
+  private async assertQuota(
+    userId: string,
+    repository = this.repository,
+  ): Promise<void> {
+    const membership = await this.getMembershipRecord(userId, repository);
     if (membership.status === 'active') return;
-    const used = this.ownedRecords(userId).filter(
+    const used = (await this.ownedRecords(userId, repository)).filter(
       (record) => !record.deletedAt && !record.isDemo,
     ).length;
     if (used >= FREE_SUBSCRIPTION_LIMIT) {
@@ -374,12 +399,12 @@ export class SubscriptionsService {
     };
   }
 
-  list(userId: string | undefined, query: QuerySubscriptionDto) {
+  async list(userId: string | undefined, query: QuerySubscriptionDto) {
     const normalizedUserId = this.normalizeUserId(userId);
     const page = query.page ?? 1;
     const limit = query.limit ?? 20;
     const includeDeleted = query.includeDeleted ?? false;
-    let records = this.ownedRecords(normalizedUserId).filter(
+    let records = (await this.ownedRecords(normalizedUserId)).filter(
       (record) => includeDeleted || !record.deletedAt,
     );
 
@@ -426,48 +451,58 @@ export class SubscriptionsService {
     };
   }
 
-  findOne(userId: string | undefined, id: string) {
-    return this.toPublic(this.findRecord(this.normalizeUserId(userId), id));
+  async findOne(userId: string | undefined, id: string) {
+    return this.toPublic(
+      await this.findRecord(this.normalizeUserId(userId), id),
+    );
   }
 
-  create(userId: string | undefined, dto: CreateSubscriptionDto) {
+  async create(userId: string | undefined, dto: CreateSubscriptionDto) {
     const normalizedUserId = this.normalizeUserId(userId);
-    this.assertQuota(normalizedUserId);
     if (!dto.name.trim()) {
       throw new BadRequestException('Subscription name cannot be empty');
     }
-    const now = this.now();
-    const trialEndDate = dto.trialEndDate ?? null;
-    const record = createSeedRecord({
-      id: 'sub_' + this.nextId++,
-      userId: normalizedUserId,
-      name: dto.name.trim(),
-      plan: dto.plan?.trim() || null,
-      logo: dto.logo?.trim() || null,
-      color: dto.color || '#16834d',
-      amount: dto.amount === undefined ? null : dto.amount,
-      currency: (dto.currency || 'CNY').toUpperCase(),
-      cycle: dto.cycle,
-      cycleValue: dto.cycle === 'custom_days' ? dto.cycleValue ?? 1 : null,
-      nextBillingDate: dto.nextBillingDate,
-      payment: dto.payment ?? 'other',
-      category: dto.category,
-      status: trialEndDate && daysUntil(trialEndDate) >= 0 ? 'trial' : 'active',
-      autoRenew: dto.autoRenew ?? dto.cycle !== 'one_off',
-      reminders: uniqueReminders(dto.reminders),
-      trialEndDate,
-      note: dto.note?.trim() || '',
-      cancelGuide: dto.cancelGuide?.trim() || '',
-      createdAt: now,
-      updatedAt: now,
-      isDemo: false,
+    return this.repository.transaction(async (repository) => {
+      await this.assertQuota(normalizedUserId, repository);
+      const now = this.now();
+      const trialEndDate = dto.trialEndDate ?? null;
+      const record = createSeedRecord({
+        id: 'sub_' + randomUUID(),
+        userId: normalizedUserId,
+        name: dto.name.trim(),
+        plan: dto.plan?.trim() || null,
+        logo: dto.logo?.trim() || null,
+        color: dto.color || '#16834d',
+        amount: dto.amount === undefined ? null : dto.amount,
+        currency: (dto.currency || 'CNY').toUpperCase(),
+        cycle: dto.cycle,
+        cycleValue: dto.cycle === 'custom_days' ? dto.cycleValue ?? 1 : null,
+        nextBillingDate: dto.nextBillingDate,
+        payment: dto.payment ?? 'other',
+        category: dto.category,
+        status:
+          trialEndDate && daysUntil(trialEndDate) >= 0 ? 'trial' : 'active',
+        autoRenew: dto.autoRenew ?? dto.cycle !== 'one_off',
+        reminders: uniqueReminders(dto.reminders),
+        trialEndDate,
+        note: dto.note?.trim() || '',
+        cancelGuide: dto.cancelGuide?.trim() || '',
+        createdAt: now,
+        updatedAt: now,
+        isDemo: false,
+      });
+      await repository.saveSubscription(record);
+      return this.toPublic(record);
     });
-    this.records.push(record);
-    return this.toPublic(record);
   }
 
-  update(userId: string | undefined, id: string, dto: UpdateSubscriptionDto) {
-    const record = this.findRecord(this.normalizeUserId(userId), id);
+  async update(userId: string | undefined, id: string, dto: UpdateSubscriptionDto) {
+    return this.repository.transaction(async (repository) => {
+    const record = await this.findRecord(
+      this.normalizeUserId(userId),
+      id,
+      repository,
+    );
     if (record.deletedAt) {
       throw new BadRequestException('Deleted subscriptions must be restored before editing');
     }
@@ -513,29 +548,46 @@ export class SubscriptionsService {
       record.status = 'trial';
     }
     record.updatedAt = this.now();
+    await repository.saveSubscription(record);
     return this.toPublic(record);
+    });
   }
 
-  remove(userId: string | undefined, id: string) {
-    const record = this.findRecord(this.normalizeUserId(userId), id);
+  async remove(userId: string | undefined, id: string) {
+    return this.repository.transaction(async (repository) => {
+    const record = await this.findRecord(
+      this.normalizeUserId(userId),
+      id,
+      repository,
+    );
     if (record.deletedAt) throw new BadRequestException('Subscription is already deleted');
     record.deletedAt = this.now();
     record.updatedAt = this.now();
+    await repository.saveSubscription(record);
     return this.toPublic(record);
+    });
   }
 
-  restore(userId: string | undefined, id: string) {
+  async restore(userId: string | undefined, id: string) {
     const normalizedUserId = this.normalizeUserId(userId);
-    const record = this.findRecord(normalizedUserId, id);
+    return this.repository.transaction(async (repository) => {
+    const record = await this.findRecord(normalizedUserId, id, repository);
     if (!record.deletedAt) throw new BadRequestException('Subscription is not deleted');
-    this.assertQuota(normalizedUserId);
+    await this.assertQuota(normalizedUserId, repository);
     record.deletedAt = null;
     record.updatedAt = this.now();
+    await repository.saveSubscription(record);
     return this.toPublic(record);
+    });
   }
 
-  renew(userId: string | undefined, id: string, billingDate?: string) {
-    const record = this.findRecord(this.normalizeUserId(userId), id);
+  async renew(userId: string | undefined, id: string, billingDate?: string) {
+    return this.repository.transaction(async (repository) => {
+    const record = await this.findRecord(
+      this.normalizeUserId(userId),
+      id,
+      repository,
+    );
     if (billingDate) {
       const previous = record.renewalHistory.find(event => event.previousNextBillingDate === billingDate);
       if (previous) return { subscription: this.toPublic(record), renewal: clone(previous) };
@@ -581,14 +633,21 @@ export class SubscriptionsService {
     record.lastRenewedAt = renewedAt;
     record.lastRenewalNextBillingDate = nextBillingDate;
     record.updatedAt = renewedAt;
+    await repository.saveSubscription(record);
     return {
       subscription: this.toPublic(record),
       renewal: clone(event),
     };
+    });
   }
 
-  undoRenewal(userId: string | undefined, id: string) {
-    const record = this.findRecord(this.normalizeUserId(userId), id);
+  async undoRenewal(userId: string | undefined, id: string) {
+    return this.repository.transaction(async (repository) => {
+    const record = await this.findRecord(
+      this.normalizeUserId(userId),
+      id,
+      repository,
+    );
     const history = record.renewalHistory;
     const event = history[history.length - 1];
     if (
@@ -608,14 +667,17 @@ export class SubscriptionsService {
     record.lastRenewedAt = null;
     record.lastRenewalNextBillingDate = null;
     record.updatedAt = this.now();
+    await repository.saveSubscription(record);
     return this.toPublic(record);
+    });
   }
 
-  stats(userId: string | undefined, query: StatsQueryDto) {
+  async stats(userId: string | undefined, query: StatsQueryDto) {
     const normalizedUserId = this.normalizeUserId(userId);
     const period = query.period ?? 'month';
-    const currency = (query.currency ?? this.getSettingsRecord(normalizedUserId).defaultCurrency).toUpperCase();
-    const records = this.ownedRecords(normalizedUserId).filter(
+    const settings = await this.getSettingsRecord(normalizedUserId);
+    const currency = (query.currency ?? settings.defaultCurrency).toUpperCase();
+    const records = (await this.ownedRecords(normalizedUserId)).filter(
       (record) =>
         !record.deletedAt &&
         record.currency === currency &&
@@ -675,9 +737,9 @@ export class SubscriptionsService {
     };
   }
 
-  reminders(userId: string | undefined, requestedDays?: number) {
+  async reminders(userId: string | undefined, requestedDays?: number) {
     const horizon = Math.min(90, Math.max(1, Number(requestedDays) || 30));
-    const records = this.ownedRecords(this.normalizeUserId(userId))
+    const records = (await this.ownedRecords(this.normalizeUserId(userId)))
       .filter(
         (record) =>
           !record.deletedAt &&
@@ -706,10 +768,10 @@ export class SubscriptionsService {
     };
   }
 
-  getMembership(userId: string | undefined) {
+  async getMembership(userId: string | undefined) {
     const normalizedUserId = this.normalizeUserId(userId);
-    const membership = this.getMembershipRecord(normalizedUserId);
-    const used = this.ownedRecords(normalizedUserId).filter(
+    const membership = await this.getMembershipRecord(normalizedUserId);
+    const used = (await this.ownedRecords(normalizedUserId)).filter(
       (record) => !record.deletedAt && !record.isDemo,
     ).length;
     return {
@@ -731,30 +793,48 @@ export class SubscriptionsService {
     };
   }
 
-  activateMembership(userId: string | undefined) {
-    const membership = this.getMembershipRecord(this.normalizeUserId(userId));
-    membership.status = 'active';
-    membership.plan = 'member';
-    membership.startedAt = this.now();
-    return this.getMembership(membership.userId);
+  async activateMembership(userId: string | undefined) {
+    const normalizedUserId = this.normalizeUserId(userId);
+    await this.repository.transaction(async (repository) => {
+      const membership = await this.getMembershipRecord(
+        normalizedUserId,
+        repository,
+      );
+      membership.status = 'active';
+      membership.plan = 'member';
+      membership.startedAt = this.now();
+      await repository.saveMembership(membership);
+    });
+    return this.getMembership(normalizedUserId);
   }
 
-  restoreMembership(userId: string | undefined) {
-    const membership = this.getMembershipRecord(this.normalizeUserId(userId));
-    membership.status = 'free';
-    membership.plan = 'free';
-    membership.startedAt = null;
-    return this.getMembership(membership.userId);
+  async restoreMembership(userId: string | undefined) {
+    const normalizedUserId = this.normalizeUserId(userId);
+    await this.repository.transaction(async (repository) => {
+      const membership = await this.getMembershipRecord(
+        normalizedUserId,
+        repository,
+      );
+      membership.status = 'free';
+      membership.plan = 'free';
+      membership.startedAt = null;
+      await repository.saveMembership(membership);
+    });
+    return this.getMembership(normalizedUserId);
   }
 
-  getSettings(userId: string | undefined) {
-    const settings = this.getSettingsRecord(this.normalizeUserId(userId));
+  async getSettings(userId: string | undefined) {
+    const settings = await this.getSettingsRecord(this.normalizeUserId(userId));
     const { userId: _userId, ...publicSettings } = clone(settings);
     return publicSettings;
   }
 
-  updateSettings(userId: string | undefined, dto: UpdateSettingsDto) {
-    const settings = this.getSettingsRecord(this.normalizeUserId(userId));
+  async updateSettings(userId: string | undefined, dto: UpdateSettingsDto) {
+    return this.repository.transaction(async (repository) => {
+    const settings = await this.getSettingsRecord(
+      this.normalizeUserId(userId),
+      repository,
+    );
     const values = dto as unknown as Record<string, unknown>;
     for (const key of [
       'amountVisible',
@@ -774,8 +854,10 @@ export class SubscriptionsService {
       settings.defaultReminders = uniqueReminders(settings.defaultReminders);
     }
     settings.defaultCurrency = settings.defaultCurrency.toUpperCase();
+    await repository.saveSettings(settings);
     const { userId: _userId, ...publicSettings } = clone(settings);
     return publicSettings;
+    });
   }
 
   catalog() {

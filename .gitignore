@@ -2,3 +2,8 @@ node_modules/
 subscription/.preview/
 subscription/cache/
 .npm-cache/
+backend/src/generated/
+backend/dist/
+backend/.env
+deploy/.env.production
+*.log

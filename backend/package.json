@@ -1,13 +1,13 @@
 {
   "name": "subscription-monitor-api",
   "version": "0.1.0",
-  "description": "In-memory subscription monitor API",
+  "description": "Subscription monitor API with memory and PostgreSQL persistence",
   "author": "Subscription Monitor",
   "private": true,
   "license": "MIT",
   "packageManager": "pnpm@9.13.2",
   "scripts": {
-    "prebuild": "rimraf dist",
+    "prebuild": "prisma generate && rimraf dist",
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
@@ -16,7 +16,12 @@
     "lint": "eslint \"src/main.ts\" \"src/app.module.ts\" \"src/config/app.config.ts\" \"src/config/app-config.type.ts\" \"src/utils/validate-config.ts\" \"src/utils/validation-options.ts\" \"src/health/**/*.ts\" \"src/subscriptions/**/*.ts\" \"src/**/*.spec.ts\"",
     "test": "jest --passWithNoTests",
     "test:watch": "jest --watch",
-    "test:cov": "jest --coverage"
+    "test:cov": "jest --coverage",
+    "db:generate": "prisma generate",
+    "db:validate": "prisma validate",
+    "db:migrate": "prisma migrate dev",
+    "db:deploy": "prisma migrate deploy",
+    "db:studio": "prisma studio"
   },
   "dependencies": {
     "@nestjs/common": "11.1.18",
@@ -24,9 +29,12 @@
     "@nestjs/core": "11.1.18",
     "@nestjs/platform-express": "11.1.18",
     "@nestjs/swagger": "11.2.6",
+    "@prisma/adapter-pg": "^7.10.0",
+    "@prisma/client": "^7.10.0",
     "class-transformer": "0.5.1",
     "class-validator": "0.15.1",
     "dotenv": "17.3.1",
+    "pg": "^8.23.0",
     "reflect-metadata": "0.2.2",
     "rxjs": "7.8.2",
     "swagger-ui-express": "5.0.1"
@@ -46,6 +54,7 @@
     "globals": "^17.4.0",
     "jest": "30.3.0",
     "prettier": "3.8.1",
+    "prisma": "7.10.0",
     "rimraf": "6.1.3",
     "ts-jest": "29.4.6",
     "ts-loader": "9.5.7",

@@ -8,4 +8,6 @@ export type AppConfig = {
   apiPrefix: string;
   fallbackLanguage: string;
   headerLanguage: string;
+  databaseUrl?: string;
+  persistenceDriver: 'memory' | 'prisma';
 };

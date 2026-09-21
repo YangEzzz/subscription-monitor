@@ -1,11 +1,41 @@
 import { Module } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { PrismaPg } from '@prisma/adapter-pg';
+import { AppConfig } from '../config/app-config.type';
+import { PrismaClient } from '../generated/prisma/client';
 import { CatalogController } from './catalog.controller';
 import { DashboardController } from './dashboard.controller';
 import { MembershipController } from './membership.controller';
 import { RemindersController } from './reminders.controller';
 import { SettingsController } from './settings.controller';
 import { SubscriptionsController } from './subscriptions.controller';
-import { SubscriptionsService } from './subscriptions.service';
+import {
+  SubscriptionsService,
+  createDemoSubscriptions,
+} from './subscriptions.service';
+import { MemorySubscriptionsRepository } from './repositories/memory-subscriptions.repository';
+import { PrismaSubscriptionsRepository } from './repositories/prisma-subscriptions.repository';
+import {
+  SUBSCRIPTIONS_REPOSITORY,
+  SubscriptionsRepository,
+} from './repositories/subscriptions.repository';
+
+export function createSubscriptionsRepository(
+  config: AppConfig,
+): SubscriptionsRepository {
+  if (config.persistenceDriver === 'memory') {
+    return new MemorySubscriptionsRepository(createDemoSubscriptions());
+  }
+  if (!config.databaseUrl) {
+    throw new Error(
+      'DATABASE_URL is required when PERSISTENCE_DRIVER is set to prisma',
+    );
+  }
+
+  const adapter = new PrismaPg({ connectionString: config.databaseUrl });
+  const client = new PrismaClient({ adapter });
+  return PrismaSubscriptionsRepository.create(client);
+}
 
 @Module({
   controllers: [
@@ -16,7 +46,15 @@ import { SubscriptionsService } from './subscriptions.service';
     SettingsController,
     CatalogController,
   ],
-  providers: [SubscriptionsService],
+  providers: [
+    {
+      provide: SUBSCRIPTIONS_REPOSITORY,
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) =>
+        createSubscriptionsRepository(configService.getOrThrow<AppConfig>('app')),
+    },
+    SubscriptionsService,
+  ],
   exports: [SubscriptionsService],
 })
 export class SubscriptionsModule {}

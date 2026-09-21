@@ -30,6 +30,17 @@ test('page and uni.request adapter complete the workflow against real Nest HTTP 
 		showModal(options) { options.success({ confirm: true }) }
 	}
 	try {
+		const invalidResponse = await fetch(`${API_CONFIG.baseUrl}/subscriptions`, {
+			method: 'POST',
+			headers: { 'content-type': 'application/json', 'x-demo-user-id': API_CONFIG.demoUserId, 'x-request-id': 'integration-validation-1' },
+			body: '{}'
+		})
+		const invalidBody = await invalidResponse.json()
+		assert.equal(invalidResponse.status, 422)
+		assert.equal(invalidBody.code, 'VALIDATION_ERROR')
+		assert.equal(invalidBody.requestId, 'integration-validation-1')
+		assert.ok(invalidBody.errors.name)
+
 		const page = createSubscriptionPageState()
 		for (const [key, value] of Object.entries(subscriptionMethods)) page[key] = value.bind(page)
 		for (const [key, value] of Object.entries(subscriptionComputed)) Object.defineProperty(page, key, { get: value.bind(page) })
@@ -87,6 +98,6 @@ test('page and uni.request adapter complete the workflow against real Nest HTTP 
 		assert.equal(page.selectedSubscription.status, 'active')
 		const savedId = page.selectedId
 		API_CONFIG.demoUserId = 'different-integration-user'
-		await assert.rejects(api.detail(savedId), error => error.status === 404)
+		await assert.rejects(api.detail(savedId), error => error.status === 404 && error.code === 'NOT_FOUND' && Boolean(error.requestId))
 	} finally { await app.close() }
 })
