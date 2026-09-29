@@ -44,8 +44,8 @@ export default {
 };
 </script>
 
-<style scoped>
-@import "@/styles/tokens";
+<style lang="scss" scoped>
+@import "../../styles/tokens";
 
 .async-state {
   box-sizing: border-box;
