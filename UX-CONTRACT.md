@@ -2,7 +2,9 @@
 
 ## 临时桌面管理后台
 
-`backend/public/admin.html` 是独立原生 HTML 界面，复用 `_tokens.scss` 的颜色和字体镜像，不依赖 uni-app 的平台组件。原生 select 接受操作系统弹窗；table 为语义表格，由表格区域承担水平滚动，文档承担纵向滚动。所有查询共享 load、message、paging 和 render 函数；错误、空态、加载占用稳定表格区域。搜索显式提交、支持中文输入、清除立即查询，AbortController 与序号忽略旧响应。筛选和页码存 URL，后台仅在本机提供；搜索不涉及秘密凭证。第一版只有读取，不提供写入或外部副作用。后台入口及查询由独立本地服务器提供，默认禁用，部署见 `deploy/临时管理后台.md`。
+本地 HTML 的连接表单由 `backend/public/admin.html` 拥有，复用现有 field、toolbar、message。双击文件自动请求 `https://subscription.yangezzz.top/admin/`，无需密钥；仅在切换后端时使用地址表单。地址支持 HTTPS 管理接口及本机 HTTP，保留代理路径前缀；验证错误关联字段并聚焦。`file://` 下不写 history，查询与 HTTP 页面共用 load/get/render 和取消过期请求机制。权限依据 `deploy/临时管理后台.md` 与 `backend/src/admin/admin.module.ts`：用户明确选择无鉴权的只读文件访问，跨域允许 Origin null，默认关闭管理服务。
+
+`backend/public/admin.html` 是独立原生 HTML 界面，复用 `_tokens.scss` 的颜色和字体镜像，不依赖 uni-app 的平台组件。原生 select 接受操作系统弹窗；table 为语义表格，由表格区域承担水平滚动，文档承担纵向滚动。所有查询共享 load、message、paging 和 render 函数；错误、空态、加载占用稳定表格区域。搜索显式提交、支持中文输入、清除立即查询，AbortController 与序号忽略旧响应。HTTP 页面筛选和页码存 URL，本地文件页面保留在内存；搜索不涉及秘密凭证。第一版只有读取，不提供写入或外部副作用。后台查询由独立管理服务器提供，本地文件可通过HTTPS 转发访问，默认禁用，部署见 `deploy/临时管理后台.md`。
 
 ## Evidence and scope
 

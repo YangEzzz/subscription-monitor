@@ -44,16 +44,34 @@ export class LocalAdminServer
         );
         const allowedHosts = ['localhost:3002', '127.0.0.1:3002'];
         const origin = request.headers.origin;
+        const fileOrigin = origin === 'null';
         if (
-          !allowedHosts.includes(request.headers.host || '') ||
-          (origin &&
-            !allowedHosts.some((value) => origin === `http://${value}`)) ||
-          request.headers['sec-fetch-site'] === 'cross-site' ||
-          request.headers['x-forwarded-for'] ||
-          request.headers.forwarded
+          !fileOrigin &&
+          (!allowedHosts.includes(request.headers.host || '') ||
+            (origin &&
+              !allowedHosts.some((value) => origin === `http://${value}`)) ||
+            request.headers['sec-fetch-site'] === 'cross-site' ||
+            request.headers['x-forwarded-for'] ||
+            request.headers.forwarded)
         ) {
           response.writeHead(403).end('仅允许本地访问');
           return;
+        }
+        if (fileOrigin) {
+          response.setHeader('Access-Control-Allow-Origin', 'null');
+          response.setHeader('Vary', 'Origin');
+          if (request.method === 'OPTIONS') {
+            if (
+              request.headers['access-control-request-method'] !== 'GET' ||
+              request.headers['access-control-request-headers']
+            ) {
+              response.writeHead(403).end();
+              return;
+            }
+            response.setHeader('Access-Control-Allow-Methods', 'GET');
+            response.writeHead(204).end();
+            return;
+          }
         }
         if (request.method !== 'GET') {
           response.writeHead(405, { Allow: 'GET' }).end();

@@ -382,6 +382,29 @@
       <span class="local">仅本机访问</span>
     </header>
     <main>
+      <section id="connection" class="panel" hidden aria-label="连接后台">
+        <form id="connectionform" class="toolbar" novalidate>
+          <div class="field">
+            <label for="address">后台管理接口地址</label>
+            <input
+              id="address"
+              type="url"
+              value="https://subscription.yangezzz.top/admin/"
+              aria-describedby="connectionhelp connectionerror"
+            />
+          </div>
+          <button id="connect" type="submit">连接后台</button>
+        </form>
+        <p id="connectionhelp" class="muted" style="padding: 0 20px">
+          打开文件即自动读取线上后端数据，无需启动前端服务或填写密钥。需要连接其他后端时修改地址并点击「连接后台」。
+        </p>
+        <p
+          id="connectionerror"
+          class="message error"
+          role="status"
+          aria-live="polite"
+        ></p>
+      </section>
       <section class="intro">
         <div>
           <h2>运行概览</h2>
@@ -475,6 +498,13 @@
     <script>
       'use strict';
       const $ = (id) => document.getElementById(id);
+      const localFile = location.protocol === 'file:';
+      let backendAddress = localFile
+        ? 'https://subscription.yangezzz.top/admin/'
+        : location.origin + '/';
+      $('connection').hidden = !localFile;
+      if (localFile)
+        document.querySelector('.local').textContent = '本地文件访问';
       const schemas = {
         subscriptions: [
           ['name', '订阅名称'],
@@ -544,6 +574,7 @@
         busy = value;
         $('tablewrap').setAttribute('aria-busy', String(value));
         $('refresh').disabled = value;
+        $('connect').disabled = value;
         paging();
       }
       function format(key, value, row) {
@@ -613,31 +644,30 @@
       async function get(url, signal) {
         let response;
         try {
-          response = await fetch(url, {
-            signal: AbortSignal.any([signal, AbortSignal.timeout(20000)]),
-            cache: 'no-store',
-          });
+          response = await fetch(
+            new URL(url.replace(/^\//, ''), backendAddress),
+            {
+              signal: AbortSignal.any([signal, AbortSignal.timeout(20000)]),
+              cache: 'no-store',
+              credentials: 'omit',
+              redirect: 'error',
+            },
+          );
         } catch (error) {
           if (signal.aborted) throw error;
           throw new Error(
             error.name === 'TimeoutError'
               ? '读取超时，请重试'
-              : '无法连接本地后台，请确认后端已启动',
+              : '无法连接后台，请检查地址、后端运行状态及跨域配置',
           );
         }
-        const data = await response.json();
+        const data = await response
+          .json()
+          .catch(() => ({ message: '后台返回了无效响应，请检查管理接口地址' }));
         if (!response.ok) throw new Error(data.message || '查询失败，请重试');
         return data;
       }
       async function load() {
-        if (location.protocol === 'file:') {
-          message(
-            '请通过 http://127.0.0.1:3002 打开后台，直接打开文件无法读取数据。',
-            true,
-          );
-          render([], $('section').value);
-          return;
-        }
         controller?.abort();
         controller = new AbortController();
         const id = ++requestId,
@@ -650,7 +680,7 @@
           page: String(page),
           search: query,
         });
-        history.replaceState(null, '', `?${params}`);
+        if (!localFile) history.replaceState(null, '', `?${params}`);
         const signal = controller.signal;
         const results = await Promise.allSettled([
           get('/data?' + params, signal),
@@ -770,6 +800,42 @@
           page++;
           void load();
         }
+      });
+      $('connectionform').addEventListener('submit', (event) => {
+        event.preventDefault();
+        if (event.isComposing || busy) return;
+        let address;
+        let invalid;
+        try {
+          address = new URL($('address').value.trim());
+          const loopback = ['127.0.0.1', 'localhost', '[::1]'].includes(
+            address.hostname,
+          );
+          if (
+            !(
+              address.protocol === 'https:' ||
+              (address.protocol === 'http:' && loopback)
+            ) ||
+            address.username ||
+            address.password ||
+            address.search ||
+            address.hash
+          )
+            throw new Error();
+        } catch {
+          invalid = 'address';
+        }
+        $('address').setAttribute('aria-invalid', String(Boolean(invalid)));
+        $('connectionerror').textContent = invalid
+          ? '请输入 HTTPS 后台地址；本机也可使用 http://127.0.0.1:3002。地址中不能包含账号、查询参数或锚点。'
+          : '';
+        if (invalid) {
+          $(invalid).focus();
+          return;
+        }
+        backendAddress = address.href.replace(/\/?$/, '/');
+        page = 1;
+        void load();
       });
       void load();
     </script>
