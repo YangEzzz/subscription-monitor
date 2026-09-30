@@ -161,4 +161,37 @@ describe('Local admin server', () => {
       ).size,
     ).toBe(26);
   });
+  it('reads simulated membership and order records without private payment request keys', async () => {
+    await repository.saveMembership({
+      userId: 'wx-test',
+      status: 'active',
+      plan: 'member',
+      startedAt: '2026-10-01T00:00:00Z',
+      source: 'simulation',
+    });
+    await repository.saveMembershipOrder({
+      id: 'admin-test-order',
+      userId: 'wx-test',
+      requestId: 'private-request-key',
+      productId: 'lifetime',
+      productName: '永久会员',
+      amount: 2990,
+      currency: 'CNY',
+      channel: 'simulation',
+      status: 'paid',
+      createdAt: '2026-10-01T00:00:00Z',
+      updatedAt: '2026-10-01T00:00:00Z',
+      paidAt: '2026-10-01T00:00:00Z',
+    });
+    const members = await read('/data?section=memberships&search=wx-test', {
+      Origin: 'null',
+    });
+    expect(JSON.parse(members.body).items[0].source).toBe('simulation');
+    const orders = await read(
+      '/data?section=membershipOrders&search=admin-test-order',
+      { Origin: 'null' },
+    );
+    expect(JSON.parse(orders.body).items[0].amount).toBe(29.9);
+    expect(orders.body).not.toContain('private-request-key');
+  });
 });

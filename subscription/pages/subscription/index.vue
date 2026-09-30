@@ -179,6 +179,18 @@
           :is-member="isMember"
           :free-quota-value="freeQuotaValue"
           :subscription-limit="subscriptionLimit"
+          :membership="settings.membership"
+          :orders="membershipOrders"
+          :order="membershipOrder"
+          :busy="membershipBusy"
+          :loading="membershipLoading"
+          :error="membershipError"
+          :message="membershipMessage"
+          @purchase="beginMembershipPurchase"
+          @simulate="simulateMembershipPayment"
+          @refund="refundMembershipOrder"
+          @refresh="loadMembershipOrders"
+          @select-order="selectMembershipOrder"
           @back="goBackView('profile')"
         />
 

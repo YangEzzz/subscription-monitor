@@ -1,3 +1,4 @@
+import { MembershipOrder } from '../domain/membership-order';
 import { Injectable } from '@nestjs/common';
 import {
   Membership,
@@ -21,6 +22,8 @@ function clone<T>(value: T): T {
 
 @Injectable()
 export class MemorySubscriptionsRepository implements SubscriptionsRepository {
+  private orders = new Map<string, MembershipOrder>();
+  private userTransactionQueue: Promise<unknown> = Promise.resolve();
   private records: SubscriptionRecord[];
   private settings = new Map<string, UserSettings>();
   private memberships = new Map<string, Membership>();
@@ -80,6 +83,18 @@ export class MemorySubscriptionsRepository implements SubscriptionsRepository {
           nextBillingDate: row.nextBillingDate,
           deletedAt: row.deletedAt,
         }));
+    else if (section === 'memberships')
+      rows = [...this.memberships.values()].map((row) => ({
+        ...row,
+        createdAt: row.startedAt,
+      }));
+    else if (section === 'membershipOrders')
+      rows = [...this.orders.values()]
+        .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+        .map(({ requestId: _requestId, ...row }) => ({
+          ...row,
+          amount: row.amount / 100,
+        }));
     else
       rows = [...this.deliveries.values()]
         .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
@@ -98,7 +113,11 @@ export class MemorySubscriptionsRepository implements SubscriptionsRepository {
         ? ['id']
         : section === 'subscriptions'
           ? ['id', 'name', 'userId']
-          : ['userId', 'subscriptionName', 'errorCode'];
+          : section === 'memberships'
+            ? ['userId']
+            : section === 'membershipOrders'
+              ? ['id', 'userId', 'productName']
+              : ['userId', 'subscriptionName', 'errorCode'];
     rows = rows.filter((row) =>
       fields.some((key) =>
         String(row[key] ?? '')
@@ -345,9 +364,41 @@ export class MemorySubscriptionsRepository implements SubscriptionsRepository {
     return Promise.resolve();
   }
 
+  listMembershipOrders(userId: string): Promise<MembershipOrder[]> {
+    return Promise.resolve(
+      clone(
+        [...this.orders.values()]
+          .filter((order) => order.userId === userId)
+          .sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
+      ),
+    );
+  }
+  findMembershipOrder(
+    userId: string,
+    id: string,
+  ): Promise<MembershipOrder | null> {
+    const order = this.orders.get(id);
+    return Promise.resolve(order?.userId === userId ? clone(order) : null);
+  }
+  saveMembershipOrder(order: MembershipOrder): Promise<void> {
+    this.orders.set(order.id, clone(order));
+    return Promise.resolve();
+  }
+  transactionForUser<T>(
+    _userId: string,
+    work: (repository: SubscriptionsRepository) => Promise<T>,
+  ): Promise<T> {
+    // Memory transactions share snapshot maps: serialize all of these operations.
+    const next = this.userTransactionQueue.then(() => this.transaction(work));
+    this.userTransactionQueue = next.catch(() => undefined);
+    return next;
+  }
   async transaction<T>(
     work: (repository: SubscriptionsRepository) => Promise<T>,
   ): Promise<T> {
+    const ordersSnapshot = new Map(
+      [...this.orders.entries()].map(([key, value]) => [key, clone(value)]),
+    );
     const recordsSnapshot = clone(this.records);
     const identitiesSnapshot = new Map(
       [...this.identities.entries()].map(([key, value]) => [key, clone(value)]),
@@ -371,6 +422,7 @@ export class MemorySubscriptionsRepository implements SubscriptionsRepository {
     try {
       return await work(this);
     } catch (error) {
+      this.orders = ordersSnapshot;
       this.records = recordsSnapshot;
       this.identities = identitiesSnapshot;
       this.grants = grantsSnapshot;

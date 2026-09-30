@@ -5,6 +5,7 @@ import {
 } from '../domain/subscription';
 import { NotificationRepository } from '../../notifications/notification.repository';
 import { AdminOverview, AdminPage, AdminQuery } from './admin-read';
+import { MembershipOrder } from '../domain/membership-order';
 
 export const SUBSCRIPTIONS_REPOSITORY = Symbol('SUBSCRIPTIONS_REPOSITORY');
 
@@ -23,6 +24,16 @@ export interface SubscriptionsRepository extends NotificationRepository {
 
   findMembership(userId: string): Promise<Membership | null>;
   saveMembership(membership: Membership): Promise<void>;
+  listMembershipOrders(userId: string): Promise<MembershipOrder[]>;
+  findMembershipOrder(
+    userId: string,
+    id: string,
+  ): Promise<MembershipOrder | null>;
+  saveMembershipOrder(order: MembershipOrder): Promise<void>;
+  transactionForUser<T>(
+    userId: string,
+    work: (repository: SubscriptionsRepository) => Promise<T>,
+  ): Promise<T>;
 
   transaction<T>(
     work: (repository: SubscriptionsRepository) => Promise<T>,

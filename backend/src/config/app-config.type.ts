@@ -18,4 +18,5 @@ export type AppConfig = {
   wechatSubscriptionType?: 'once' | 'long_term';
   wechatMessageState?: 'formal' | 'developer' | 'trial';
   notificationSchedulerEnabled?: boolean;
+  membershipSimulationEnabled?: boolean;
 };

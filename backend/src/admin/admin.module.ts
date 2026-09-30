@@ -108,7 +108,13 @@ export class LocalAdminServer
           const rawPage = url.searchParams.get('page') || '1';
           const search = (url.searchParams.get('search') || '').trim();
           if (
-            !['users', 'subscriptions', 'notifications'].includes(section) ||
+            ![
+              'users',
+              'subscriptions',
+              'notifications',
+              'memberships',
+              'membershipOrders',
+            ].includes(section) ||
             !/^[1-9]\d{0,5}$/.test(rawPage) ||
             search.length > 128
           ) {

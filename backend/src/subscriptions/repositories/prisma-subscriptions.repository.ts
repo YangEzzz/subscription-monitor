@@ -1,3 +1,4 @@
+import { MembershipOrder } from '../domain/membership-order';
 import { Prisma, PrismaClient } from '../../generated/prisma/client';
 import { OnApplicationShutdown } from '@nestjs/common';
 import {
@@ -30,6 +31,7 @@ type PrismaExecutor = Pick<
   | 'subscription'
   | 'userSettings'
   | 'membership'
+  | 'membershipOrder'
   | 'notificationGrant'
   | 'notificationDelivery'
   | '$queryRaw'
@@ -121,6 +123,62 @@ export class PrismaSubscriptionsRepository
   async adminRead({ section, page, search }: AdminQuery): Promise<AdminPage> {
     const paging = { skip: (page - 1) * 20, take: 20 };
     const contains = { contains: search, mode: 'insensitive' as const };
+    if (section === 'memberships') {
+      const where = search ? { userId: contains } : {};
+      const [items, total] = await Promise.all([
+        this.executor.membership.findMany({
+          where,
+          ...paging,
+          orderBy: [{ createdAt: 'desc' }, { userId: 'asc' }],
+          select: {
+            userId: true,
+            status: true,
+            plan: true,
+            source: true,
+            startedAt: true,
+            createdAt: true,
+          },
+        }),
+        this.executor.membership.count({ where }),
+      ]);
+      return { items, total, page, pageSize: 20 };
+    }
+    if (section === 'membershipOrders') {
+      const where = search
+        ? {
+            OR: [
+              { id: contains },
+              { userId: contains },
+              { productName: contains },
+            ],
+          }
+        : {};
+      const [rows, total] = await Promise.all([
+        this.executor.membershipOrder.findMany({
+          where,
+          ...paging,
+          orderBy: [{ createdAt: 'desc' }, { id: 'asc' }],
+          select: {
+            id: true,
+            userId: true,
+            productName: true,
+            amount: true,
+            currency: true,
+            channel: true,
+            status: true,
+            paidAt: true,
+            createdAt: true,
+          },
+        }),
+        this.executor.membershipOrder.count({ where }),
+      ]);
+      return {
+        items: rows.map((row) => ({ ...row, amount: row.amount / 100 })),
+        total,
+        page,
+        pageSize: 20,
+      };
+    }
     if (section === 'users') {
       const where = search ? { id: contains } : {};
       const [rows, total] = await Promise.all([
@@ -607,6 +665,8 @@ export class PrismaSubscriptionsRepository
           userId: row.userId,
           status: row.status,
           plan: row.plan,
+          source: row.source as Membership['source'],
+          sourceOrderId: row.sourceOrderId,
           startedAt: row.startedAt?.toISOString() ?? null,
         }
       : null;
@@ -615,6 +675,8 @@ export class PrismaSubscriptionsRepository
   async saveMembership(membership: Membership): Promise<void> {
     await this.ensureUser(membership.userId);
     const data = {
+      source: membership.source || 'legacy',
+      sourceOrderId: membership.sourceOrderId || null,
       status: membership.status,
       plan: membership.plan,
       startedAt: membership.startedAt ? new Date(membership.startedAt) : null,
@@ -626,6 +688,58 @@ export class PrismaSubscriptionsRepository
     });
   }
 
+  async listMembershipOrders(userId: string): Promise<MembershipOrder[]> {
+    const rows = await this.executor.membershipOrder.findMany({
+      where: { userId },
+      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+    });
+    return rows.map((row) => ({
+      ...row,
+      channel: row.channel as MembershipOrder['channel'],
+      status: row.status as MembershipOrder['status'],
+      createdAt: row.createdAt.toISOString(),
+      updatedAt: row.updatedAt.toISOString(),
+      paidAt: row.paidAt?.toISOString() || null,
+    }));
+  }
+  async findMembershipOrder(
+    userId: string,
+    id: string,
+  ): Promise<MembershipOrder | null> {
+    const row = await this.executor.membershipOrder.findFirst({
+      where: { id, userId },
+    });
+    return row
+      ? {
+          ...row,
+          channel: row.channel as MembershipOrder['channel'],
+          status: row.status as MembershipOrder['status'],
+          createdAt: row.createdAt.toISOString(),
+          updatedAt: row.updatedAt.toISOString(),
+          paidAt: row.paidAt?.toISOString() || null,
+        }
+      : null;
+  }
+  async saveMembershipOrder(order: MembershipOrder): Promise<void> {
+    await this.ensureUser(order.userId);
+    const data = {
+      ...order,
+      createdAt: new Date(order.createdAt),
+      updatedAt: new Date(order.updatedAt),
+      paidAt: order.paidAt ? new Date(order.paidAt) : null,
+    };
+    await this.executor.membershipOrder.upsert({
+      where: { id: order.id },
+      create: data,
+      update: data,
+    });
+  }
+  transactionForUser<T>(
+    userId: string,
+    work: (repository: SubscriptionsRepository) => Promise<T>,
+  ): Promise<T> {
+    return this.locked(userId, work);
+  }
   async transaction<T>(
     work: (repository: SubscriptionsRepository) => Promise<T>,
   ): Promise<T> {

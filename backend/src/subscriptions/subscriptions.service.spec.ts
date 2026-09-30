@@ -88,6 +88,20 @@ describe('SubscriptionsService', () => {
     );
   });
 
+  it('serializes concurrent creation at the free quota boundary', async () => {
+    const service = createService();
+    for (let index = 0; index < 4; index++)
+      await service.create('parallel-user', createInput(index));
+    const results = await Promise.allSettled([
+      service.create('parallel-user', createInput(4)),
+      service.create('parallel-user', createInput(5)),
+    ]);
+    expect(
+      results.filter((result) => result.status === 'fulfilled'),
+    ).toHaveLength(1);
+    expect((await service.getMembership('parallel-user')).quota.used).toBe(5);
+  });
+
   it('should soft-delete and restore without losing the record', async () => {
     const service = createService();
     const created = (await service.create('restore-user', createInput(1))) as {

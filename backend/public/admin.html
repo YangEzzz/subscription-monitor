@@ -441,6 +441,8 @@
               <option value="subscriptions">订阅记录</option>
               <option value="users">用户列表</option>
               <option value="notifications">通知记录</option>
+              <option value="memberships">会员权益</option>
+              <option value="membershipOrders">会员订单</option>
             </select>
           </div>
           <form id="searchform" novalidate>
@@ -506,6 +508,23 @@
       if (localFile)
         document.querySelector('.local').textContent = '本地文件访问';
       const schemas = {
+        memberships: [
+          ['userId', '用户 ID'],
+          ['status', '状态'],
+          ['plan', '方案'],
+          ['source', '权益来源'],
+          ['startedAt', '开通时间'],
+        ],
+        membershipOrders: [
+          ['productName', '商品'],
+          ['userId', '用户 ID'],
+          ['amount', '金额'],
+          ['channel', '支付方式'],
+          ['status', '订单状态'],
+          ['paidAt', '完成时间'],
+          ['createdAt', '创建时间'],
+          ['id', '订单号'],
+        ],
         subscriptions: [
           ['name', '订阅名称'],
           ['userId', '用户 ID'],
@@ -533,6 +552,10 @@
         ],
       };
       const labels = {
+        refunded: '已撤销测试权益',
+        simulation: '模拟支付（测试）',
+        legacy: '历史权益',
+        paid: '模拟成功',
         active: '正常',
         trial: '试用',
         pending: '待确认',
@@ -582,7 +605,7 @@
         if (key === 'amount')
           return `${row.currency} ${Number(value).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
         if (key === 'notificationEnabled') return value ? '已开启' : '已关闭';
-        if (key === 'createdAt' || key === 'deletedAt')
+        if (['createdAt', 'deletedAt', 'startedAt', 'paidAt'].includes(key))
           return new Intl.DateTimeFormat('zh-CN', {
             timeZone: 'Asia/Shanghai',
             year: 'numeric',

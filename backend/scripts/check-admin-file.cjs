@@ -50,10 +50,35 @@ async function main() {
       );
     } else if (url.pathname === '/admin/data') {
       const search = url.searchParams.get('search') || '';
+      const section = url.searchParams.get('section');
       const data =
-        url.searchParams.get('section') === 'subscriptions'
+        section === 'subscriptions'
           ? rows.filter((row) => row.name.includes(search))
-          : [];
+          : section === 'memberships'
+            ? [
+                {
+                  userId: 'test-user',
+                  status: 'active',
+                  plan: 'member',
+                  source: 'simulation',
+                  startedAt: '2026-10-01T00:00:00Z',
+                },
+              ]
+            : section === 'membershipOrders'
+              ? [
+                  {
+                    id: 'test-order',
+                    userId: 'test-user',
+                    productName: '永久会员',
+                    amount: 29.9,
+                    currency: 'CNY',
+                    channel: 'simulation',
+                    status: 'paid',
+                    createdAt: '2026-10-01T00:00:00Z',
+                    paidAt: '2026-10-01T00:00:00Z',
+                  },
+                ]
+              : [];
       const page = Number(url.searchParams.get('page'));
       res.end(
         JSON.stringify({
@@ -139,6 +164,16 @@ async function main() {
     await page.waitForFunction(
       () => document.querySelectorAll('#tbody tr').length === 20,
     );
+    await page.locator('#section').selectOption('memberships');
+    await page.waitForFunction(() =>
+      document.getElementById('tbody').textContent.includes('test-user'),
+    );
+    assert.match(await page.locator('#tbody').textContent(), /模拟/);
+    await page.locator('#section').selectOption('membershipOrders');
+    await page.waitForFunction(() =>
+      document.getElementById('tbody').textContent.includes('test-order'),
+    );
+    assert.match(await page.locator('#tbody').textContent(), /29\.90/);
     await page.locator('#section').selectOption('notifications');
     await page.waitForFunction(() =>
       document.getElementById('tbody').textContent.includes('暂无记录'),
