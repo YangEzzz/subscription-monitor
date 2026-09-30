@@ -81,8 +81,8 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     })
   } : {}, {
     o: $props.isMember ? 1 : "",
-    p: common_vendor.o(($event) => _ctx.$emit("open-membership"), "6e"),
-    q: common_vendor.o(($event) => _ctx.$emit("notification-change", true), "ed"),
+    p: common_vendor.o(($event) => _ctx.$emit("open-membership"), "f4"),
+    q: common_vendor.o(($event) => _ctx.$emit("notification-change", true), "91"),
     r: common_vendor.p({
       icon: "notification",
       ["icon-class"]: "green-bg",
@@ -91,7 +91,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       description: "仅站内待办，尚未接入微信发送",
       action: true
     }),
-    s: common_vendor.o(($event) => _ctx.$emit("open-reminder-settings"), "e6"),
+    s: common_vendor.o(($event) => _ctx.$emit("open-reminder-settings"), "31"),
     t: common_vendor.p({
       icon: "calendar",
       ["icon-class"]: "orange-bg",
@@ -100,7 +100,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       description: `提前 ${$props.settings.defaultReminders.join("、")} 天 · ${$props.settings.reminderTime}`,
       action: true
     }),
-    v: common_vendor.o(($event) => _ctx.$emit("weekly-summary-change", $event), "18"),
+    v: common_vendor.o(($event) => _ctx.$emit("weekly-summary-change", $event), "cf"),
     w: common_vendor.p({
       icon: "email",
       ["icon-class"]: "blue-bg",
@@ -119,8 +119,8 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       action: true
     }),
     y: $props.currencies,
-    z: common_vendor.o((...args) => $options.changeDefaultCurrency && $options.changeDefaultCurrency(...args), "e4"),
-    A: common_vendor.o(($event) => _ctx.$emit("export"), "c4"),
+    z: common_vendor.o((...args) => $options.changeDefaultCurrency && $options.changeDefaultCurrency(...args), "0d"),
+    A: common_vendor.o(($event) => _ctx.$emit("export"), "22"),
     B: common_vendor.p({
       icon: "download",
       ["icon-class"]: "green-bg",
@@ -129,7 +129,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       description: "生成 CSV 或复制表格数据",
       action: true
     }),
-    C: common_vendor.o(($event) => _ctx.$emit("trash"), "7a"),
+    C: common_vendor.o(($event) => _ctx.$emit("trash"), "6b"),
     D: common_vendor.p({
       icon: "trash",
       ["icon-class"]: "orange-bg",
@@ -138,16 +138,16 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       description: $props.deletedSubscriptions.length ? `${$props.deletedSubscriptions.length} 条可恢复订阅` : "暂无已删除订阅",
       action: true
     }),
-    E: common_vendor.o(($event) => _ctx.$emit("privacy"), "50"),
+    E: common_vendor.o(($event) => _ctx.$emit("privacy"), "c7"),
     F: common_vendor.p({
       icon: "locked",
       ["icon-class"]: "blue-bg",
       ["icon-color"]: "#3c7fc1",
       title: "隐私与数据说明",
-      description: "了解当前演示的数据边界",
+      description: "了解账号登录与数据保存",
       action: true
     }),
-    G: common_vendor.o(($event) => _ctx.$emit("reset-demo"), "9a"),
+    G: common_vendor.o(($event) => _ctx.$emit("reset-demo"), "51"),
     H: common_vendor.p({
       icon: "refresh",
       ["icon-class"]: "red-bg",

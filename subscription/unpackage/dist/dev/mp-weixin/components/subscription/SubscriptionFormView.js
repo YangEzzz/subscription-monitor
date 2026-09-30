@@ -27,6 +27,7 @@ const _sfc_main = {
     logoColors: { type: Array, default: () => [] },
     reminderOptions: { type: Array, default: () => [] },
     formError: { type: String, default: "" },
+    busy: { type: Boolean, default: false },
     todayKey: { type: String, required: true },
     formReminderPreview: { type: String, default: "未设置提醒" },
     formatDate: { type: Function, required: true },
@@ -192,8 +193,10 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       size: "20",
       color: "#ffffff"
     }),
-    aj: common_vendor.t($props.editingId ? "保存修改" : "保存订阅"),
-    ak: common_vendor.o(($event) => _ctx.$emit("save"), "dd")
+    aj: common_vendor.t($props.busy ? "正在保存" : $props.editingId ? "保存修改" : "保存订阅"),
+    ak: $props.busy,
+    al: $props.busy ? "true" : "false",
+    am: common_vendor.o(($event) => _ctx.$emit("save"), "6e")
   });
 }
 const Component = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render]]);

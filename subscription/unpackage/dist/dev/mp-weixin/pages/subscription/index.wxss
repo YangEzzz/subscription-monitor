@@ -10,14 +10,3 @@
   margin: 0;
   font-size: 12px;
 }
-.api-error.data-v-a355b6de {
-  margin: 12px 20px;
-  padding: 16px;
-  background: #fff0eb;
-  color: #a13e2a;
-  border-radius: 12px;
-  font-size: 14px;
-}
-.api-error button.data-v-a355b6de {
-  margin-top: 12px;
-}
