@@ -4,10 +4,13 @@ import {
   UserSettings,
 } from '../domain/subscription';
 import { NotificationRepository } from '../../notifications/notification.repository';
+import { AdminOverview, AdminPage, AdminQuery } from './admin-read';
 
 export const SUBSCRIPTIONS_REPOSITORY = Symbol('SUBSCRIPTIONS_REPOSITORY');
 
 export interface SubscriptionsRepository extends NotificationRepository {
+  adminOverview(): Promise<AdminOverview>;
+  adminRead(query: AdminQuery): Promise<AdminPage>;
   listSubscriptions(userId: string): Promise<SubscriptionRecord[]>;
   findSubscription(
     userId: string,

@@ -6,6 +6,7 @@ import {
 } from '../domain/subscription';
 import { SubscriptionsRepository } from './subscriptions.repository';
 import { randomUUID } from 'node:crypto';
+import { AdminOverview, AdminPage, AdminQuery } from './admin-read';
 import {
   AuthorizationResult,
   DeliveryInput,
@@ -29,6 +30,91 @@ export class MemorySubscriptionsRepository implements SubscriptionsRepository {
     { id: string; userId: string; templateId: string; status: string }
   >();
   private deliveries = new Map<string, NotificationDelivery>();
+
+  private adminUsers(): string[] {
+    return [
+      ...new Set([
+        ...this.identities.keys(),
+        ...this.settings.keys(),
+        ...this.memberships.keys(),
+        ...this.records.map((row) => row.userId),
+      ]),
+    ].sort();
+  }
+
+  adminOverview(): Promise<AdminOverview> {
+    return Promise.resolve({
+      users: this.adminUsers().length,
+      subscriptions: this.records.filter((row) => !row.deletedAt && !row.isDemo)
+        .length,
+      notifications: this.deliveries.size,
+      failedNotifications: [...this.deliveries.values()].filter((row) =>
+        ['failed', 'unknown'].includes(row.status),
+      ).length,
+    });
+  }
+
+  adminRead({ section, page, search }: AdminQuery): Promise<AdminPage> {
+    let rows: Record<string, unknown>[];
+    if (section === 'users')
+      rows = this.adminUsers().map((id) => ({
+        id,
+        createdAt: null,
+        subscriptions: this.records.filter(
+          (row) => row.userId === id && !row.deletedAt && !row.isDemo,
+        ).length,
+        notificationEnabled:
+          this.settings.get(id)?.notificationEnabled ?? false,
+        plan: this.memberships.get(id)?.plan ?? 'free',
+      }));
+    else if (section === 'subscriptions')
+      rows = this.records
+        .filter((row) => !row.isDemo)
+        .map((row) => ({
+          id: row.id,
+          userId: row.userId,
+          name: row.name,
+          amount: row.amount,
+          currency: row.currency,
+          status: row.status,
+          nextBillingDate: row.nextBillingDate,
+          deletedAt: row.deletedAt,
+        }));
+    else
+      rows = [...this.deliveries.values()]
+        .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+        .map((row) => ({
+          id: row.id,
+          userId: row.userId,
+          subscriptionName: row.subscriptionName,
+          billingDate: row.billingDate,
+          status: row.status,
+          attempts: row.attempts,
+          errorCode: row.errorCode,
+          createdAt: row.createdAt,
+        }));
+    const fields =
+      section === 'users'
+        ? ['id']
+        : section === 'subscriptions'
+          ? ['id', 'name', 'userId']
+          : ['userId', 'subscriptionName', 'errorCode'];
+    rows = rows.filter((row) =>
+      fields.some((key) =>
+        String(row[key] ?? '')
+          .toLowerCase()
+          .includes(search.toLowerCase()),
+      ),
+    );
+    return Promise.resolve(
+      clone({
+        items: rows.slice((page - 1) * 20, page * 20),
+        total: rows.length,
+        page,
+        pageSize: 20,
+      }),
+    );
+  }
 
   saveWechatIdentity(identity: WechatIdentity): Promise<void> {
     this.identities.set(identity.userId, clone(identity));

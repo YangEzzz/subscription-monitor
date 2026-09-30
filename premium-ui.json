@@ -1,11 +1,13 @@
 {
   "profile": "product-admin",
   "sourceRoots": [
+    "backend/public",
     "subscription/components/subscription",
     "subscription/pages/subscription",
     "subscription/styles"
   ],
   "canonicalMap": "UX-CONTRACT.md",
+  "ownership": { "Select/Listbox": "native" },
   "requiredCapabilities": [
     "Select/Listbox",
     "Date",

@@ -11,6 +11,7 @@ import {
 } from '../domain/subscription';
 import { SubscriptionsRepository } from './subscriptions.repository';
 import { randomUUID } from 'node:crypto';
+import { AdminOverview, AdminPage, AdminQuery } from './admin-read';
 import {
   AuthorizationResult,
   DeliveryInput,
@@ -100,6 +101,132 @@ export class PrismaSubscriptionsRepository
 
   static create(client: PrismaClient): PrismaSubscriptionsRepository {
     return new PrismaSubscriptionsRepository(client, client);
+  }
+
+  async adminOverview(): Promise<AdminOverview> {
+    const [users, subscriptions, notifications, failedNotifications] =
+      await Promise.all([
+        this.executor.appUser.count(),
+        this.executor.subscription.count({
+          where: { deletedAt: null, isDemo: false },
+        }),
+        this.executor.notificationDelivery.count(),
+        this.executor.notificationDelivery.count({
+          where: { status: { in: ['failed', 'unknown'] } },
+        }),
+      ]);
+    return { users, subscriptions, notifications, failedNotifications };
+  }
+
+  async adminRead({ section, page, search }: AdminQuery): Promise<AdminPage> {
+    const paging = { skip: (page - 1) * 20, take: 20 };
+    const contains = { contains: search, mode: 'insensitive' as const };
+    if (section === 'users') {
+      const where = search ? { id: contains } : {};
+      const [rows, total] = await Promise.all([
+        this.executor.appUser.findMany({
+          where,
+          ...paging,
+          orderBy: [{ createdAt: 'desc' }, { id: 'asc' }],
+          select: {
+            id: true,
+            createdAt: true,
+            settings: { select: { notificationEnabled: true } },
+            membership: { select: { plan: true } },
+            _count: {
+              select: {
+                subscriptions: { where: { deletedAt: null, isDemo: false } },
+              },
+            },
+          },
+        }),
+        this.executor.appUser.count({ where }),
+      ]);
+      return {
+        items: rows.map((row) => ({
+          id: row.id,
+          createdAt: row.createdAt,
+          subscriptions: row._count.subscriptions,
+          notificationEnabled: row.settings?.notificationEnabled ?? false,
+          plan: row.membership?.plan ?? 'free',
+        })),
+        total,
+        page,
+        pageSize: 20,
+      };
+    }
+    if (section === 'subscriptions') {
+      const where = {
+        isDemo: false,
+        ...(search
+          ? { OR: [{ name: contains }, { userId: contains }, { id: contains }] }
+          : {}),
+      };
+      const [rows, total] = await Promise.all([
+        this.executor.subscription.findMany({
+          where,
+          ...paging,
+          orderBy: [{ createdAt: 'desc' }, { id: 'asc' }],
+          select: {
+            id: true,
+            userId: true,
+            name: true,
+            amount: true,
+            currency: true,
+            status: true,
+            nextBillingDate: true,
+            deletedAt: true,
+          },
+        }),
+        this.executor.subscription.count({ where }),
+      ]);
+      return {
+        items: rows.map((row) => ({
+          ...row,
+          amount: row.amount?.toNumber() ?? null,
+          nextBillingDate: dateKey(row.nextBillingDate),
+        })),
+        total,
+        page,
+        pageSize: 20,
+      };
+    }
+    const where = search
+      ? {
+          OR: [
+            { userId: contains },
+            { subscriptionName: contains },
+            { errorCode: contains },
+          ],
+        }
+      : {};
+    const [rows, total] = await Promise.all([
+      this.executor.notificationDelivery.findMany({
+        where,
+        ...paging,
+        orderBy: [{ createdAt: 'desc' }, { id: 'asc' }],
+        select: {
+          id: true,
+          userId: true,
+          subscriptionName: true,
+          billingDate: true,
+          status: true,
+          attempts: true,
+          errorCode: true,
+          createdAt: true,
+        },
+      }),
+      this.executor.notificationDelivery.count({ where }),
+    ]);
+    return {
+      items: rows.map((row) => ({
+        ...row,
+        billingDate: dateKey(row.billingDate),
+      })),
+      total,
+      page,
+      pageSize: 20,
+    };
   }
 
   private async locked<T>(

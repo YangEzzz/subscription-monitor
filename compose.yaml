@@ -46,9 +46,12 @@ services:
 
   api:
     <<: [*api-image, *api-environment]
+    environment:
+      LOCAL_ADMIN_BIND_HOST: 0.0.0.0
     init: true
     ports:
       - "127.0.0.1:3001:3001"
+      - "127.0.0.1:3002:3002"
     depends_on:
       postgres:
         condition: service_healthy
