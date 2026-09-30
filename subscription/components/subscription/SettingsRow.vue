@@ -1,5 +1,5 @@
 <template>
-  <view class="setting-row" @tap="$emit('tap')">
+  <view class="setting-row" :aria-disabled="disabled" @tap="!disabled && $emit('tap')">
     <view class="setting-icon" :class="iconClass"
       ><uni-icons :type="icon" size="18" :color="iconColor"
     /></view>
@@ -11,6 +11,7 @@
       v-if="switchable"
       :key="switchRevision"
       :checked="checked"
+      :disabled="disabled"
       color="#16834d"
       @change="changeSwitch"
     />
@@ -35,6 +36,7 @@ export default {
     },
   },
   props: {
+    disabled: { type: Boolean, default: false },
     icon: { type: String, required: true },
     iconClass: { type: String, default: "" },
     iconColor: { type: String, default: "#177e4b" },

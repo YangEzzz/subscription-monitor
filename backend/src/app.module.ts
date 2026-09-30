@@ -12,6 +12,7 @@ import appConfig from './config/app.config';
 import { HealthModule } from './health/health.module';
 import { AuthModule } from './auth/auth.module';
 import { SubscriptionsModule } from './subscriptions/subscriptions.module';
+import { NotificationsModule } from './notifications/notifications.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { SubscriptionsModule } from './subscriptions/subscriptions.module';
     }),
     AuthModule,
     SubscriptionsModule,
+    NotificationsModule,
     HealthModule,
   ],
   providers: [

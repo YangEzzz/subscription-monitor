@@ -13,6 +13,9 @@ const _sfc_main = {
     "handle-reminder"
   ],
   props: {
+    notificationReady: { type: Boolean, default: false },
+    notificationDescription: { type: String, default: "" },
+    notificationBusy: { type: Boolean, default: false },
     settings: { type: Object, required: true },
     navigationBarHeight: { type: Number, default: 0 },
     next30TotalText: { type: String, default: "¥0.00" },
@@ -49,28 +52,31 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     f: common_vendor.t($props.settings.amountVisible ? $props.monthlyAverageText : "•••"),
     g: common_vendor.t($props.activeSubscriptions.length),
     h: common_vendor.t($props.upcoming7.length),
-    i: !$props.settings.notificationEnabled
-  }, !$props.settings.notificationEnabled ? {
+    i: !$props.notificationReady
+  }, !$props.notificationReady ? {
     j: common_vendor.p({
       type: "notification",
       size: "20",
       color: "#a86210"
     }),
-    k: common_vendor.o(($event) => _ctx.$emit("enable-notification"), "85"),
-    l: common_vendor.o(($event) => _ctx.$emit("enable-notification"), "09")
+    k: common_vendor.t($props.notificationDescription),
+    l: common_vendor.t($props.notificationBusy ? "确认中" : "开启"),
+    m: $props.notificationBusy,
+    n: common_vendor.o(($event) => _ctx.$emit("enable-notification"), "c6"),
+    o: common_vendor.o(($event) => _ctx.$emit("enable-notification"), "dd")
   } : {}, {
-    m: common_vendor.t($props.activeSubscriptions.length),
-    n: common_vendor.p({
+    p: common_vendor.t($props.activeSubscriptions.length),
+    q: common_vendor.p({
       type: "right",
       size: "14",
       color: "#747b76"
     }),
-    o: common_vendor.o(($event) => _ctx.$emit("switch-all"), "7e"),
-    p: $props.upcoming7.length
+    r: common_vendor.o(($event) => _ctx.$emit("switch-all"), "ae"),
+    s: $props.upcoming7.length
   }, $props.upcoming7.length ? {
-    q: common_vendor.t($props.upcoming7.length)
+    t: common_vendor.t($props.upcoming7.length)
   } : {}, {
-    r: common_vendor.f($props.upcoming7, (item, k0, i0) => {
+    v: common_vendor.f($props.upcoming7, (item, k0, i0) => {
       return {
         a: item.id,
         b: common_vendor.o(($event) => _ctx.$emit("open-detail", item), item.id),
@@ -80,11 +86,11 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
         })
       };
     }),
-    s: $props.upcoming30Later.length
+    w: $props.upcoming30Later.length
   }, $props.upcoming30Later.length ? {
-    t: common_vendor.t($props.upcoming30Later.length)
+    x: common_vendor.t($props.upcoming30Later.length)
   } : {}, {
-    v: common_vendor.f($props.upcoming30Later.slice(0, 3), (item, k0, i0) => {
+    y: common_vendor.f($props.upcoming30Later.slice(0, 3), (item, k0, i0) => {
       return {
         a: item.id,
         b: common_vendor.o(($event) => _ctx.$emit("open-detail", item), item.id),
@@ -94,17 +100,17 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
         })
       };
     }),
-    w: !$props.next30Subscriptions.length
+    z: !$props.next30Subscriptions.length
   }, !$props.next30Subscriptions.length ? {
-    x: common_vendor.o(($event) => _ctx.$emit("open-form"), "26")
+    A: common_vendor.o(($event) => _ctx.$emit("open-form"), "80")
   } : {}, {
-    y: $props.next30Subscriptions.length > 4
+    B: $props.next30Subscriptions.length > 4
   }, $props.next30Subscriptions.length > 4 ? {
-    z: common_vendor.t($props.next30Subscriptions.length),
-    A: common_vendor.o(($event) => _ctx.$emit("switch-all"), "91")
+    C: common_vendor.t($props.next30Subscriptions.length),
+    D: common_vendor.o(($event) => _ctx.$emit("switch-all"), "76")
   } : {}, {
-    B: common_vendor.t($props.actionableReminders.length),
-    C: common_vendor.f($props.actionableReminders, (reminder, k0, i0) => {
+    E: common_vendor.t($props.actionableReminders.length),
+    F: common_vendor.f($props.actionableReminders, (reminder, k0, i0) => {
       return common_vendor.e({
         a: "e09cc250-5-" + i0,
         b: common_vendor.p({
@@ -128,12 +134,12 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
         j: common_vendor.o(($event) => _ctx.$emit("handle-reminder", reminder), reminder.key)
       });
     }),
-    D: common_vendor.p({
+    G: common_vendor.p({
       type: "plus",
       size: "20",
       color: "#ffffff"
     }),
-    E: common_vendor.o(($event) => _ctx.$emit("open-form"), "9c")
+    H: common_vendor.o(($event) => _ctx.$emit("open-form"), "71")
   });
 }
 const Component = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render]]);

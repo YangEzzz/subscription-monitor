@@ -1,7 +1,4 @@
-import {
-  Prisma,
-  PrismaClient,
-} from '../../generated/prisma/client';
+import { Prisma, PrismaClient } from '../../generated/prisma/client';
 import { OnApplicationShutdown } from '@nestjs/common';
 import {
   BillingCycle,
@@ -13,6 +10,14 @@ import {
   UserSettings,
 } from '../domain/subscription';
 import { SubscriptionsRepository } from './subscriptions.repository';
+import { randomUUID } from 'node:crypto';
+import {
+  AuthorizationResult,
+  DeliveryInput,
+  DeliveryStatus,
+  NotificationDelivery,
+  WechatIdentity,
+} from '../../notifications/notification.repository';
 
 type PersistedSubscription = Prisma.SubscriptionGetPayload<{
   include: { reminders: true; renewalHistory: true };
@@ -20,7 +25,13 @@ type PersistedSubscription = Prisma.SubscriptionGetPayload<{
 
 type PrismaExecutor = Pick<
   Prisma.TransactionClient,
-  'appUser' | 'subscription' | 'userSettings' | 'membership'
+  | 'appUser'
+  | 'subscription'
+  | 'userSettings'
+  | 'membership'
+  | 'notificationGrant'
+  | 'notificationDelivery'
+  | '$queryRaw'
 >;
 
 function dateKey(value: Date): string {
@@ -60,7 +71,9 @@ function toRecord(value: PersistedSubscription): SubscriptionRecord {
     deletedAt: value.deletedAt?.toISOString() ?? null,
     isDemo: value.isDemo,
     renewalHistory: value.renewalHistory
-      .sort((left, right) => left.renewedAt.getTime() - right.renewedAt.getTime())
+      .sort(
+        (left, right) => left.renewedAt.getTime() - right.renewedAt.getTime(),
+      )
       .map((event) => ({
         id: event.id,
         renewedAt: event.renewedAt.toISOString(),
@@ -87,6 +100,250 @@ export class PrismaSubscriptionsRepository
 
   static create(client: PrismaClient): PrismaSubscriptionsRepository {
     return new PrismaSubscriptionsRepository(client, client);
+  }
+
+  private async locked<T>(
+    userId: string,
+    work: (repository: PrismaSubscriptionsRepository) => Promise<T>,
+  ): Promise<T> {
+    if (this.rootClient)
+      return this.rootClient.$transaction(async (tx) => {
+        const repository = new PrismaSubscriptionsRepository(tx);
+        await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended(${userId}, 0))::text`;
+        return work(repository);
+      });
+    return work(this);
+  }
+
+  async saveWechatIdentity(identity: WechatIdentity): Promise<void> {
+    const data = { wechatAppId: identity.appId, wechatOpenId: identity.openId };
+    await this.executor.appUser.upsert({
+      where: { id: identity.userId },
+      create: { id: identity.userId, ...data },
+      update: data,
+    });
+  }
+
+  async findWechatIdentity(userId: string): Promise<WechatIdentity | null> {
+    const row = await this.executor.appUser.findUnique({
+      where: { id: userId },
+    });
+    return row?.wechatAppId && row.wechatOpenId
+      ? { userId, appId: row.wechatAppId, openId: row.wechatOpenId }
+      : null;
+  }
+
+  async recordNotificationAuthorization(
+    userId: string,
+    requestId: string,
+    templateId: string,
+    result: AuthorizationResult,
+  ): Promise<void> {
+    await this.locked(userId, async (repository) => {
+      const executor = repository.executor;
+      const existing = await executor.notificationGrant.findUnique({
+        where: { userId_requestId: { userId, requestId } },
+      });
+      if (existing) return;
+      await executor.notificationGrant.create({
+        data: {
+          id: randomUUID(),
+          userId,
+          requestId,
+          templateId,
+          result,
+          status: result === 'accept' ? 'available' : 'revoked',
+        },
+      });
+      if (result === 'accept')
+        await executor.userSettings.update({
+          where: { userId },
+          data: { notificationEnabled: true },
+        });
+      if (result === 'ban') {
+        await executor.notificationGrant.updateMany({
+          where: { userId, templateId, status: 'available' },
+          data: { status: 'revoked' },
+        });
+        await executor.userSettings.update({
+          where: { userId },
+          data: { notificationEnabled: false },
+        });
+      }
+    });
+  }
+
+  countNotificationCredits(
+    userId: string,
+    templateId: string,
+  ): Promise<number> {
+    return this.executor.notificationGrant.count({
+      where: { userId, templateId, status: 'available' },
+    });
+  }
+
+  async listNotificationUsers(afterId = '', limit = 100): Promise<string[]> {
+    const rows = await this.executor.appUser.findMany({
+      where: {
+        id: { gt: afterId },
+        wechatOpenId: { not: null },
+        settings: { notificationEnabled: true },
+      },
+      orderBy: { id: 'asc' },
+      take: limit,
+      select: { id: true },
+    });
+    return rows.map((row) => row.id);
+  }
+
+  async claimNotificationDelivery(
+    input: DeliveryInput,
+    now: Date,
+  ): Promise<NotificationDelivery | null> {
+    return this.locked(input.userId, async (repository) => {
+      const executor = repository.executor;
+      const settings = await repository.findSettings(input.userId);
+      const record = await repository.findSubscription(
+        input.userId,
+        input.subscriptionId,
+      );
+      if (
+        !settings?.notificationEnabled ||
+        !record ||
+        record.deletedAt ||
+        record.isDemo ||
+        record.amount === null ||
+        ['paused', 'cancelled', 'archived'].includes(record.status) ||
+        record.nextBillingDate !== input.billingDate ||
+        !record.reminders.includes(input.offset)
+      )
+        return null;
+      const key = {
+        userId: input.userId,
+        subscriptionId: input.subscriptionId,
+        billingDate: toDate(input.billingDate),
+        offset: input.offset,
+      };
+      const previous = await executor.notificationDelivery.findUnique({
+        where: { userId_subscriptionId_billingDate_offset: key },
+      });
+      if (
+        previous &&
+        (previous.status !== 'failed' ||
+          !previous.nextAttemptAt ||
+          previous.nextAttemptAt > now ||
+          previous.attempts >= 3)
+      )
+        return null;
+      const grant = await executor.notificationGrant.findFirst({
+        where: {
+          userId: input.userId,
+          templateId: input.templateId,
+          status: 'available',
+        },
+        orderBy: { createdAt: 'asc' },
+      });
+      if (!grant) return null;
+      await executor.notificationGrant.update({
+        where: { id: grant.id },
+        data: { status: 'consumed' },
+      });
+      const data = {
+        ...input,
+        billingDate: toDate(input.billingDate),
+        grantId: grant.id,
+        status: 'sending',
+        errorCode: null,
+        nextAttemptAt: null,
+        updatedAt: now,
+      };
+      const row = previous
+        ? await executor.notificationDelivery.update({
+            where: { id: previous.id },
+            data: { ...data, attempts: { increment: 1 } },
+          })
+        : await executor.notificationDelivery.create({
+            data: { id: randomUUID(), ...data, createdAt: now },
+          });
+      return this.toDelivery(row);
+    });
+  }
+
+  async finishNotificationDelivery(
+    id: string,
+    status: DeliveryStatus,
+    errorCode: string | null,
+    retryAt?: Date,
+  ): Promise<void> {
+    const row = await this.executor.notificationDelivery.findUnique({
+      where: { id },
+    });
+    if (!row) return;
+    await this.locked(row.userId, async (repository) => {
+      const executor = repository.executor;
+      const delivery = await executor.notificationDelivery.findUnique({
+        where: { id },
+      });
+      if (!delivery || delivery.status !== 'sending') return;
+      await executor.notificationDelivery.update({
+        where: { id },
+        data: { status, errorCode, nextAttemptAt: retryAt ?? null },
+      });
+      if (status === 'failed' || status === 'skipped')
+        await executor.notificationGrant.updateMany({
+          where: { id: delivery.grantId, status: 'consumed' },
+          data: { status: 'available' },
+        });
+      if (errorCode === '43101') {
+        await executor.notificationGrant.updateMany({
+          where: {
+            userId: delivery.userId,
+            templateId: delivery.templateId,
+            status: 'available',
+          },
+          data: { status: 'revoked' },
+        });
+        await executor.userSettings.update({
+          where: { userId: delivery.userId },
+          data: { notificationEnabled: false },
+        });
+      }
+    });
+  }
+
+  async recoverNotificationDeliveries(before: Date): Promise<void> {
+    await this.executor.notificationDelivery.updateMany({
+      where: { status: 'sending', updatedAt: { lt: before } },
+      data: {
+        status: 'unknown',
+        errorCode: 'DELIVERY_UNKNOWN',
+        nextAttemptAt: null,
+      },
+    });
+  }
+
+  private toDelivery(
+    row: Prisma.NotificationDeliveryGetPayload<object>,
+  ): NotificationDelivery {
+    return {
+      ...row,
+      status: row.status as DeliveryStatus,
+      billingDate: dateKey(row.billingDate),
+      nextAttemptAt: row.nextAttemptAt?.toISOString() ?? null,
+      createdAt: row.createdAt.toISOString(),
+      updatedAt: row.updatedAt.toISOString(),
+    };
+  }
+
+  async listNotificationDeliveries(
+    userId: string,
+  ): Promise<NotificationDelivery[]> {
+    const rows = await this.executor.notificationDelivery.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+      take: 20,
+    });
+    return rows.map((row) => this.toDelivery(row));
   }
 
   async listSubscriptions(userId: string): Promise<SubscriptionRecord[]> {
@@ -212,7 +469,9 @@ export class PrismaSubscriptionsRepository
   }
 
   async findMembership(userId: string): Promise<Membership | null> {
-    const row = await this.executor.membership.findUnique({ where: { userId } });
+    const row = await this.executor.membership.findUnique({
+      where: { userId },
+    });
     return row
       ? {
           userId: row.userId,

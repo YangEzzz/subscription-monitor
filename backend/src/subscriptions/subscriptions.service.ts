@@ -817,6 +817,13 @@ export class SubscriptionsService {
   }
 
   async updateSettings(userId: string | undefined, dto: UpdateSettingsDto) {
+    if (dto.timezone !== undefined) {
+      try {
+        new Intl.DateTimeFormat('en', { timeZone: dto.timezone }).format();
+      } catch {
+        throw new BadRequestException('无效的提醒时区');
+      }
+    }
     return this.repository.transaction(async (repository) => {
     const settings = await this.getSettingsRecord(
       this.normalizeUserId(userId),

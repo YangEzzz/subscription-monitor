@@ -5,12 +5,14 @@ import { API_CONFIG } from '../api/config.js'
 import { subscriptionApi as api } from '../api/subscriptions.js'
 import { createSubscriptionPageState, subscriptionComputed, subscriptionMethods } from '../pages/subscription/subscription-page-logic.js'
 import { ensureSession, clearSession } from '../api/auth.js'
+import { notificationApi } from '../api/notifications.js'
 
 process.env.NODE_ENV = 'test'
 process.env.PERSISTENCE_DRIVER = 'memory'
 process.env.WECHAT_APP_ID = 'wx-integration-app'
 process.env.WECHAT_APP_SECRET = 'integration-provider-secret'
 process.env.AUTH_TOKEN_SECRET = 'integration-session-secret-with-more-than-32-bytes'
+process.env.WECHAT_REMINDER_TEMPLATE_ID = 'integration-template'
 
 const require = createRequire(new URL('../../backend/package.json', import.meta.url))
 require('reflect-metadata')
@@ -57,6 +59,10 @@ test('page and uni.request adapter complete the workflow against real Nest HTTP 
 		}
 		assert.equal((await fetch(`${API_CONFIG.baseUrl}/auth/wechat`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' })).status, 422)
 		const session = await ensureSession()
+		assert.equal((await notificationApi.status()).identityLinked, true)
+		const receipt = { requestId: 'abc12345-1234-4567-8abc-123456789012', templateId: 'integration-template', result: 'accept' }
+		assert.equal((await notificationApi.authorize(receipt)).credits, 1)
+		assert.equal((await notificationApi.authorize(receipt)).credits, 1)
 		const invalidResponse = await fetch(`${API_CONFIG.baseUrl}/subscriptions`, {
 			method: 'POST',
 			headers: { 'content-type': 'application/json', Authorization: `Bearer ${session.accessToken}`, 'x-request-id': 'integration-validation-1' },
@@ -132,6 +138,8 @@ test('page and uni.request adapter complete the workflow against real Nest HTTP 
 		assert.equal((await api.settings()).reminderTime, '09:00')
 		assert.equal((await api.membership()).status, 'free')
 		const otherSession = await ensureSession()
+		assert.equal((await notificationApi.status()).credits, 0)
+		assert.equal((await notificationApi.status()).recentDeliveries.length, 0)
 		const forged = await fetch(`${API_CONFIG.baseUrl}/subscriptions`, { headers: { Authorization: `Bearer ${otherSession.accessToken}`, 'x-demo-user-id': session.user.id } })
 		assert.equal((await forged.json()).meta.total, 0)
 	} finally { await app.close(); globalThis.fetch = realFetch }

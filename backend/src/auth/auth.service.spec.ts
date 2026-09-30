@@ -1,6 +1,7 @@
 import { ConfigService } from '@nestjs/config';
 import { AuthService } from './auth.service';
 import { createHmac } from 'node:crypto';
+import { MemorySubscriptionsRepository } from '../subscriptions/repositories/memory-subscriptions.repository';
 
 describe('WeChat authentication', () => {
   const secret = 'test-session-secret-with-more-than-32-bytes';
@@ -16,17 +17,15 @@ describe('WeChat authentication', () => {
   let fetchMock: jest.SpyInstance;
 
   beforeEach(() => {
-    auth = new AuthService(config);
-    fetchMock = jest
-      .spyOn(global, 'fetch')
-      .mockResolvedValue({
-        ok: true,
-        json: () =>
-          Promise.resolve({
-            openid: 'openid-1',
-            session_key: 'private-session-key',
-          }),
-      } as Response);
+    auth = new AuthService(config, new MemorySubscriptionsRepository([]));
+    fetchMock = jest.spyOn(global, 'fetch').mockResolvedValue({
+      ok: true,
+      json: () =>
+        Promise.resolve({
+          openid: 'openid-1',
+          session_key: 'private-session-key',
+        }),
+    } as Response);
   });
   afterEach(() => jest.restoreAllMocks());
 
@@ -84,7 +83,10 @@ describe('WeChat authentication', () => {
 
   it('never issues a session when credentials or the signing key are missing', async () => {
     await expect(
-      new AuthService(new ConfigService({ app: {} })).login('code'),
+      new AuthService(
+        new ConfigService({ app: {} }),
+        new MemorySubscriptionsRepository([]),
+      ).login('code'),
     ).rejects.toMatchObject({ status: 503 });
   });
 });

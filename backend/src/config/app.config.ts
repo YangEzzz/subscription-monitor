@@ -118,5 +118,16 @@ export default registerAs<AppConfig>('app', () => {
     wechatAppSecret: process.env.WECHAT_APP_SECRET,
     authTokenSecret: process.env.AUTH_TOKEN_SECRET,
     authTokenTtlSeconds,
+    wechatReminderTemplateId: process.env.WECHAT_REMINDER_TEMPLATE_ID,
+    wechatMessageState: ['formal', 'developer', 'trial'].includes(
+      process.env.WECHAT_MESSAGE_STATE || 'formal',
+    )
+      ? ((process.env.WECHAT_MESSAGE_STATE || 'formal') as
+          | 'formal'
+          | 'developer'
+          | 'trial')
+      : 'formal',
+    notificationSchedulerEnabled:
+      process.env.NOTIFICATION_SCHEDULER_ENABLED !== 'false',
   };
 });

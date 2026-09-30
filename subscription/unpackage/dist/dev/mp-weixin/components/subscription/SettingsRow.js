@@ -15,6 +15,7 @@ const _sfc_main = {
     }
   },
   props: {
+    disabled: { type: Boolean, default: false },
     icon: { type: String, required: true },
     iconClass: { type: String, default: "" },
     iconColor: { type: String, default: "#177e4b" },
@@ -47,16 +48,18 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   }, $props.switchable ? {
     f: $data.switchRevision,
     g: $props.checked,
-    h: common_vendor.o((...args) => $options.changeSwitch && $options.changeSwitch(...args), "54")
+    h: $props.disabled,
+    i: common_vendor.o((...args) => $options.changeSwitch && $options.changeSwitch(...args), "e9")
   } : $props.action ? {
-    j: common_vendor.p({
+    k: common_vendor.p({
       type: "right",
       size: "17",
       color: "#aab0ac"
     })
   } : {}, {
-    i: $props.action,
-    k: common_vendor.o(($event) => _ctx.$emit("tap"), "cb")
+    j: $props.action,
+    l: $props.disabled,
+    m: common_vendor.o(($event) => !$props.disabled && _ctx.$emit("tap"), "82")
   });
 }
 const Component = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render]]);

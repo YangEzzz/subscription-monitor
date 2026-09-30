@@ -62,6 +62,12 @@ model AppUser {
   subscriptions Subscription[]
   settings      UserSettings?
   membership    Membership?
+  wechatAppId   String?        @map("wechat_app_id") @db.VarChar(64)
+  wechatOpenId  String?        @map("wechat_open_id") @db.VarChar(128)
+  notificationGrants NotificationGrant[]
+  notificationDeliveries NotificationDelivery[]
+
+  @@unique([wechatAppId, wechatOpenId], map: "app_users_wechat_identity_key")
 
   @@map("app_users")
 }
@@ -95,12 +101,52 @@ model Subscription {
   deletedAt                  DateTime?              @map("deleted_at") @db.Timestamptz(3)
   reminders                  SubscriptionReminder[]
   renewalHistory             RenewalEvent[]
+  notificationDeliveries     NotificationDelivery[]
 
   @@index([userId, deletedAt], map: "subscriptions_user_deleted_idx")
   @@index([userId, nextBillingDate], map: "subscriptions_user_billing_idx")
   @@index([userId, category], map: "subscriptions_user_category_idx")
   @@index([userId, status], map: "subscriptions_user_status_idx")
   @@map("subscriptions")
+}
+
+model NotificationGrant {
+  id         String   @id @db.VarChar(64)
+  userId     String   @map("user_id") @db.VarChar(128)
+  user       AppUser  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  requestId  String   @map("request_id") @db.VarChar(64)
+  templateId String   @map("template_id") @db.VarChar(128)
+  result     String   @db.VarChar(16)
+  status     String   @db.VarChar(16)
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@unique([userId, requestId], map: "notification_grants_request_key")
+  @@index([userId, templateId, status], map: "notification_grants_available_idx")
+  @@map("notification_grants")
+}
+
+model NotificationDelivery {
+  id               String       @id @db.VarChar(64)
+  userId           String       @map("user_id") @db.VarChar(128)
+  user             AppUser      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subscriptionId   String       @map("subscription_id") @db.VarChar(64)
+  subscription     Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  subscriptionName String       @map("subscription_name") @db.VarChar(120)
+  billingDate      DateTime     @map("billing_date") @db.Date
+  offset           Int
+  templateId       String       @map("template_id") @db.VarChar(128)
+  grantId          String       @map("grant_id") @db.VarChar(64)
+  status           String       @db.VarChar(16)
+  attempts         Int          @default(1)
+  errorCode        String?      @map("error_code") @db.VarChar(64)
+  nextAttemptAt    DateTime?    @map("next_attempt_at") @db.Timestamptz(3)
+  createdAt        DateTime     @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt        DateTime     @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@unique([userId, subscriptionId, billingDate, offset], map: "notification_deliveries_period_key")
+  @@index([userId, createdAt], map: "notification_deliveries_user_idx")
+  @@index([status, updatedAt], map: "notification_deliveries_recovery_idx")
+  @@map("notification_deliveries")
 }
 
 model SubscriptionReminder {

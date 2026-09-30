@@ -51,10 +51,12 @@ export function createSubscriptionsRepository(
       provide: SUBSCRIPTIONS_REPOSITORY,
       inject: [ConfigService],
       useFactory: (configService: ConfigService) =>
-        createSubscriptionsRepository(configService.getOrThrow<AppConfig>('app')),
+        createSubscriptionsRepository(
+          configService.getOrThrow<AppConfig>('app'),
+        ),
     },
     SubscriptionsService,
   ],
-  exports: [SubscriptionsService],
+  exports: [SubscriptionsService, SUBSCRIPTIONS_REPOSITORY],
 })
 export class SubscriptionsModule {}

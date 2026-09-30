@@ -1,16 +1,25 @@
 import {
   Injectable,
+  Inject,
   ServiceUnavailableException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createHash, createHmac, timingSafeEqual } from 'node:crypto';
+import {
+  SUBSCRIPTIONS_REPOSITORY,
+  SubscriptionsRepository,
+} from '../subscriptions/repositories/subscriptions.repository';
 
 type SessionPayload = { sub: string; appid: string; exp: number };
 
 @Injectable()
 export class AuthService {
-  constructor(private readonly config: ConfigService) {}
+  constructor(
+    private readonly config: ConfigService,
+    @Inject(SUBSCRIPTIONS_REPOSITORY)
+    private readonly repository: SubscriptionsRepository,
+  ) {}
 
   private signingSecret(): string {
     const secret = this.config.get<string>('app.authTokenSecret') || '';
@@ -80,6 +89,11 @@ export class AuthService {
     const exp =
       Math.floor(Date.now() / 1000) +
       (this.config.get<number>('app.authTokenTtlSeconds') || 604800);
+    await this.repository.saveWechatIdentity({
+      userId: id,
+      appId: appid,
+      openId: result.openid,
+    });
     const body = Buffer.from(JSON.stringify({ sub: id, appid, exp })).toString(
       'base64url',
     );

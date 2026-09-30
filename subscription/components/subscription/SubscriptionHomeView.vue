@@ -52,7 +52,7 @@
     </view>
 
     <view
-      v-if="!settings.notificationEnabled"
+      v-if="!notificationReady"
       class="notice-banner"
       @tap="$emit('enable-notification')"
     >
@@ -60,16 +60,17 @@
         ><uni-icons type="notification" size="20" color="#a86210"
       /></view>
       <view class="notice-copy"
-        ><text class="notice-title">当前仅支持站内提醒</text
-        ><text class="notice-desc">微信消息发送尚未接入</text></view
+        ><text class="notice-title">开启微信续费通知</text
+        ><text class="notice-desc">{{ notificationDescription }}</text></view
       >
       <button
         role="button"
         tabindex="0"
         class="notice-action"
+        :disabled="notificationBusy"
         @tap.stop="$emit('enable-notification')"
       >
-        了解
+        {{ notificationBusy ? '确认中' : '开启' }}
       </button>
     </view>
 
@@ -185,6 +186,9 @@ export default {
     "handle-reminder",
   ],
   props: {
+    notificationReady: { type: Boolean, default: false },
+    notificationDescription: { type: String, default: '' },
+    notificationBusy: { type: Boolean, default: false },
     settings: { type: Object, required: true },
     navigationBarHeight: { type: Number, default: 0 },
     next30TotalText: { type: String, default: "¥0.00" },

@@ -3,9 +3,26 @@ const common_vendor = require("../../common/vendor.js");
 const api_subscriptions = require("../../api/subscriptions.js");
 const pages_subscription_subscriptionData = require("./subscription-data.js");
 const api_auth = require("../../api/auth.js");
+const api_notifications = require("../../api/notifications.js");
 const confirm = (options) => new Promise((resolve) => common_vendor.index.showModal({ ...options, success: (result) => resolve(result.confirm), fail: () => resolve(false) }));
 const toast = (title) => common_vendor.index.showToast({ title, icon: "none" });
 const remoteComputed = {
+  notificationReady() {
+    return Boolean(this.notifications.configured && this.notifications.schedulerEnabled && this.notifications.identityLinked && this.settings.notificationEnabled && this.notifications.credits > 0);
+  },
+  notificationDescription() {
+    if (this.notificationAuthorizing)
+      return "正在确认授权，请稍候";
+    if (!this.notifications.configured)
+      return "微信通知服务尚未配置";
+    if (!this.notifications.schedulerEnabled)
+      return "发送任务未开启，请完成服务器部署";
+    if (!this.settings.notificationEnabled)
+      return this.notifications.credits > 0 ? `已暂停 · 剩余 ${this.notifications.credits} 次授权，点击恢复通知` : "点击授权，每次允许可发送一条通知";
+    if (!this.notifications.credits)
+      return "授权次数已用完，点击再次授权";
+    return `剩余 ${this.notifications.credits} 次授权 · 点击增加；仅发送已填写金额的记录`;
+  },
   loadErrorTitle() {
     if (this.authStatus !== "authenticated")
       return "微信登录未完成";
@@ -82,6 +99,15 @@ const remoteMethods = {
       }
       this.currentUserId = session.user.id;
       this.authStatus = "authenticated";
+      let notifications = await api_notifications.notificationApi.status();
+      if (notifications.configured && !notifications.identityLinked) {
+        api_auth.clearSession(session.accessToken);
+        await api_auth.ensureSession();
+        notifications = await api_notifications.notificationApi.status();
+      }
+      if (notifications.configured)
+        notifications = await api_notifications.syncPendingAuthorization(this.currentUserId) || notifications;
+      this.notifications = notifications;
       const [subscriptions, settings, membership, catalog, reminders] = await Promise.all([
         api_subscriptions.subscriptionApi.listAll(),
         api_subscriptions.subscriptionApi.settings(),
@@ -260,7 +286,7 @@ const remoteMethods = {
     const item = this.selectedSubscription;
     if (!item)
       return;
-    if (!await confirm({ title: "稍后处理", content: "将保留为站内待办，扣费日不变。当前后端尚未接入消息发送，不会发送微信再提醒。", confirmText: "加入待办" }))
+    if (!await confirm({ title: "稍后处理", content: "将保留为站内待办，扣费日和提醒节点不变，不额外安排微信通知。", confirmText: "加入待办" }))
       return;
     await this.mutate(() => api_subscriptions.subscriptionApi.update(item.id, { status: "pending" }), "已加入站内待办");
   },
@@ -358,8 +384,30 @@ const remoteMethods = {
       list.push(value);
     return this.updateSetting("defaultReminders", list.sort((a, b) => b - a));
   },
-  enableNotification() {
-    common_vendor.index.showModal({ title: "暂未接入微信发送", content: "当前 API 仅提供站内到期待办。真实通知发送接入后，再申请消息授权并展示发送状态。", showCancel: false });
+  async enableNotification() {
+    if (this.notificationAuthorizing || this.loading || this.mutating || !this.dataReady)
+      return;
+    if (!this.notifications.configured || !this.notifications.schedulerEnabled)
+      return toast(this.notificationDescription);
+    if (!this.settings.notificationEnabled && this.notifications.credits > 0)
+      return this.updateSetting("notificationEnabled", true);
+    this.notificationAuthorizing = true;
+    try {
+      const { status, answer } = await api_notifications.requestNotificationAuthorization(this.notifications.templateId, this.currentUserId);
+      this.notifications = status;
+      this.settings.notificationEnabled = status.enabled;
+      toast(answer === "accept" ? "已增加一次通知授权" : answer === "ban" ? "微信通知已关闭" : "本次未授权");
+    } catch (error) {
+      toast(error.message + "；授权记录将在刷新时重新确认");
+    } finally {
+      this.notificationAuthorizing = false;
+    }
+  },
+  showNotificationHistory() {
+    const labels = { sent: "已发送", failed: "发送失败", unknown: "结果未知，不自动重发", sending: "发送中", skipped: "记录已变更，未发送" };
+    const rows = this.notifications.recentDeliveries || [];
+    common_vendor.index.showModal({ title: "最近通知记录", content: rows.length ? rows.slice(0, 8).map((row) => `${row.subscriptionName} · ${row.billingDate}
+${labels[row.status] || row.status}${row.errorCode ? `（${row.errorCode}）` : ""}`).join("\n\n") : "暂无发送记录。授权后会按提醒日期与时间发送；每条消息使用一次授权。", showCancel: false });
   },
   handleNotificationSwitch(value) {
     if (value)
@@ -378,11 +426,15 @@ const remoteMethods = {
   nextReminderText(item) {
     if (["paused", "cancelled", "archived"].includes(item.status))
       return "已停止提醒";
+    if (item.amount === null)
+      return "请填写金额后接收微信通知";
+    if (this.notificationReady)
+      return `按提醒节点于 ${this.settings.reminderTime} 发送微信通知，每条使用一次授权`;
     const reminder = this.serverReminders.find((row) => row.subscription.id === item.id);
-    return reminder ? reminder.nextReminderInDays === 0 ? "当前有站内到期待办（不发送微信消息）" : `${reminder.nextReminderInDays} 天后进入站内提醒窗口` : "仅站内记录，未安排微信发送";
+    return reminder ? reminder.nextReminderInDays === 0 ? "当前有站内到期待办，请授权微信通知" : `${reminder.nextReminderInDays} 天后进入站内提醒窗口` : "请在“我的”中开启微信通知";
   },
   showPrivacy() {
-    common_vendor.index.showModal({ title: "隐私与数据说明", content: "小程序通过微信登录识别账号，订阅、备注和设置发送至后端并按账号保存。登录凭证保存在本机，用于访问你的数据；不会自动获取微信昵称、头像或手机号。续费通知目前仅支持站内待办。", showCancel: false });
+    common_vendor.index.showModal({ title: "隐私与数据说明", content: "小程序通过微信登录识别账号，订阅、备注和设置发送至后端并按账号保存。后端保存微信账号标识，用于发送你授权的订阅消息，消息含扣费日期和金额。每次授权允许发送一条消息；可在“我的”中暂停。登录凭证保存在本机，不获取昵称、头像或手机号。", showCancel: false });
   },
   resetDemoData() {
     return this.refreshData();

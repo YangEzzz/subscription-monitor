@@ -17,7 +17,7 @@
       ><view class="profile-metrics"
         ><view
           ><text>月均支出</text><text>{{ monthlyAverageText }}</text></view
-        ><view><text>提醒状态</text><text>仅站内</text></view></view
+        ><view><text>提醒状态</text><text>{{ notificationReady ? '微信通知' : '待开启' }}</text></view></view
       ></view
     >
     <view
@@ -86,10 +86,19 @@
           icon-class="green-bg"
           icon-color="#177e4b"
           title="续费通知"
-          description="仅站内待办，尚未接入微信发送"
+          :description="notificationDescription"
+          :disabled="notificationBusy"
           action
           @tap="$emit('notification-change', true)"
         />
+        <settings-row
+          v-if="settings.notificationEnabled"
+          icon="notification" title="暂停微信通知"
+          description="暂停发送，保留已有授权次数" action
+          :disabled="notificationBusy"
+          @tap="$emit('notification-change', false)"
+        />
+        <settings-row icon="list" title="通知发送记录" description="查看最近的发送结果" action @tap="$emit('notification-history')" />
         <settings-row
           icon="calendar"
           icon-class="orange-bg"
@@ -181,6 +190,7 @@ export default {
   emits: [
     "open-membership",
     "notification-change",
+    "notification-history",
     "open-reminder-settings",
     "weekly-summary-change",
     "default-currency-change",
@@ -190,6 +200,9 @@ export default {
     "reset-demo",
   ],
   props: {
+    notificationReady: { type: Boolean, default: false },
+    notificationDescription: { type: String, default: '' },
+    notificationBusy: { type: Boolean, default: false },
     navigationBarHeight: { type: Number, default: 0 },
     liveSubscriptions: { type: Array, default: () => [] },
     monthlyAverageText: { type: String, default: "¥0.00" },

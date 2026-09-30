@@ -14,4 +14,7 @@ export type AppConfig = {
   wechatAppSecret?: string;
   authTokenSecret?: string;
   authTokenTtlSeconds?: number;
+  wechatReminderTemplateId?: string;
+  wechatMessageState?: 'formal' | 'developer' | 'trial';
+  notificationSchedulerEnabled?: boolean;
 };

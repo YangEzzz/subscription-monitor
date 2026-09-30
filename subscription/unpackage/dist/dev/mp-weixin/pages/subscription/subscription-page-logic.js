@@ -35,8 +35,8 @@ function createSubscriptionPageState() {
     statsErrorCode: "",
     statsErrorRequestId: "",
     trashPage: 0,
-    subscribeTemplateIds: [],
-    // 填写微信公众平台中的订阅消息模板 ID
+    notifications: { configured: false, schedulerEnabled: false, credits: 0, recentDeliveries: [] },
+    notificationAuthorizing: false,
     subscriptionLimit: 5,
     searchKeyword: "",
     activeCategory: "全部",
@@ -144,8 +144,8 @@ const subscriptionComputed = {
   },
   actionableReminders() {
     const list = [];
-    if (!this.settings.notificationEnabled)
-      list.push({ key: "notification", tone: "warning", icon: "notification", title: "当前仅支持站内提醒", desc: "当前只能在小程序内查看到期待办", action: "notification" });
+    if (!this.notificationReady)
+      list.push({ key: "notification", tone: "warning", icon: "notification", title: "开启微信续费通知", desc: this.notificationDescription, action: "notification" });
     const overdue = this.liveSubscriptions.filter((item) => !["cancelled", "archived", "paused"].includes(item.status) && pages_subscription_subscriptionData.daysUntil(item.nextBillingDate) < 0);
     if (overdue.length)
       list.push({ key: "overdue", tone: "danger", icon: "info-filled", title: `${overdue.length} 项订阅已逾期未确认`, desc: "请确认是否已完成续费", action: "overdue" });
@@ -238,9 +238,13 @@ const subscriptionComputed = {
   }
 };
 const subscriptionLifecycle = {
-  onLoad() {
+  async onLoad(options = {}) {
     this.initNavigationLayout();
-    this.refreshData();
+    if (await this.refreshData() && options.subscriptionId) {
+      await this.openDetail({ id: options.subscriptionId });
+      if (options.billingDate && this.selectedSubscription && this.selectedSubscription.nextBillingDate !== options.billingDate)
+        common_vendor.index.showToast({ title: "这是历史通知，当前显示最新账期", icon: "none" });
+    }
   },
   onBackPress() {
     if (this.sortSheetVisible) {

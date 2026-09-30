@@ -52,6 +52,9 @@
         <subscription-home-view
           v-if="activeView === 'home'"
           :settings="settings"
+          :notification-ready="notificationReady"
+          :notification-description="notificationDescription"
+          :notification-busy="notificationAuthorizing"
           :navigation-bar-height="navigationBarHeight"
           :next30-total-text="next30TotalText"
           :monthly-average-text="monthlyAverageText"
@@ -154,8 +157,12 @@
           :membership-quota-percent="membershipQuotaPercent"
           :currencies="currencies"
           :deleted-subscriptions="deletedSubscriptions"
+          :notification-ready="notificationReady"
+          :notification-description="notificationDescription"
+          :notification-busy="notificationAuthorizing"
           @open-membership="openMembership"
           @notification-change="handleNotificationSwitch"
+          @notification-history="showNotificationHistory"
           @open-reminder-settings="openReminderSettings"
           @weekly-summary-change="updateSetting('weeklySummary', $event)"
           @default-currency-change="updateDefaultCurrency"
@@ -179,7 +186,7 @@
         <subscription-detail-view
           v-else-if="activeView === 'detail' && selectedSubscription"
           :subscription="selectedSubscription"
-          :notification-enabled="false"
+          :notification-enabled="notificationReady"
           :renewal-history="selectedRenewalHistory"
           :renewal-locked="renewalLocked"
           :selected-next-reminder-text="selectedNextReminderText"
@@ -302,8 +309,8 @@ export default {
     return createSubscriptionPageState();
   },
   computed: subscriptionComputed,
-  onLoad() {
-    subscriptionLifecycle.onLoad.call(this);
+  onLoad(options) {
+    subscriptionLifecycle.onLoad.call(this, options);
   },
   onBackPress() {
     return subscriptionLifecycle.onBackPress.call(this);
