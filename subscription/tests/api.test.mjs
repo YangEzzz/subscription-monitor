@@ -91,6 +91,77 @@ test('failed initial load exposes retry and never seeds local records', async ()
 	assert.match(page.loadError, /无法连接/)
 })
 
+test('quota and status follow the backend rather than local record counts and dates', () => {
+	const page = pageHarness()
+	page.applyMembership({ status: 'free', quota: { used: 5, limit: 5, remaining: 0 } })
+	page.subscriptions = []
+	assert.equal(page.canCreateSubscription, false)
+	assert.equal(page.freeQuotaValue, '5 / 5')
+	assert.equal(page.getStatus({ status: 'active', displayStatus: 'overdue', nextBillingDate: '2099-01-01' }), 'overdue')
+	page.applyMembership({ status: 'active', quota: { used: 8, limit: null, remaining: null } })
+	assert.equal(page.subscriptionLimit, null)
+	assert.equal(page.canCreateSubscription, true)
+})
+
+test('clearing account state removes old drafts, notifications and filter state', () => {
+	const page = pageHarness()
+	page.subscriptions = [{ id: 'old' }]
+	page.form = { name: 'private draft' }
+	page.formBaseline = 'private draft'
+	page.editingId = 'old'
+	page.searchKeyword = 'private search'
+	page.notifications = { credits: 10, recentDeliveries: [{ id: 'old-message' }] }
+	page.clearAccountData()
+	assert.deepEqual(page.subscriptions, [])
+	assert.deepEqual(page.form, {})
+	assert.equal(page.formBaseline, '')
+	assert.equal(page.editingId, null)
+	assert.equal(page.searchKeyword, '')
+	assert.equal(page.notifications.credits, 0)
+	assert.deepEqual(page.notifications.recentDeliveries, [])
+	assert.equal(page.dataReady, false)
+})
+
+test('an account change cannot save the previous account’s form', async () => {
+	globalThis.uni = mockUni({ showToast() {} })
+	const page = pageHarness()
+	page.currentUserId = 'previous-user'
+	page.dataReady = true
+	page.form = { name: 'previous account draft' }
+	let writes = 0
+	assert.equal(await page.mutate(() => { writes++; return Promise.resolve({ id: 'wrong-owner' }) }), false)
+	assert.equal(writes, 0)
+	assert.equal(page.dataReady, false)
+	assert.deepEqual(page.form, {})
+})
+
+test('notification failure does not replace backend records with demo data or block loading', async () => {
+	const keys = []
+	globalThis.uni = mockUni({
+		getStorageSync(key) { keys.push(key); return key === 'renewal_wechat_session_v1' ? { accessToken: 'test-token', expiresAt: '2099-01-01T00:00:00Z', user: { id: 'test-user' } } : null },
+		request(options) {
+			const url = new URL(options.url)
+			if (url.pathname.endsWith('/notifications')) return options.fail({ errMsg: 'offline' })
+			let data
+			if (url.pathname.endsWith('/subscriptions')) data = { data: [{ id: 'real-record', nextBillingDate: '2099-01-01' }], meta: { hasMore: false } }
+			else if (url.pathname.endsWith('/settings')) data = { defaultCurrency: 'CNY' }
+			else if (url.pathname.endsWith('/membership')) data = { status: 'free', quota: { used: 1, limit: 5, remaining: 4 } }
+			else if (url.pathname.endsWith('/catalog')) data = { categories: [], cycles: [], paymentMethods: [], currencies: ['CNY'], templates: [] }
+			else if (url.pathname.endsWith('/reminders')) data = { data: [] }
+			else data = { period: url.searchParams.get('period'), currency: 'CNY', total: 0 }
+			options.success({ statusCode: 200, data })
+		}
+	})
+	const page = pageHarness()
+	assert.equal(await page.refreshData(), true)
+	assert.equal(page.dataReady, true)
+	assert.equal(page.subscriptions[0].id, 'real-record')
+	assert.equal(page.loadError, '')
+	assert.match(page.notificationError, /无法连接/)
+	assert.equal(page.notificationReady, false)
+	assert.equal(keys.some(key => key.includes('renewal_demo')), false)
+})
+
 test('mutation locks concurrent submits and preserves known success if refresh fails', async () => {
 	globalThis.uni = { showToast() {} }
 	const page = pageHarness()

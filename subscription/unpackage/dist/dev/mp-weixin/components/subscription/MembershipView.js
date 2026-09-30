@@ -1,123 +1,56 @@
 "use strict";
 const common_vendor = require("../../common/vendor.js");
+const SettingsRow = () => "./SettingsRow.js";
 const _sfc_main = {
   name: "MembershipView",
-  emits: ["back", "activate", "restore"],
+  components: { SettingsRow },
+  emits: ["back"],
   props: {
     isMember: { type: Boolean, default: false },
-    freeQuotaValue: { type: String, default: "0 / 5" }
+    freeQuotaValue: { type: String, default: "" },
+    subscriptionLimit: { type: Number, default: null }
   }
 };
 if (!Array) {
   const _easycom_uni_icons2 = common_vendor.resolveComponent("uni-icons");
-  _easycom_uni_icons2();
+  const _component_settings_row = common_vendor.resolveComponent("settings-row");
+  (_easycom_uni_icons2 + _component_settings_row)();
 }
 const _easycom_uni_icons = () => "../../uni_modules/uni-icons/components/uni-icons/uni-icons.js";
 if (!Math) {
   _easycom_uni_icons();
 }
 function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
-  return common_vendor.e({
+  return {
     a: common_vendor.p({
       type: "left",
       size: "24",
       color: "#202622"
     }),
-    b: common_vendor.o(($event) => _ctx.$emit("back"), "bf"),
-    c: common_vendor.p({
-      type: $props.isMember ? "checkbox-filled" : "vip-filled",
-      size: "36",
-      color: "#e6a526"
+    b: common_vendor.o(($event) => _ctx.$emit("back"), "fb"),
+    c: common_vendor.t($props.isMember ? "会员版" : "免费版"),
+    d: common_vendor.p({
+      icon: "list",
+      title: "订阅额度",
+      description: "已使用 " + $props.freeQuotaValue
     }),
-    d: common_vendor.t($props.isMember ? "✦ 会员已激活" : "✦ 升级会员"),
-    e: common_vendor.t($props.isMember ? "无限订阅已解锁" : "解锁无限订阅"),
-    f: common_vendor.t($props.isMember ? "感谢使用，所有会员权益均已开放" : "不再受 5 条免费额度限制，尽情记录"),
+    e: common_vendor.p({
+      icon: "cloud-upload",
+      title: "账号数据",
+      description: "订阅和设置跟随你的微信账号保存"
+    }),
+    f: common_vendor.p({
+      icon: "notification",
+      title: "微信续费通知",
+      description: "需授权，每条通知使用一次授权"
+    }),
     g: common_vendor.p({
-      type: "list",
-      size: "22",
-      color: "#c87f1a"
+      icon: "bars",
+      title: "支出统计",
+      description: "按币种查看月均、年度和未来 30 天支出"
     }),
-    h: common_vendor.p({
-      type: "notification-filled",
-      size: "22",
-      color: "#c87f1a"
-    }),
-    i: common_vendor.p({
-      type: "bars",
-      size: "22",
-      color: "#c87f1a"
-    }),
-    j: $props.isMember ? 1 : "",
-    k: !$props.isMember
-  }, !$props.isMember ? {
-    l: common_vendor.p({
-      type: "vip-filled",
-      size: "24",
-      color: "#fff"
-    }),
-    m: common_vendor.p({
-      type: "right",
-      size: "18",
-      color: "rgba(255,255,255,.7)"
-    }),
-    n: common_vendor.o(($event) => _ctx.$emit("activate"), "50")
-  } : {}, {
-    o: common_vendor.p({
-      type: "list",
-      size: "20",
-      color: "#b8720f"
-    }),
-    p: common_vendor.p({
-      type: "notification-filled",
-      size: "20",
-      color: "#16834d"
-    }),
-    q: common_vendor.p({
-      type: "bars",
-      size: "20",
-      color: "#16834d"
-    }),
-    r: common_vendor.p({
-      type: "locked",
-      size: "20",
-      color: "#16834d"
-    }),
-    s: common_vendor.p({
-      type: $props.isMember ? "vip-filled" : "person",
-      size: "22",
-      color: $props.isMember ? "#b8720f" : "#16834d"
-    }),
-    t: $props.isMember ? 1 : "",
-    v: common_vendor.t($props.isMember ? "会员版" : "免费版"),
-    w: common_vendor.t($props.isMember ? "全部权益已开放" : "基础功能可用"),
-    x: $props.isMember ? 1 : "",
-    y: common_vendor.p({
-      type: "compose",
-      size: "22",
-      color: "#16834d"
-    }),
-    z: common_vendor.t($props.isMember ? "无限" : $props.freeQuotaValue),
-    A: common_vendor.t($props.isMember ? "不受数量限制" : "5 条免费上限"),
-    B: $props.isMember
-  }, $props.isMember ? {
-    C: common_vendor.o(($event) => _ctx.$emit("restore"), "48")
-  } : {}, {
-    D: common_vendor.p({
-      type: "locked",
-      size: "18",
-      color: "#16834d"
-    }),
-    E: common_vendor.p({
-      type: "wallet",
-      size: "18",
-      color: "#16834d"
-    }),
-    F: common_vendor.p({
-      type: "refresh",
-      size: "18",
-      color: "#16834d"
-    })
-  });
+    h: common_vendor.t($props.isMember ? "当前账号可不限数量新增订阅。" : "当前额度为 " + $props.subscriptionLimit + " 条，删除记录后可释放额度。会员购买暂未开放。")
+  };
 }
 const Component = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render]]);
 wx.createComponent(Component);

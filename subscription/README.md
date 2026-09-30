@@ -1,8 +1,8 @@
 # 续订清单
 
-订阅业务页面已接入 `../backend` 的 NestJS API。请求地址在 `api/config.js` 配置，默认 `http://localhost:3001/api/v1`。
+订阅业务页面已接入 `../backend` 的 NestJS API。请求地址在 `api/config.js` 配置，当前 `https://subscription.yangezzz.top/api/v1`。
 
-启动、真机配置、接口映射和验证方法见 [前后端联调说明](docs/前后端联调说明.md)。当前后端仍为内存演示服务，未接入真实登录、数据库、支付或微信消息发送。
+启动、真机配置、接口映射和验证方法见 [前后端联调说明](docs/前后端联调说明.md)。已接入微信登录、PostgreSQL 持久化和微信订阅消息；会员支付暂未开放。业务数据只读写后端，旧本地演示缓存不再使用。
 
 ## 原始 hello-uniapp 模板说明
 

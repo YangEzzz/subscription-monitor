@@ -44,9 +44,9 @@
    ~~~
 
 4. 设置 `PERSISTENCE_DRIVER=prisma` 并启动后端。Prisma Client 会在首次查询时连接数据库，应用关闭时释放连接池。
-5. 导入演示种子并运行 HTTP 集成测试，确认分页、额度、续费幂等和十分钟撤销窗口。
+5. 创建测试账号记录并运行 HTTP 集成测试，确认分页、额度、续费幂等和十分钟撤销窗口。
 
-如果需要临时退回本地开发，只需设置：
+仅在 NODE_ENV=development 或 test 时可使用内存仓库，初始为空，重启后不保留数据：
 
 ~~~env
 PERSISTENCE_DRIVER=memory

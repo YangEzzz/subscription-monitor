@@ -69,6 +69,12 @@ export default registerAs<AppConfig>('app', () => {
     (process.env.PERSISTENCE_DRIVER as PersistenceDriver | undefined) ??
     PersistenceDriver.Memory;
   if (
+    process.env.NODE_ENV === 'production' &&
+    persistenceDriver !== PersistenceDriver.Prisma
+  ) {
+    throw new Error('Production requires PERSISTENCE_DRIVER=prisma');
+  }
+  if (
     persistenceDriver === PersistenceDriver.Prisma &&
     !process.env.DATABASE_URL
   ) {

@@ -9,10 +9,7 @@ import { MembershipController } from './membership.controller';
 import { RemindersController } from './reminders.controller';
 import { SettingsController } from './settings.controller';
 import { SubscriptionsController } from './subscriptions.controller';
-import {
-  SubscriptionsService,
-  createDemoSubscriptions,
-} from './subscriptions.service';
+import { SubscriptionsService } from './subscriptions.service';
 import { MemorySubscriptionsRepository } from './repositories/memory-subscriptions.repository';
 import { PrismaSubscriptionsRepository } from './repositories/prisma-subscriptions.repository';
 import {
@@ -24,7 +21,9 @@ export function createSubscriptionsRepository(
   config: AppConfig,
 ): SubscriptionsRepository {
   if (config.persistenceDriver === 'memory') {
-    return new MemorySubscriptionsRepository(createDemoSubscriptions());
+    if (config.nodeEnv === 'production')
+      throw new Error('Production requires PostgreSQL persistence');
+    return new MemorySubscriptionsRepository();
   }
   if (!config.databaseUrl) {
     throw new Error(

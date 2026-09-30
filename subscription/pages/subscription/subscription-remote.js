@@ -1,17 +1,18 @@
 import { subscriptionApi as api, toSubscription, CATEGORIES, CYCLES, PAYMENTS } from '../../api/subscriptions.js'
 import { CATEGORY_COLORS, createDefaultSettings, daysUntil, formatDate } from './subscription-data.js'
-import { ensureSession, clearSession } from '../../api/auth.js'
+import { ensureSession, clearSession, getSession } from '../../api/auth.js'
 import { notificationApi, requestNotificationAuthorization, syncPendingAuthorization } from '../../api/notifications.js'
 
 const confirm = options => new Promise(resolve => uni.showModal({ ...options, success: result => resolve(result.confirm), fail: () => resolve(false) }))
 const toast = title => uni.showToast({ title, icon: 'none' })
 
 export const remoteComputed = {
-	notificationReady() { return Boolean(this.notifications.configured && this.notifications.schedulerEnabled && this.notifications.identityLinked && this.settings.notificationEnabled && this.notifications.credits > 0) },
+	notificationReady() { return Boolean(!this.notificationError && this.notifications.configured && this.notifications.schedulerEnabled && this.notifications.identityLinked && this.settings.notificationEnabled && this.notifications.credits > 0) },
 	notificationDescription() {
+		if (this.notificationError) return '通知状态暂不可用，请重新加载'
 		if (this.notificationAuthorizing) return '正在确认授权，请稍候'
 		if (!this.notifications.configured) return '微信通知服务尚未配置'
-		if (!this.notifications.schedulerEnabled) return '发送任务未开启，请完成服务器部署'
+		if (!this.notifications.schedulerEnabled) return '微信通知暂未开放，请稍后再试'
 		if (!this.settings.notificationEnabled) return this.notifications.credits > 0 ? `已暂停 · 剩余 ${this.notifications.credits} 次授权，点击恢复通知` : '点击授权，每次允许可发送一条通知'
 		if (!this.notifications.credits) return '授权次数已用完，点击再次授权'
 		return `剩余 ${this.notifications.credits} 次授权 · 点击增加；仅发送已填写金额的记录`
@@ -48,9 +49,33 @@ export const remoteComputed = {
 }
 
 export const remoteMethods = {
+	clearAccountData() {
+		this.subscriptions = []
+		this.settings = createDefaultSettings()
+		this.notifications = { configured: false, schedulerEnabled: false, credits: 0, recentDeliveries: [] }
+		this.notificationError = ''
+		this.serverStats = {}
+		this.serverReminders = []
+		this.statsRequestId++
+		this.statsLoading = false
+		this.statsError = ''
+		this.subscriptionLimit = null
+		this.selectedId = null
+		this.editingId = null
+		this.originalBillingDate = null
+		this.form = {}
+		this.formBaseline = ''
+		this.formError = ''
+		this.dataReady = false
+		this.activeView = 'home'
+		this.viewStack = []
+		this.serviceTemplates = []
+		this.categories = []; this.cycles = []; this.payments = []; this.currencies = []
+		this.resetFilters()
+	},
 	applyMembership(membership) {
 		this.settings = { ...this.settings, membership: { ...membership, plan: membership.status === 'active' ? '会员版' : '免费版', startedAt: membership.startedAt ? new Date(membership.startedAt).getTime() : null } }
-		this.subscriptionLimit = membership.quota.limit || 5
+		this.subscriptionLimit = membership.quota.limit
 	},
 	applyCatalog(catalog) {
 		this.categories = catalog.categories.map(key => CATEGORIES[key] || key)
@@ -68,31 +93,35 @@ export const remoteMethods = {
 		this.loadErrorCode = ''
 		this.loadErrorRequestId = ''
 		try {
-			const session = await ensureSession()
+			let session = await ensureSession()
 			if (this.currentUserId && this.currentUserId !== session.user.id) {
-				this.subscriptions = []
-				this.settings = createDefaultSettings()
-				this.serverStats = {}
-				this.serverReminders = []
-				this.selectedId = null
-				this.dataReady = false
-				this.form = {}
-				this.activeView = 'home'
-				this.viewStack = []
+				this.clearAccountData()
 			}
 			this.currentUserId = session.user.id
 			this.authStatus = 'authenticated'
-			let notifications = await notificationApi.status()
-			if (notifications.configured && !notifications.identityLinked) {
-				clearSession(session.accessToken)
-				await ensureSession()
-				notifications = await notificationApi.status()
+			this.notificationError = ''
+			try {
+				let notifications = await notificationApi.status()
+				if (notifications.configured && !notifications.identityLinked) {
+					clearSession(session.accessToken)
+					session = await ensureSession()
+					if (this.currentUserId !== session.user.id) this.clearAccountData()
+					this.currentUserId = session.user.id
+					notifications = await notificationApi.status()
+				}
+				if (notifications.configured) notifications = await syncPendingAuthorization(this.currentUserId) || notifications
+				this.notifications = notifications
+			} catch (error) {
+				if (error.status === 401 || ['WECHAT_LOGIN_FAILED', 'WECHAT_UNAVAILABLE', 'AUTH_NOT_CONFIGURED'].includes(error.code)) throw error
+				this.notificationError = error.message
 			}
-			if (notifications.configured) notifications = await syncPendingAuthorization(this.currentUserId) || notifications
-			this.notifications = notifications
 			const [subscriptions, settings, membership, catalog, reminders] = await Promise.all([
 				api.listAll(), api.settings(), api.membership(), api.catalog(), api.reminders()
 			])
+			if (getSession()?.user.id !== this.currentUserId) {
+				this.clearAccountData()
+				throw Object.assign(new Error('账号已切换，请重新加载'), { code: 'AUTH_ACCOUNT_CHANGED' })
+			}
 			this.subscriptions = subscriptions
 			this.settings = { ...createDefaultSettings(), ...settings }
 			this.applyMembership(membership)
@@ -106,10 +135,7 @@ export const remoteMethods = {
 		} catch (error) {
 			if (error.status === 401 || ['WECHAT_LOGIN_FAILED', 'WECHAT_UNAVAILABLE', 'AUTH_NOT_CONFIGURED'].includes(error.code)) {
 				this.authStatus = 'unauthenticated'
-				this.dataReady = false
-				this.subscriptions = []
-				this.serverStats = {}
-				this.serverReminders = []
+				this.clearAccountData()
 			}
 			this.loadError = error.message
 			this.loadErrorCode = error.code || 'UNKNOWN_ERROR'
@@ -150,6 +176,12 @@ export const remoteMethods = {
 		if (uni.showLoading) uni.showLoading({ title: '正在保存', mask: true })
 		let operationError = null
 		try {
+			if (this.currentUserId && (await ensureSession()).user.id !== this.currentUserId) {
+				this.clearAccountData()
+				this.loadError = '账号已切换，请重新加载后操作'
+				this.loadErrorCode = 'AUTH_ACCOUNT_CHANGED'
+				throw new Error('账号已切换，请重新加载后操作')
+			}
 			const result = await operation()
 			applyResult(result)
 		} catch (error) {
@@ -293,7 +325,13 @@ export const remoteMethods = {
 	},
 	async enableNotification() {
 		if (this.notificationAuthorizing || this.loading || this.mutating || !this.dataReady) return
-		if (!this.notifications.configured || !this.notifications.schedulerEnabled) return toast(this.notificationDescription)
+		if (getSession()?.user.id !== this.currentUserId) {
+			this.clearAccountData()
+			this.loadError = '登录状态已变化，请重新加载后授权'
+			this.loadErrorCode = 'AUTH_ACCOUNT_CHANGED'
+			return toast(this.loadError)
+		}
+		if (this.notificationError || !this.notifications.configured || !this.notifications.schedulerEnabled) return toast(this.notificationDescription)
 		if (!this.settings.notificationEnabled && this.notifications.credits > 0) return this.updateSetting('notificationEnabled', true)
 		this.notificationAuthorizing = true
 		try {
@@ -310,12 +348,6 @@ export const remoteMethods = {
 		uni.showModal({ title: '最近通知记录', content: rows.length ? rows.slice(0, 8).map(row => `${row.subscriptionName} · ${row.billingDate}\n${labels[row.status] || row.status}${row.errorCode ? `（${row.errorCode}）` : ''}`).join('\n\n') : '暂无发送记录。授权后会按提醒日期与时间发送；每条消息使用一次授权。', showCancel: false })
 	},
 	handleNotificationSwitch(value) { if (value) this.enableNotification(); else this.updateSetting('notificationEnabled', false) },
-	async activateMembership() {
-		if (await confirm({ title: '模拟开通会员', content: '仅修改后端演示会员状态，不产生真实扣款；重启后端后会重置。', confirmText: '模拟开通' })) await this.mutate(() => api.activateMembership(), '模拟会员已开通', this.applyMembership)
-	},
-	async restoreFreePlan() {
-		if (await confirm({ title: '恢复免费版', content: '已有订阅不会删除，后续新增受五条额度限制。', confirmText: '确认恢复' })) await this.mutate(() => api.restoreMembership(), '已恢复免费版', this.applyMembership)
-	},
 	nextReminderText(item) {
 		if (['paused', 'cancelled', 'archived'].includes(item.status)) return '已停止提醒'
 		if (item.amount === null) return '请填写金额后接收微信通知'
@@ -323,6 +355,5 @@ export const remoteMethods = {
 		const reminder = this.serverReminders.find(row => row.subscription.id === item.id)
 		return reminder ? (reminder.nextReminderInDays === 0 ? '当前有站内到期待办，请授权微信通知' : `${reminder.nextReminderInDays} 天后进入站内提醒窗口`) : '请在“我的”中开启微信通知'
 	},
-	showPrivacy() { uni.showModal({ title: '隐私与数据说明', content: '小程序通过微信登录识别账号，订阅、备注和设置发送至后端并按账号保存。后端保存微信账号标识，用于发送你授权的订阅消息，消息含扣费日期和金额。每次授权允许发送一条消息；可在“我的”中暂停。登录凭证保存在本机，不获取昵称、头像或手机号。', showCancel: false }) },
-	resetDemoData() { return this.refreshData() }
+	showPrivacy() { uni.showModal({ title: '隐私与数据说明', content: '小程序通过微信登录识别账号，订阅、备注和设置发送至后端并按账号保存。后端保存微信账号标识，用于发送你授权的订阅消息，消息含扣费日期和金额。每次授权允许发送一条消息；可在“我的”中暂停。登录凭证保存在本机，不获取昵称、头像或手机号。', showCancel: false }) }
 }

@@ -1,13 +1,8 @@
 import { MemorySubscriptionsRepository } from './repositories/memory-subscriptions.repository';
-import {
-  SubscriptionsService,
-  createDemoSubscriptions,
-} from './subscriptions.service';
+import { SubscriptionsService } from './subscriptions.service';
 
 function createService(): SubscriptionsService {
-  return new SubscriptionsService(
-    new MemorySubscriptionsRepository(createDemoSubscriptions()),
-  );
+  return new SubscriptionsService(new MemorySubscriptionsRepository());
 }
 
 function futureDate(days: number): string {
@@ -30,17 +25,45 @@ function createInput(index: number) {
 }
 
 describe('SubscriptionsService', () => {
-  it('should expose seeded records with calculated display fields', async () => {
+  it('hides legacy demo records from account reads, quota and statistics', async () => {
+    const repository = new MemorySubscriptionsRepository();
+    const service = new SubscriptionsService(repository);
+    const created = (await service.create('user', createInput(1))) as {
+      id: string;
+    };
+    const record = await repository.findSubscription('user', created.id);
+    await repository.saveSubscription({ ...record!, isDemo: true });
+    expect(
+      (await service.list('user', { page: 1, limit: 20 })).meta.total,
+    ).toBe(0);
+    expect((await service.getMembership('user')).quota.used).toBe(0);
+    expect(
+      (await service.stats('user', { period: 'month', currency: 'CNY' })).total,
+    ).toBe(0);
+    await expect(service.findOne('user', created.id)).rejects.toThrow(
+      'Subscription not found',
+    );
+  });
+  it('rejects missing identities instead of using a shared demo account', async () => {
+    await expect(
+      createService().list(undefined, { page: 1, limit: 20 }),
+    ).rejects.toThrow('微信登录未完成');
+  });
+  it('starts empty and exposes backend-calculated fields for saved records', async () => {
     const service = createService();
-    const result = await service.list('demo-user', { page: 1, limit: 100 });
+    expect(
+      (await service.list('user', { page: 1, limit: 100 })).meta.total,
+    ).toBe(0);
+    await service.create('user', createInput(1));
+    const result = await service.list('user', { page: 1, limit: 100 });
 
-    expect(result.meta.total).toBe(8);
+    expect(result.meta.total).toBe(1);
     expect(result.data[0]).toHaveProperty('displayStatus');
     expect(result.data[0]).toHaveProperty('daysUntilBilling');
-    expect(result.data.every((item) => item.isDemo)).toBe(true);
+    expect(result.data.every((item) => item.isDemo === undefined)).toBe(true);
   });
 
-  it('should enforce the free quota only for non-demo records', async () => {
+  it('enforces quota and reads membership only from repository', async () => {
     const service = createService();
     const userId = 'quota-user';
 
@@ -52,29 +75,51 @@ describe('SubscriptionsService', () => {
       'Free plan allows up to 5 subscriptions',
     );
 
-    await service.activateMembership(userId);
-    expect(await service.create(userId, createInput(5))).toHaveProperty('id');
+    const repository = new MemorySubscriptionsRepository();
+    await repository.saveMembership({
+      userId,
+      status: 'active',
+      plan: 'member',
+      startedAt: new Date().toISOString(),
+    });
+    const memberService = new SubscriptionsService(repository);
+    expect(await memberService.create(userId, createInput(5))).toHaveProperty(
+      'id',
+    );
   });
 
   it('should soft-delete and restore without losing the record', async () => {
     const service = createService();
-    const created = (await service.create('restore-user', createInput(1))) as { id: string };
+    const created = (await service.create('restore-user', createInput(1))) as {
+      id: string;
+    };
 
-    const deleted = (await service.remove('restore-user', created.id)) as { deletedAt: string };
+    const deleted = (await service.remove('restore-user', created.id)) as {
+      deletedAt: string;
+    };
     expect(deleted.deletedAt).toEqual(expect.any(String));
-    expect((await service.list('restore-user', { page: 1, limit: 20 })).meta.total).toBe(0);
+    expect(
+      (await service.list('restore-user', { page: 1, limit: 20 })).meta.total,
+    ).toBe(0);
 
-    const restored = (await service.restore('restore-user', created.id)) as { deletedAt: null };
+    const restored = (await service.restore('restore-user', created.id)) as {
+      deletedAt: null;
+    };
     expect(restored.deletedAt).toBeNull();
-    expect((await service.list('restore-user', { page: 1, limit: 20 })).meta.total).toBe(1);
+    expect(
+      (await service.list('restore-user', { page: 1, limit: 20 })).meta.total,
+    ).toBe(1);
   });
 
   it('should renew and undo within the ten-minute window', async () => {
     const service = createService();
-    const before = (await service.findOne('demo-user', 'sub_1001')) as {
+    const created = (await service.create('renew-user', createInput(1))) as {
+      id: string;
+    };
+    const before = (await service.findOne('renew-user', created.id)) as {
       nextBillingDate: string;
     };
-    const renewed = (await service.renew('demo-user', 'sub_1001')) as {
+    const renewed = (await service.renew('renew-user', created.id)) as {
       renewal: {
         nextBillingDate: string;
         previousNextBillingDate: string;
@@ -83,14 +128,19 @@ describe('SubscriptionsService', () => {
     };
 
     expect(renewed.renewal.nextBillingDate).not.toBe(before.nextBillingDate);
-    expect(renewed.renewal.previousNextBillingDate).toBe(before.nextBillingDate);
+    expect(renewed.renewal.previousNextBillingDate).toBe(
+      before.nextBillingDate,
+    );
     expect(renewed.renewal.previousStatus).toBe('active');
-    await expect(service.renew('demo-user', 'sub_1001')).rejects.toThrow(
+    await expect(service.renew('renew-user', created.id)).rejects.toThrow(
       'This subscription was renewed recently',
     );
     expect(
-      ((await service.undoRenewal('demo-user', 'sub_1001')) as { nextBillingDate: string })
-        .nextBillingDate,
+      (
+        (await service.undoRenewal('renew-user', created.id)) as {
+          nextBillingDate: string;
+        }
+      ).nextBillingDate,
     ).toBe(before.nextBillingDate);
   });
 
@@ -104,28 +154,51 @@ describe('SubscriptionsService', () => {
     const result = await service.renew('one-off-user', created.id);
     expect(result.subscription.status).toBe('archived');
     expect(result.subscription.renewalHistory).toHaveLength(1);
-    expect((await service.undoRenewal('one-off-user', created.id)).status).toBe('active');
+    expect((await service.undoRenewal('one-off-user', created.id)).status).toBe(
+      'active',
+    );
   });
 
   it('should preserve the month-end anchor and accept retries of an old period', async () => {
     jest.useFakeTimers().setSystemTime(new Date('2028-01-01T12:00:00Z'));
     try {
       const service = createService();
-      const created = (await service.create('month-end-user', { ...createInput(1), nextBillingDate: '2028-01-31' })) as { id: string };
-      expect((await service.renew('month-end-user', created.id, '2028-01-31')).subscription.nextBillingDate).toBe('2028-02-29');
+      const created = (await service.create('month-end-user', {
+        ...createInput(1),
+        nextBillingDate: '2028-01-31',
+      })) as { id: string };
+      expect(
+        (await service.renew('month-end-user', created.id, '2028-01-31'))
+          .subscription.nextBillingDate,
+      ).toBe('2028-02-29');
       jest.advanceTimersByTime(11 * 60 * 1000);
-      const retried = await service.renew('month-end-user', created.id, '2028-01-31');
+      const retried = await service.renew(
+        'month-end-user',
+        created.id,
+        '2028-01-31',
+      );
       expect(retried.subscription.nextBillingDate).toBe('2028-02-29');
       expect(retried.subscription.renewalHistory).toHaveLength(1);
-      expect((await service.renew('month-end-user', created.id, '2028-02-29')).subscription.nextBillingDate).toBe('2028-03-31');
-      await expect(service.renew('month-end-user', created.id, '2028-03-30')).rejects.toThrow('Billing period has changed');
-    } finally { jest.useRealTimers(); }
+      expect(
+        (await service.renew('month-end-user', created.id, '2028-02-29'))
+          .subscription.nextBillingDate,
+      ).toBe('2028-03-31');
+      await expect(
+        service.renew('month-end-user', created.id, '2028-03-30'),
+      ).rejects.toThrow('Billing period has changed');
+    } finally {
+      jest.useRealTimers();
+    }
   });
 
   it('should return stats and reminders from the same in-memory state', async () => {
     const service = createService();
-    const stats = await service.stats('demo-user', { period: 'month', currency: 'CNY' });
-    const reminders = await service.reminders('demo-user', 30);
+    await service.create('stats-user', createInput(1));
+    const stats = await service.stats('stats-user', {
+      period: 'month',
+      currency: 'CNY',
+    });
+    const reminders = await service.reminders('stats-user', 30);
 
     expect(stats.total).toBeGreaterThan(0);
     expect(stats.categoryStats.length).toBeGreaterThan(0);

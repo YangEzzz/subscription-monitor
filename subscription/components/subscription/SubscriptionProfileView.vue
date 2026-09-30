@@ -11,7 +11,7 @@
         ><view class="profile-copy"
           ><text class="profile-name">续订清单用户</text
           ><text class="profile-sub"
-            >服务端数据 · {{ liveSubscriptions.length }} 项订阅</text
+            >已保存 · {{ liveSubscriptions.length }} 项订阅</text
           ></view
         ><text class="local-badge">微信已登录</text></view
       ><view class="profile-metrics"
@@ -24,7 +24,7 @@
       class="membership-entry"
       :class="{ active: isMember }"
       role="button"
-      aria-label="查看会员权益"
+      aria-label="查看账号额度"
       hover-class="membership-entry-pressed"
       @tap="$emit('open-membership')"
     >
@@ -37,15 +37,15 @@
         /></view>
         <view class="membership-copy"
           ><text class="membership-kicker">{{
-            isMember ? "会员权益" : "升级会员"
+            isMember ? "会员权益" : "账号额度"
           }}</text
           ><text class="membership-title">{{
-            isMember ? "会员已开启" : "开通会员"
+            isMember ? "会员已开启" : "免费版"
           }}</text
           ><text class="membership-desc">{{
             isMember
-              ? "无限新增订阅 · 模拟会员"
-              : "解锁无限订阅，重要支出更从容"
+              ? "无限新增订阅"
+              : "查看订阅额度与可用功能"
           }}</text></view
         >
         <uni-icons
@@ -66,10 +66,10 @@
         ><view class="membership-benefits"
           ><view class="membership-benefit"
             ><uni-icons type="checkmarkempty" size="13" color="#8b641f" />
-            <text>无限订阅</text></view
+            <text>订阅管理</text></view
           ><view class="membership-benefit"
             ><uni-icons type="checkmarkempty" size="13" color="#8b641f" />
-            <text>高级统计</text></view
+            <text>支出统计</text></view
           ><view class="membership-benefit"
             ><uni-icons type="checkmarkempty" size="13" color="#8b641f" />
             <text>续费提醒</text></view
@@ -107,16 +107,6 @@
           :description="`提前 ${settings.defaultReminders.join('、')} 天 · ${settings.reminderTime}`"
           action
           @tap="$emit('open-reminder-settings')"
-        />
-        <settings-row
-          icon="email"
-          icon-class="blue-bg"
-          icon-color="#3c7fc1"
-          title="每周订阅摘要"
-          description="仅保存偏好，摘要发送尚未接入"
-          switchable
-          :checked="settings.weeklySummary"
-          @change="$emit('weekly-summary-change', $event)"
         />
       </view>
     </view>
@@ -173,11 +163,11 @@
           title="重新加载数据"
           description="从服务端刷新订阅与设置"
           action
-          @tap="$emit('reset-demo')"
+          @tap="$emit('refresh')"
         />
       </view>
     </view>
-    <text class="version-text">续订清单 · 接口联调版 v0.3</text>
+    <text class="version-text">续订清单</text>
   </view>
 </template>
 
@@ -192,12 +182,11 @@ export default {
     "notification-change",
     "notification-history",
     "open-reminder-settings",
-    "weekly-summary-change",
     "default-currency-change",
     "export",
     "trash",
     "privacy",
-    "reset-demo",
+    "refresh",
   ],
   props: {
     notificationReady: { type: Boolean, default: false },

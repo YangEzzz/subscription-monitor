@@ -8,15 +8,17 @@ const confirm = (options) => new Promise((resolve) => common_vendor.index.showMo
 const toast = (title) => common_vendor.index.showToast({ title, icon: "none" });
 const remoteComputed = {
   notificationReady() {
-    return Boolean(this.notifications.configured && this.notifications.schedulerEnabled && this.notifications.identityLinked && this.settings.notificationEnabled && this.notifications.credits > 0);
+    return Boolean(!this.notificationError && this.notifications.configured && this.notifications.schedulerEnabled && this.notifications.identityLinked && this.settings.notificationEnabled && this.notifications.credits > 0);
   },
   notificationDescription() {
+    if (this.notificationError)
+      return "通知状态暂不可用，请重新加载";
     if (this.notificationAuthorizing)
       return "正在确认授权，请稍候";
     if (!this.notifications.configured)
       return "微信通知服务尚未配置";
     if (!this.notifications.schedulerEnabled)
-      return "发送任务未开启，请完成服务器部署";
+      return "微信通知暂未开放，请稍后再试";
     if (!this.settings.notificationEnabled)
       return this.notifications.credits > 0 ? `已暂停 · 剩余 ${this.notifications.credits} 次授权，点击恢复通知` : "点击授权，每次允许可发送一条通知";
     if (!this.notifications.credits)
@@ -66,9 +68,36 @@ const remoteComputed = {
   }
 };
 const remoteMethods = {
+  clearAccountData() {
+    this.subscriptions = [];
+    this.settings = pages_subscription_subscriptionData.createDefaultSettings();
+    this.notifications = { configured: false, schedulerEnabled: false, credits: 0, recentDeliveries: [] };
+    this.notificationError = "";
+    this.serverStats = {};
+    this.serverReminders = [];
+    this.statsRequestId++;
+    this.statsLoading = false;
+    this.statsError = "";
+    this.subscriptionLimit = null;
+    this.selectedId = null;
+    this.editingId = null;
+    this.originalBillingDate = null;
+    this.form = {};
+    this.formBaseline = "";
+    this.formError = "";
+    this.dataReady = false;
+    this.activeView = "home";
+    this.viewStack = [];
+    this.serviceTemplates = [];
+    this.categories = [];
+    this.cycles = [];
+    this.payments = [];
+    this.currencies = [];
+    this.resetFilters();
+  },
   applyMembership(membership) {
     this.settings = { ...this.settings, membership: { ...membership, plan: membership.status === "active" ? "会员版" : "免费版", startedAt: membership.startedAt ? new Date(membership.startedAt).getTime() : null } };
-    this.subscriptionLimit = membership.quota.limit || 5;
+    this.subscriptionLimit = membership.quota.limit;
   },
   applyCatalog(catalog) {
     this.categories = catalog.categories.map((key) => api_subscriptions.CATEGORIES[key] || key);
@@ -78,6 +107,7 @@ const remoteMethods = {
     this.serviceTemplates = catalog.templates.filter((item) => item.category !== "ai").map((item) => ({ ...item, category: api_subscriptions.CATEGORIES[item.category], cycle: api_subscriptions.CYCLES[item.cycle], payment: api_subscriptions.PAYMENTS[item.payment], short: item.shortName, icon: "star-filled" }));
   },
   async refreshData() {
+    var _a;
     if (this.loading || this.mutating)
       return false;
     this.loading = true;
@@ -85,29 +115,31 @@ const remoteMethods = {
     this.loadErrorCode = "";
     this.loadErrorRequestId = "";
     try {
-      const session = await api_auth.ensureSession();
+      let session = await api_auth.ensureSession();
       if (this.currentUserId && this.currentUserId !== session.user.id) {
-        this.subscriptions = [];
-        this.settings = pages_subscription_subscriptionData.createDefaultSettings();
-        this.serverStats = {};
-        this.serverReminders = [];
-        this.selectedId = null;
-        this.dataReady = false;
-        this.form = {};
-        this.activeView = "home";
-        this.viewStack = [];
+        this.clearAccountData();
       }
       this.currentUserId = session.user.id;
       this.authStatus = "authenticated";
-      let notifications = await api_notifications.notificationApi.status();
-      if (notifications.configured && !notifications.identityLinked) {
-        api_auth.clearSession(session.accessToken);
-        await api_auth.ensureSession();
-        notifications = await api_notifications.notificationApi.status();
+      this.notificationError = "";
+      try {
+        let notifications = await api_notifications.notificationApi.status();
+        if (notifications.configured && !notifications.identityLinked) {
+          api_auth.clearSession(session.accessToken);
+          session = await api_auth.ensureSession();
+          if (this.currentUserId !== session.user.id)
+            this.clearAccountData();
+          this.currentUserId = session.user.id;
+          notifications = await api_notifications.notificationApi.status();
+        }
+        if (notifications.configured)
+          notifications = await api_notifications.syncPendingAuthorization(this.currentUserId) || notifications;
+        this.notifications = notifications;
+      } catch (error) {
+        if (error.status === 401 || ["WECHAT_LOGIN_FAILED", "WECHAT_UNAVAILABLE", "AUTH_NOT_CONFIGURED"].includes(error.code))
+          throw error;
+        this.notificationError = error.message;
       }
-      if (notifications.configured)
-        notifications = await api_notifications.syncPendingAuthorization(this.currentUserId) || notifications;
-      this.notifications = notifications;
       const [subscriptions, settings, membership, catalog, reminders] = await Promise.all([
         api_subscriptions.subscriptionApi.listAll(),
         api_subscriptions.subscriptionApi.settings(),
@@ -115,6 +147,10 @@ const remoteMethods = {
         api_subscriptions.subscriptionApi.catalog(),
         api_subscriptions.subscriptionApi.reminders()
       ]);
+      if (((_a = api_auth.getSession()) == null ? void 0 : _a.user.id) !== this.currentUserId) {
+        this.clearAccountData();
+        throw Object.assign(new Error("账号已切换，请重新加载"), { code: "AUTH_ACCOUNT_CHANGED" });
+      }
       this.subscriptions = subscriptions;
       this.settings = { ...pages_subscription_subscriptionData.createDefaultSettings(), ...settings };
       this.applyMembership(membership);
@@ -132,10 +168,7 @@ const remoteMethods = {
     } catch (error) {
       if (error.status === 401 || ["WECHAT_LOGIN_FAILED", "WECHAT_UNAVAILABLE", "AUTH_NOT_CONFIGURED"].includes(error.code)) {
         this.authStatus = "unauthenticated";
-        this.dataReady = false;
-        this.subscriptions = [];
-        this.serverStats = {};
-        this.serverReminders = [];
+        this.clearAccountData();
       }
       this.loadError = error.message;
       this.loadErrorCode = error.code || "UNKNOWN_ERROR";
@@ -194,6 +227,12 @@ const remoteMethods = {
       common_vendor.index.showLoading({ title: "正在保存", mask: true });
     let operationError = null;
     try {
+      if (this.currentUserId && (await api_auth.ensureSession()).user.id !== this.currentUserId) {
+        this.clearAccountData();
+        this.loadError = "账号已切换，请重新加载后操作";
+        this.loadErrorCode = "AUTH_ACCOUNT_CHANGED";
+        throw new Error("账号已切换，请重新加载后操作");
+      }
       const result = await operation();
       applyResult(result);
     } catch (error) {
@@ -385,9 +424,16 @@ const remoteMethods = {
     return this.updateSetting("defaultReminders", list.sort((a, b) => b - a));
   },
   async enableNotification() {
+    var _a;
     if (this.notificationAuthorizing || this.loading || this.mutating || !this.dataReady)
       return;
-    if (!this.notifications.configured || !this.notifications.schedulerEnabled)
+    if (((_a = api_auth.getSession()) == null ? void 0 : _a.user.id) !== this.currentUserId) {
+      this.clearAccountData();
+      this.loadError = "登录状态已变化，请重新加载后授权";
+      this.loadErrorCode = "AUTH_ACCOUNT_CHANGED";
+      return toast(this.loadError);
+    }
+    if (this.notificationError || !this.notifications.configured || !this.notifications.schedulerEnabled)
       return toast(this.notificationDescription);
     if (!this.settings.notificationEnabled && this.notifications.credits > 0)
       return this.updateSetting("notificationEnabled", true);
@@ -415,14 +461,6 @@ ${labels[row.status] || row.status}${row.errorCode ? `（${row.errorCode}）` : 
     else
       this.updateSetting("notificationEnabled", false);
   },
-  async activateMembership() {
-    if (await confirm({ title: "模拟开通会员", content: "仅修改后端演示会员状态，不产生真实扣款；重启后端后会重置。", confirmText: "模拟开通" }))
-      await this.mutate(() => api_subscriptions.subscriptionApi.activateMembership(), "模拟会员已开通", this.applyMembership);
-  },
-  async restoreFreePlan() {
-    if (await confirm({ title: "恢复免费版", content: "已有订阅不会删除，后续新增受五条额度限制。", confirmText: "确认恢复" }))
-      await this.mutate(() => api_subscriptions.subscriptionApi.restoreMembership(), "已恢复免费版", this.applyMembership);
-  },
   nextReminderText(item) {
     if (["paused", "cancelled", "archived"].includes(item.status))
       return "已停止提醒";
@@ -435,9 +473,6 @@ ${labels[row.status] || row.status}${row.errorCode ? `（${row.errorCode}）` : 
   },
   showPrivacy() {
     common_vendor.index.showModal({ title: "隐私与数据说明", content: "小程序通过微信登录识别账号，订阅、备注和设置发送至后端并按账号保存。后端保存微信账号标识，用于发送你授权的订阅消息，消息含扣费日期和金额。每次授权允许发送一条消息；可在“我的”中暂停。登录凭证保存在本机，不获取昵称、头像或手机号。", showCancel: false });
-  },
-  resetDemoData() {
-    return this.refreshData();
   }
 };
 exports.remoteComputed = remoteComputed;

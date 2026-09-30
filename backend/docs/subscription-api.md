@@ -1,13 +1,13 @@
 # Subscription Monitor API
 
-当前接口是本地 mock 版本，服务进程内使用变量保存数据，不连接数据库、不发起真实支付、不发送通知。重启服务后数据会恢复为种子数据。
+业务数据按微信账号隔离并由后端保存。生产环境使用 PostgreSQL，开发和测试的空内存仓库不会生成示例数据。微信通知已接入授权、定时任务及发送记录，会员支付尚未开放。
 
 ## 基础约定
 
 - Base URL：/api/v1
 - Swagger：/docs
 - OpenAPI JSON：/docs-json
-- 默认用户：demo-user
+- 所有业务接口必须使用已验证的微信账号，无默认共享用户
 - 登录：POST /api/v1/auth/wechat，提交微信登录 code，返回 accessToken、expiresAt 和 user.id
 - 业务接口请求头：Authorization: Bearer <accessToken>，服务端按验证后的微信身份隔离数据；x-demo-user-id 不再生效
 - 成功响应直接返回 JSON；错误响应沿用 NestJS 的 HTTP 错误格式
@@ -65,7 +65,7 @@ displayStatus 是结合周期、提醒窗口和到期日计算的展示状态；
 
 ### POST /subscriptions
 
-创建订阅。免费方案只允许 5 条非演示订阅，会员 mock 方案不限制数量。
+创建订阅。免费账号限 5 条订阅，会员账号额度由数据库中的会员状态决定。
 
 必填字段：name、category、cycle、nextBillingDate。
 
@@ -118,15 +118,7 @@ displayStatus 是结合周期、提醒窗口和到期日计算的展示状态；
 
 ### GET /membership
 
-返回当前 mock 会员状态、免费额度、权益。演示数据 isDemo=true 不占用免费额度。
-
-### POST /membership/activate
-
-本地模拟开通会员，不触发支付。
-
-### POST /membership/restore
-
-恢复免费方案。
+返回当前账号的只读会员状态、额度和可用功能。旧模拟开通与恢复接口已移除，调用返回 404。
 
 ### GET /settings
 
@@ -146,8 +138,14 @@ displayStatus 是结合周期、提醒窗口和到期日计算的展示状态；
 
 ### GET /health
 
-返回服务状态、当前运行模式和数据库连接状态。mock 阶段 database 固定为 not-connected。
+返回服务状态、当前运行模式和数据库连接状态。内存开发模式不会连接数据库；生产模式检查 PostgreSQL 连接。
 
-## 后续接数据库的边界
+## 数据持久化边界
 
-前端只依赖上述 HTTP 契约；当前 SubscriptionsService 是唯一的内存存储边界。接入数据库时保留控制器和 DTO，只替换该服务的数组、Map 读写为 repository，并保留 displayStatus、软删除和续费撤销的业务规则。
+前端只依赖上述 HTTP 契约；SubscriptionsService 通过 SubscriptionsRepository 访问 PostgreSQL 或测试内存仓库，并保留 displayStatus、软删除和续费撤销的业务规则。
+
+## 微信订阅消息
+
+`GET /notifications` 返回通知配置、启用状态、估计授权次数和近期发送结果。`POST /notifications/authorization` 提交原生授权回执，参数为唯一 requestId、当前 templateId 和 accept/reject/ban。相同回执重复提交不会增加次数。
+
+设置接口不再接受旧的 weeklySummary 和 notificationAuthorization 字段；旧字段会被白名单过滤，也不再返回。通知授权仅通过专用回执接口处理。

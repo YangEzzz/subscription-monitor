@@ -23,18 +23,6 @@ export class UpdateSettingsDto {
   @IsBoolean()
   notificationEnabled?: boolean;
 
-  @ApiPropertyOptional({ example: ['system'], type: [String] })
-  @IsOptional()
-  @IsArray()
-  @ArrayMaxSize(5)
-  @IsString({ each: true })
-  notificationAuthorization?: string[];
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsBoolean()
-  weeklySummary?: boolean;
-
   @ApiPropertyOptional({ example: 'CNY' })
   @IsOptional()
   @IsString()

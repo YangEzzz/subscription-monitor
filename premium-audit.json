@@ -29,24 +29,6 @@
     },
     {
       "category": "violation",
-      "file": "subscription/components/subscription/MembershipView.vue",
-      "line": 67,
-      "message": "Enabled literal button has no detectable action or submit behavior.",
-      "remediation": "Connect the button to a real action, make it a submit button, or disable/remove it.",
-      "ruleId": "affordance.actionless-button",
-      "severity": "error"
-    },
-    {
-      "category": "violation",
-      "file": "subscription/components/subscription/MembershipView.vue",
-      "line": 171,
-      "message": "Enabled literal button has no detectable action or submit behavior.",
-      "remediation": "Connect the button to a real action, make it a submit button, or disable/remove it.",
-      "ruleId": "affordance.actionless-button",
-      "severity": "error"
-    },
-    {
-      "category": "violation",
       "file": "subscription/components/subscription/ReminderSettingsView.vue",
       "line": 4,
       "message": "Enabled literal button has no detectable action or submit behavior.",
@@ -410,10 +392,10 @@
   "projectRoot": "D:\\project\\subscription-monitor",
   "schemaVersion": 1,
   "summary": {
-    "errors": 45,
-    "total": 45,
+    "errors": 43,
+    "total": 43,
     "unresolved": 0,
-    "violations": 45,
+    "violations": 43,
     "warnings": 0
   }
 }

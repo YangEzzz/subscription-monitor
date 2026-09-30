@@ -7,8 +7,6 @@ import {
 	addDays,
 	formatDate,
 	daysUntil,
-	getDisplayStatus,
-	getMonthlyEquivalent,
 	createDefaultSettings
 } from './subscription-data.js'
 
@@ -31,8 +29,8 @@ export function createSubscriptionPageState() {
 					subscriptions: [], settings: createDefaultSettings(),
 					authStatus: 'pending', currentUserId: '', loading: false, mutating: false, dataReady: false, loadError: '', loadErrorCode: '', loadErrorRequestId: '',
 					serverStats: {}, serverReminders: [], statsRequestId: 0, statsLoading: false, statsError: '', statsErrorCode: '', statsErrorRequestId: '', trashPage: 0,
-					notifications: { configured: false, schedulerEnabled: false, credits: 0, recentDeliveries: [] }, notificationAuthorizing: false,
-				subscriptionLimit: 5,
+					notifications: { configured: false, schedulerEnabled: false, credits: 0, recentDeliveries: [] }, notificationAuthorizing: false, notificationError: '',
+				subscriptionLimit: null,
 				searchKeyword: '', activeCategory: '全部', activeStatus: 'default', sortMode: 'date', sortSheetVisible: false,
 				sortOptions: [
 					{ value: 'date', label: '按扣费日期', desc: '即将扣费的订阅排在前面', icon: 'calendar' },
@@ -42,16 +40,12 @@ export function createSubscriptionPageState() {
 				weekdays: ['日', '一', '二', '三', '四', '五', '六'], calendarCursor: today.slice(0, 7) + '-01', selectedDate: today,
 				statsPeriod: 'month', statsCurrency: 'CNY', statPeriods: [{ value: 'month', label: '月均' }, { value: 'year', label: '年度' }, { value: 'next', label: '未来30天' }],
 				selectedId: null, editingId: null, originalBillingDate: null, formError: '', formBaseline: '',
-				categories: ['影音娱乐', '音乐', '云存储', 'AI 工具', '效率工具', '阅读', '其他'],
-				cycles: ['每周', '每月', '每季度', '每半年', '每年', '自定义天数', '一次性'],
-				payments: ['微信支付', '支付宝', 'App Store', '信用卡', '官网', '其他'], currencies: ['CNY', 'USD', 'HKD', 'JPY'],
+				categories: [],
+				cycles: [],
+				payments: [], currencies: [],
 				logoColors: ['#16834d', '#3f91ed', '#ef3943', '#e43c86', '#6658d9', '#202622'],
 				reminderOptions: [{ value: 14, label: '提前 14 天', desc: '适合年度或高金额订阅' }, { value: 7, label: '提前 7 天', desc: '预留充分处理时间' }, { value: 3, label: '提前 3 天', desc: '默认提醒节点' }, { value: 1, label: '提前 1 天', desc: '临近扣费再次确认' }, { value: 0, label: '扣费当天', desc: '当天站内待办' }],
-				serviceTemplates: [
-					{ name: '腾讯视频 VIP', short: '腾讯视频', plan: '连续包月', logo: '视', icon: 'videocam-filled', color: '#19a768', category: '影音娱乐', amount: 25, payment: '微信支付' },
-					{ name: '网易云音乐黑胶 VIP', short: '网易云', plan: '黑胶 VIP', logo: '音', icon: 'headphones', color: '#ef3943', category: '音乐', amount: 15, payment: '微信支付' },
-					{ name: 'iCloud+ 200GB', short: 'iCloud', plan: '200GB', logo: '云', icon: 'cloud-upload-filled', color: '#3f98ee', category: '云存储', amount: 21, payment: 'App Store' }
-				],
+				serviceTemplates: [],
 				form: {}
 			}
 }
@@ -66,12 +60,12 @@ export const subscriptionComputed = {
 			showTabBar() { return ['home', 'all', 'calendar', 'stats', 'profile'].includes(this.activeView) },
 			liveSubscriptions() { return this.subscriptions.filter(item => !item.deletedAt) },
 			deletedSubscriptions() { return this.subscriptions.filter(item => item.deletedAt).sort((a, b) => b.deletedAt - a.deletedAt) },
-			quotaSubscriptions() { return this.liveSubscriptions.filter(item => !item.isDemo) },
+
 			isMember() { return this.settings.membership && this.settings.membership.status === 'active' },
-			canCreateSubscription() { return this.isMember || this.quotaSubscriptions.length < this.subscriptionLimit },
-			freeQuotaText() { return this.quotaSubscriptions.length >= this.subscriptionLimit ? `免费额度已用完 · ${this.quotaSubscriptions.length} / ${this.subscriptionLimit}` : `已使用 ${this.quotaSubscriptions.length} / ${this.subscriptionLimit} · 演示数据不计入` },
-			freeQuotaValue() { return `${this.quotaSubscriptions.length} / ${this.subscriptionLimit}` },
-			membershipQuotaPercent() { return Math.min(100, this.quotaSubscriptions.length / this.subscriptionLimit * 100) },
+			canCreateSubscription() { return this.settings.membership.quota?.limit === null || (this.settings.membership.quota?.remaining ?? 0) > 0 },
+			freeQuotaText() { return this.settings.membership.quota?.remaining === 0 ? `免费额度已用完 · ${this.freeQuotaValue}` : `已使用 ${this.freeQuotaValue}` },
+			freeQuotaValue() { return `${this.settings.membership.quota?.used ?? 0} / ${this.subscriptionLimit ?? "不限"}` },
+			membershipQuotaPercent() { return this.subscriptionLimit ? Math.min(100, (this.settings.membership.quota?.used ?? 0) / this.subscriptionLimit * 100) : 0 },
 			selectedSubscription() { return this.liveSubscriptions.find(item => item.id === this.selectedId) || null },
 			selectedRenewalHistory() { return this.selectedSubscription ? (this.selectedSubscription.renewalHistory || []).slice().reverse().slice(0, 3) : [] },
 			selectedNextReminderText() { return this.selectedSubscription ? this.nextReminderText(this.selectedSubscription) : '' },
@@ -80,10 +74,8 @@ export const subscriptionComputed = {
 			next30Subscriptions() { return this.activeSubscriptions.filter(item => daysUntil(item.nextBillingDate) >= 0 && daysUntil(item.nextBillingDate) <= 30) },
 			upcoming7() { return this.next30Subscriptions.filter(item => daysUntil(item.nextBillingDate) <= 7) },
 			upcoming30Later() { return this.next30Subscriptions.filter(item => daysUntil(item.nextBillingDate) > 7) },
-			next30Total() { return this.next30Subscriptions.filter(item => item.currency === this.statsCurrency).reduce((sum, item) => sum + Number(item.amount || 0), 0) },
 			next30TotalText() { return this.formatCurrencyTotals(this.next30Subscriptions, item => Number(item.amount || 0)) },
-			monthlyAverage() { return this.liveSubscriptions.filter(item => item.currency === this.statsCurrency).reduce((sum, item) => sum + (item.monthlyEquivalent ?? getMonthlyEquivalent(item)), 0) },
-			monthlyAverageText() { return this.formatCurrencyTotals(this.liveSubscriptions, item => (item.monthlyEquivalent ?? getMonthlyEquivalent(item))) },
+			monthlyAverageText() { return this.formatCurrencyTotals(this.liveSubscriptions, item => (item.monthlyEquivalent)) },
 			actionableReminders() {
 				const list = []
 				if (!this.notificationReady) list.push({ key: 'notification', tone: 'warning', icon: 'notification', title: '开启微信续费通知', desc: this.notificationDescription, action: 'notification' })
@@ -145,7 +137,7 @@ export const subscriptionLifecycle = {
 
 export const subscriptionMethods = {
 			...remoteMethods,
-			formatDate, getStatus(item) { return item.displayStatus || getDisplayStatus(item) },
+			formatDate, getStatus(item) { return item.displayStatus || item.status },
 			cycleText(item) { if (!item) return ''; return item.cycle === '自定义天数' ? `每 ${item.cycleValue || '?'} 天` : item.cycle },
 			initNavigationLayout() {
 				try {
@@ -209,7 +201,7 @@ export const subscriptionMethods = {
 			selectDate(key) { this.selectedDate = key; if (key.slice(0, 7) !== this.calendarCursor.slice(0, 7)) this.calendarCursor = key.slice(0, 7) + '-01' },
 			createEmptyForm(date) { const nextBillingDate = date || addDays(this.todayKey, 7); return { name: '', plan: '', logo: '订', color: '#16834d', amount: '', currency: this.settings.defaultCurrency, cycle: '每月', cycleValue: '', nextBillingDate, anchorDay: parseDate(nextBillingDate).getDate(), payment: '微信支付', category: '其他', status: 'active', autoRenew: true, trial: false, trialEndDate: null, reminders: this.settings.defaultReminders.slice(), note: '', cancelGuide: '' } },
 			openMembership() { this.navigateToView('membership') },
-			showMembershipLimit() { uni.showModal({ title: '免费额度已用完', content: `免费版最多保存 ${this.subscriptionLimit} 条订阅，开通会员后可无限新增。`, confirmText: '开通会员', success: res => { if (res.confirm) this.openMembership() } }) },
+			showMembershipLimit() { uni.showModal({ title: '免费额度已用完', content: `当前账号最多保存 ${this.subscriptionLimit} 条订阅。可删除不再需要的记录后继续新增。`, confirmText: '查看额度', success: res => { if (res.confirm) this.openMembership() } }) },
 			openForm(date, item) { if (!item && !this.canCreateSubscription) { this.showMembershipLimit(); return } this.formError = ''; this.editingId = item ? item.id : null; this.originalBillingDate = item ? item.nextBillingDate : null; this.form = item ? { ...item, amount: item.amount === null ? '' : String(item.amount), cycleValue: item.cycleValue || '', trial: Boolean(item.trialEndDate), trialEndDate: item.trialEndDate || null, reminders: (item.reminders || []).slice() } : this.createEmptyForm(date); this.formBaseline = JSON.stringify(this.form); this.navigateToView('form') },
 			applyTemplate(template) { Object.assign(this.form, { ...template, amount: template.amount == null ? '' : String(template.amount) }); uni.showToast({ title: `已选择${template.short}`, icon: 'none' }) },
 			toggleReminder(value) { const index = this.form.reminders.indexOf(value); if (index >= 0) this.form.reminders.splice(index, 1); else this.form.reminders.push(value); this.form.reminders.sort((a, b) => b - a) },

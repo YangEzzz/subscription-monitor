@@ -5,6 +5,7 @@ import {
   Inject,
   Injectable,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { CreateSubscriptionDto } from './dto/create-subscription.dto';
@@ -28,7 +29,6 @@ import {
   SubscriptionsRepository,
 } from './repositories/subscriptions.repository';
 
-export const DEFAULT_USER_ID = 'demo-user';
 export const FREE_SUBSCRIPTION_LIMIT = 5;
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -134,13 +134,13 @@ function clone<T>(value: T): T {
   return JSON.parse(JSON.stringify(value)) as T;
 }
 
-function createSeedRecord(
-  input: Partial<SubscriptionRecord> & Pick<SubscriptionRecord, 'id' | 'name' | 'category'>,
+function createSubscriptionRecord(
+  input: Partial<SubscriptionRecord> & Pick<SubscriptionRecord, 'id' | 'userId' | 'name' | 'category'>,
 ): SubscriptionRecord {
   const now = new Date().toISOString();
   return {
     id: input.id,
-    userId: input.userId ?? DEFAULT_USER_ID,
+    userId: input.userId,
     anchorDay: input.anchorDay ?? Number((input.nextBillingDate || todayKey()).slice(8, 10)),
     name: input.name,
     plan: input.plan ?? null,
@@ -162,122 +162,11 @@ function createSeedRecord(
     createdAt: input.createdAt ?? now,
     updatedAt: input.updatedAt ?? now,
     deletedAt: input.deletedAt ?? null,
-    isDemo: input.isDemo ?? true,
+    isDemo: false,
     renewalHistory: input.renewalHistory ?? [],
     lastRenewedAt: input.lastRenewedAt ?? null,
     lastRenewalNextBillingDate: input.lastRenewalNextBillingDate ?? null,
   };
-}
-
-export function createDemoSubscriptions(): SubscriptionRecord[] {
-  const today = todayKey();
-  return [
-    createSeedRecord({
-      id: 'sub_1001',
-      name: 'Netflix Premium',
-      plan: 'Premium',
-      logo: 'N',
-      color: '#e50914',
-      amount: 108,
-      cycle: 'monthly',
-      nextBillingDate: addDays(today, 10),
-      payment: 'card',
-      category: 'video',
-      note: '家庭账号',
-    }),
-    createSeedRecord({
-      id: 'sub_1002',
-      name: 'iCloud+',
-      plan: '200GB',
-      logo: 'i',
-      color: '#3f98ee',
-      amount: 21,
-      cycle: 'monthly',
-      nextBillingDate: addDays(today, 4),
-      payment: 'app_store',
-      category: 'cloud',
-    }),
-    createSeedRecord({
-      id: 'sub_1004',
-      name: 'Adobe Creative Cloud',
-      plan: 'Photography',
-      logo: 'A',
-      color: '#e43c86',
-      amount: 173,
-      cycle: 'yearly',
-      nextBillingDate: addDays(today, 30),
-      payment: 'card',
-      category: 'productivity',
-    }),
-    createSeedRecord({
-      id: 'sub_1005',
-      name: 'YouTube Premium',
-      plan: 'Individual',
-      logo: 'Y',
-      color: '#ed3338',
-      amount: 68,
-      cycle: 'monthly',
-      nextBillingDate: addDays(today, -2),
-      payment: 'wechat',
-      category: 'video',
-      status: 'active',
-    }),
-    createSeedRecord({
-      id: 'sub_1006',
-      name: '得到听书',
-      plan: 'Annual',
-      logo: 'D',
-      color: '#c17d2f',
-      amount: 199,
-      cycle: 'yearly',
-      nextBillingDate: addDays(today, 21),
-      payment: 'wechat',
-      category: 'reading',
-      trialEndDate: addDays(today, 2),
-    }),
-    createSeedRecord({
-      id: 'sub_1007',
-      name: 'Keep',
-      plan: 'Monthly',
-      logo: 'K',
-      color: '#6658d9',
-      amount: 25,
-      cycle: 'monthly',
-      nextBillingDate: addDays(today, 8),
-      payment: 'wechat',
-      category: 'other',
-      status: 'paused',
-      autoRenew: false,
-      note: '暂时停用，保留记录',
-    }),
-    createSeedRecord({
-      id: 'sub_1008',
-      name: 'Notion Plus',
-      plan: 'Plus',
-      logo: 'N',
-      color: '#202622',
-      amount: 72,
-      cycle: 'monthly',
-      nextBillingDate: addDays(today, 25),
-      payment: 'card',
-      category: 'productivity',
-      status: 'cancelled',
-      autoRenew: false,
-    }),
-    createSeedRecord({
-      id: 'sub_1009',
-      name: '百度网盘',
-      plan: 'Super',
-      logo: 'B',
-      color: '#3f91ed',
-      amount: 30,
-      cycle: 'monthly',
-      nextBillingDate: addDays(today, 14),
-      payment: 'alipay',
-      category: 'cloud',
-      isDemo: true,
-    }),
-  ];
 }
 
 @Injectable()
@@ -288,7 +177,8 @@ export class SubscriptionsService {
   ) {}
 
   private normalizeUserId(userId?: string): string {
-    return userId?.trim() || DEFAULT_USER_ID;
+    if (!userId?.trim()) throw new UnauthorizedException('微信登录未完成');
+    return userId.trim();
   }
 
   private now(): string {
@@ -308,7 +198,7 @@ export class SubscriptionsService {
       amountVisible: true,
       notificationEnabled: false,
       notificationAuthorization: [],
-      weeklySummary: true,
+      weeklySummary: false,
       defaultCurrency: 'CNY',
       defaultReminders: [...DEFAULT_REMINDERS],
       reminderTime: '09:00',
@@ -336,12 +226,12 @@ export class SubscriptionsService {
     return created;
   }
 
-  private ownedRecords(
+  private async ownedRecords(
     userId: string,
     repository = this.repository,
   ): Promise<SubscriptionRecord[]> {
     const normalizedUserId = this.normalizeUserId(userId);
-    return repository.listSubscriptions(normalizedUserId);
+    return (await repository.listSubscriptions(normalizedUserId)).filter(record => !record.isDemo);
   }
 
   private async findRecord(
@@ -353,7 +243,7 @@ export class SubscriptionsService {
       this.normalizeUserId(userId),
       id,
     );
-    if (!record) throw new NotFoundException('Subscription not found');
+    if (!record || record.isDemo) throw new NotFoundException('Subscription not found');
     return record;
   }
 
@@ -377,7 +267,7 @@ export class SubscriptionsService {
   }
 
   private toPublic(record: SubscriptionRecord): Record<string, unknown> {
-    const { userId: _userId, ...publicRecord } = clone(record);
+    const { userId: _userId, isDemo: _legacyDemo, ...publicRecord } = clone(record);
     return {
       ...publicRecord,
       displayStatus: getDisplayStatus(record),
@@ -453,7 +343,7 @@ export class SubscriptionsService {
       await this.assertQuota(normalizedUserId, repository);
       const now = this.now();
       const trialEndDate = dto.trialEndDate ?? null;
-      const record = createSeedRecord({
+      const record = createSubscriptionRecord({
         id: 'sub_' + randomUUID(),
         userId: normalizedUserId,
         name: dto.name.trim(),
@@ -775,44 +665,14 @@ export class SubscriptionsService {
         unlimitedSubscriptions: membership.status === 'active',
         reminderOffsets: [14, 7, 3, 1, 0],
         statistics: true,
-        localOnlyDemo: true,
+        membershipPurchaseAvailable: false,
       },
     };
   }
 
-  async activateMembership(userId: string | undefined) {
-    const normalizedUserId = this.normalizeUserId(userId);
-    await this.repository.transaction(async (repository) => {
-      const membership = await this.getMembershipRecord(
-        normalizedUserId,
-        repository,
-      );
-      membership.status = 'active';
-      membership.plan = 'member';
-      membership.startedAt = this.now();
-      await repository.saveMembership(membership);
-    });
-    return this.getMembership(normalizedUserId);
-  }
-
-  async restoreMembership(userId: string | undefined) {
-    const normalizedUserId = this.normalizeUserId(userId);
-    await this.repository.transaction(async (repository) => {
-      const membership = await this.getMembershipRecord(
-        normalizedUserId,
-        repository,
-      );
-      membership.status = 'free';
-      membership.plan = 'free';
-      membership.startedAt = null;
-      await repository.saveMembership(membership);
-    });
-    return this.getMembership(normalizedUserId);
-  }
-
   async getSettings(userId: string | undefined) {
     const settings = await this.getSettingsRecord(this.normalizeUserId(userId));
-    const { userId: _userId, ...publicSettings } = clone(settings);
+    const { userId: _userId, weeklySummary: _weeklySummary, notificationAuthorization: _authorization, ...publicSettings } = clone(settings);
     return publicSettings;
   }
 
@@ -833,8 +693,6 @@ export class SubscriptionsService {
     for (const key of [
       'amountVisible',
       'notificationEnabled',
-      'notificationAuthorization',
-      'weeklySummary',
       'defaultCurrency',
       'defaultReminders',
       'reminderTime',
@@ -849,7 +707,7 @@ export class SubscriptionsService {
     }
     settings.defaultCurrency = settings.defaultCurrency.toUpperCase();
     await repository.saveSettings(settings);
-    const { userId: _userId, ...publicSettings } = clone(settings);
+    const { userId: _userId, weeklySummary: _weeklySummary, notificationAuthorization: _authorization, ...publicSettings } = clone(settings);
     return publicSettings;
     });
   }

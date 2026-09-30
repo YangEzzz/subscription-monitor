@@ -59,6 +59,18 @@ test('page and uni.request adapter complete the workflow against real Nest HTTP 
 		}
 		assert.equal((await fetch(`${API_CONFIG.baseUrl}/auth/wechat`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' })).status, 422)
 		const session = await ensureSession()
+		const removedSettings = await fetch(API_CONFIG.baseUrl + '/settings', {
+			method: 'PATCH', headers: { Authorization: 'Bearer ' + session.accessToken, 'Content-Type': 'application/json' },
+			body: JSON.stringify({ weeklySummary: true, notificationAuthorization: ['accept'] })
+		})
+		assert.equal(removedSettings.status, 200)
+		const settingsWithoutDemoFields = await removedSettings.json()
+		assert.equal(settingsWithoutDemoFields.weeklySummary, undefined)
+		assert.equal(settingsWithoutDemoFields.notificationAuthorization, undefined)
+		assert.equal(settingsWithoutDemoFields.notificationEnabled, false)
+		for (const path of ['/membership/activate', '/membership/restore']) {
+			assert.equal((await fetch(API_CONFIG.baseUrl + path, { method: 'POST', headers: { Authorization: 'Bearer ' + session.accessToken } })).status, 404)
+		}
 		assert.equal((await notificationApi.status()).identityLinked, true)
 		const receipt = { requestId: 'abc12345-1234-4567-8abc-123456789012', templateId: 'integration-template', result: 'accept' }
 		assert.equal((await notificationApi.authorize(receipt)).credits, 1)
@@ -86,7 +98,7 @@ test('page and uni.request adapter complete the workflow against real Nest HTTP 
 		await page.saveSubscription()
 		assert.equal(page.activeView, 'detail')
 		assert.equal(page.subscriptions.length, 1)
-		assert.equal(page.selectedSubscription.isDemo, false)
+		assert.equal(page.selectedSubscription.isDemo, undefined)
 		assert.equal(page.statsTotal, 20)
 		const id = page.selectedId
 		page.openForm(null, page.selectedSubscription)
@@ -107,9 +119,7 @@ test('page and uni.request adapter complete the workflow against real Nest HTTP 
 		assert.equal(page.statsTotal, 25)
 		await page.updateSetting('reminderTime', '10:30')
 		assert.equal((await api.settings()).reminderTime, '10:30')
-		await page.activateMembership()
-		assert.equal(page.isMember, true)
-		await page.restoreFreePlan()
+
 		assert.equal(page.isMember, false)
 		await page.handleSubscriptionAction('copy')
 		assert.equal(page.editingId, null)
@@ -138,6 +148,15 @@ test('page and uni.request adapter complete the workflow against real Nest HTTP 
 		assert.equal((await api.settings()).reminderTime, '09:00')
 		assert.equal((await api.membership()).status, 'free')
 		const otherSession = await ensureSession()
+		page.form = { name: 'previous account draft' }
+		page.formBaseline = 'previous account draft'
+		page.editingId = savedId
+		await page.refreshData()
+		assert.equal(page.currentUserId, otherSession.user.id)
+		assert.equal(page.subscriptions.length, 0)
+		assert.deepEqual(page.form, {})
+		assert.equal(page.formBaseline, '')
+		assert.equal(page.editingId, null)
 		assert.equal((await notificationApi.status()).credits, 0)
 		assert.equal((await notificationApi.status()).recentDeliveries.length, 0)
 		const forged = await fetch(`${API_CONFIG.baseUrl}/subscriptions`, { headers: { Authorization: `Bearer ${otherSession.accessToken}`, 'x-demo-user-id': session.user.id } })

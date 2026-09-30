@@ -10,6 +10,7 @@ const CATEGORY_COLORS = {
 };
 const STATUS_LABELS = {
   active: "正常",
+  overdue: "逾期未确认",
   upcoming: "即将到期",
   trial: "试用中",
   pending: "待处理",
@@ -46,37 +47,10 @@ function daysUntil(dateKey) {
   const today = parseDate(toDateKey(/* @__PURE__ */ new Date()));
   return Math.ceil((parseDate(dateKey) - today) / 864e5);
 }
-function getDisplayStatus(item) {
-  if (["paused", "cancelled", "archived"].includes(item.status))
-    return item.status;
-  if (item.status === "pending")
-    return "pending";
-  if (item.trialEndDate && daysUntil(item.trialEndDate) >= 0)
-    return "trial";
-  const days = daysUntil(item.nextBillingDate);
-  if (days < 0)
-    return "pending";
-  if (days <= Math.max(...item.reminders || [3]))
-    return "upcoming";
-  return "active";
-}
-function getCycleMonths(cycle) {
-  return { "每周": 0.2301, "每月": 1, "每季度": 3, "每半年": 6, "每年": 12, "一次性": 0 }[cycle] || 1;
-}
-function getMonthlyEquivalent(item) {
-  if (item.amount === null || item.amount === "" || item.status === "cancelled" || item.status === "paused" || item.status === "archived")
-    return 0;
-  const months = item.cycle === "自定义天数" ? Number(item.cycleValue || 0) / 30.4375 : getCycleMonths(item.cycle);
-  if (!months)
-    return 0;
-  return Number(item.amount) / months;
-}
 function createDefaultSettings() {
   return {
     amountVisible: true,
     notificationEnabled: false,
-    notificationAuthorization: [],
-    weeklySummary: true,
     defaultCurrency: "CNY",
     defaultReminders: [7, 3, 1],
     reminderTime: "09:00",
@@ -95,8 +69,6 @@ exports.addDays = addDays;
 exports.createDefaultSettings = createDefaultSettings;
 exports.daysUntil = daysUntil;
 exports.formatDate = formatDate;
-exports.getDisplayStatus = getDisplayStatus;
-exports.getMonthlyEquivalent = getMonthlyEquivalent;
 exports.parseDate = parseDate;
 exports.toDateKey = toDateKey;
 //# sourceMappingURL=../../../.sourcemap/mp-weixin/pages/subscription/subscription-data.js.map

@@ -37,7 +37,8 @@ function createSubscriptionPageState() {
     trashPage: 0,
     notifications: { configured: false, schedulerEnabled: false, credits: 0, recentDeliveries: [] },
     notificationAuthorizing: false,
-    subscriptionLimit: 5,
+    notificationError: "",
+    subscriptionLimit: null,
     searchKeyword: "",
     activeCategory: "全部",
     activeStatus: "default",
@@ -59,17 +60,13 @@ function createSubscriptionPageState() {
     originalBillingDate: null,
     formError: "",
     formBaseline: "",
-    categories: ["影音娱乐", "音乐", "云存储", "AI 工具", "效率工具", "阅读", "其他"],
-    cycles: ["每周", "每月", "每季度", "每半年", "每年", "自定义天数", "一次性"],
-    payments: ["微信支付", "支付宝", "App Store", "信用卡", "官网", "其他"],
-    currencies: ["CNY", "USD", "HKD", "JPY"],
+    categories: [],
+    cycles: [],
+    payments: [],
+    currencies: [],
     logoColors: ["#16834d", "#3f91ed", "#ef3943", "#e43c86", "#6658d9", "#202622"],
     reminderOptions: [{ value: 14, label: "提前 14 天", desc: "适合年度或高金额订阅" }, { value: 7, label: "提前 7 天", desc: "预留充分处理时间" }, { value: 3, label: "提前 3 天", desc: "默认提醒节点" }, { value: 1, label: "提前 1 天", desc: "临近扣费再次确认" }, { value: 0, label: "扣费当天", desc: "当天站内待办" }],
-    serviceTemplates: [
-      { name: "腾讯视频 VIP", short: "腾讯视频", plan: "连续包月", logo: "视", icon: "videocam-filled", color: "#19a768", category: "影音娱乐", amount: 25, payment: "微信支付" },
-      { name: "网易云音乐黑胶 VIP", short: "网易云", plan: "黑胶 VIP", logo: "音", icon: "headphones", color: "#ef3943", category: "音乐", amount: 15, payment: "微信支付" },
-      { name: "iCloud+ 200GB", short: "iCloud", plan: "200GB", logo: "云", icon: "cloud-upload-filled", color: "#3f98ee", category: "云存储", amount: 21, payment: "App Store" }
-    ],
+    serviceTemplates: [],
     form: {}
   };
 }
@@ -87,23 +84,24 @@ const subscriptionComputed = {
   deletedSubscriptions() {
     return this.subscriptions.filter((item) => item.deletedAt).sort((a, b) => b.deletedAt - a.deletedAt);
   },
-  quotaSubscriptions() {
-    return this.liveSubscriptions.filter((item) => !item.isDemo);
-  },
   isMember() {
     return this.settings.membership && this.settings.membership.status === "active";
   },
   canCreateSubscription() {
-    return this.isMember || this.quotaSubscriptions.length < this.subscriptionLimit;
+    var _a, _b;
+    return ((_a = this.settings.membership.quota) == null ? void 0 : _a.limit) === null || (((_b = this.settings.membership.quota) == null ? void 0 : _b.remaining) ?? 0) > 0;
   },
   freeQuotaText() {
-    return this.quotaSubscriptions.length >= this.subscriptionLimit ? `免费额度已用完 · ${this.quotaSubscriptions.length} / ${this.subscriptionLimit}` : `已使用 ${this.quotaSubscriptions.length} / ${this.subscriptionLimit} · 演示数据不计入`;
+    var _a;
+    return ((_a = this.settings.membership.quota) == null ? void 0 : _a.remaining) === 0 ? `免费额度已用完 · ${this.freeQuotaValue}` : `已使用 ${this.freeQuotaValue}`;
   },
   freeQuotaValue() {
-    return `${this.quotaSubscriptions.length} / ${this.subscriptionLimit}`;
+    var _a;
+    return `${((_a = this.settings.membership.quota) == null ? void 0 : _a.used) ?? 0} / ${this.subscriptionLimit ?? "不限"}`;
   },
   membershipQuotaPercent() {
-    return Math.min(100, this.quotaSubscriptions.length / this.subscriptionLimit * 100);
+    var _a;
+    return this.subscriptionLimit ? Math.min(100, (((_a = this.settings.membership.quota) == null ? void 0 : _a.used) ?? 0) / this.subscriptionLimit * 100) : 0;
   },
   selectedSubscription() {
     return this.liveSubscriptions.find((item) => item.id === this.selectedId) || null;
@@ -130,17 +128,11 @@ const subscriptionComputed = {
   upcoming30Later() {
     return this.next30Subscriptions.filter((item) => pages_subscription_subscriptionData.daysUntil(item.nextBillingDate) > 7);
   },
-  next30Total() {
-    return this.next30Subscriptions.filter((item) => item.currency === this.statsCurrency).reduce((sum, item) => sum + Number(item.amount || 0), 0);
-  },
   next30TotalText() {
     return this.formatCurrencyTotals(this.next30Subscriptions, (item) => Number(item.amount || 0));
   },
-  monthlyAverage() {
-    return this.liveSubscriptions.filter((item) => item.currency === this.statsCurrency).reduce((sum, item) => sum + (item.monthlyEquivalent ?? pages_subscription_subscriptionData.getMonthlyEquivalent(item)), 0);
-  },
   monthlyAverageText() {
-    return this.formatCurrencyTotals(this.liveSubscriptions, (item) => item.monthlyEquivalent ?? pages_subscription_subscriptionData.getMonthlyEquivalent(item));
+    return this.formatCurrencyTotals(this.liveSubscriptions, (item) => item.monthlyEquivalent);
   },
   actionableReminders() {
     const list = [];
@@ -261,7 +253,7 @@ const subscriptionMethods = {
   ...pages_subscription_subscriptionRemote.remoteMethods,
   formatDate: pages_subscription_subscriptionData.formatDate,
   getStatus(item) {
-    return item.displayStatus || pages_subscription_subscriptionData.getDisplayStatus(item);
+    return item.displayStatus || item.status;
   },
   cycleText(item) {
     if (!item)
@@ -412,7 +404,7 @@ const subscriptionMethods = {
     this.navigateToView("membership");
   },
   showMembershipLimit() {
-    common_vendor.index.showModal({ title: "免费额度已用完", content: `免费版最多保存 ${this.subscriptionLimit} 条订阅，开通会员后可无限新增。`, confirmText: "开通会员", success: (res) => {
+    common_vendor.index.showModal({ title: "免费额度已用完", content: `当前账号最多保存 ${this.subscriptionLimit} 条订阅。可删除不再需要的记录后继续新增。`, confirmText: "查看额度", success: (res) => {
       if (res.confirm)
         this.openMembership();
     } });

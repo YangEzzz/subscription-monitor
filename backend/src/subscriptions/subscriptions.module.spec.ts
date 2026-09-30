@@ -19,11 +19,16 @@ function config(overrides: Partial<AppConfig> = {}): AppConfig {
 }
 
 describe('SubscriptionsModule repository selection', () => {
-  it('uses the seeded memory repository by default', async () => {
+  it('rejects volatile memory storage in production', () => {
+    expect(() =>
+      createSubscriptionsRepository(config({ nodeEnv: 'production' })),
+    ).toThrow('Production requires PostgreSQL persistence');
+  });
+  it('uses empty memory storage for development and tests', async () => {
     const repository = createSubscriptionsRepository(config());
 
     expect(repository).toBeInstanceOf(MemorySubscriptionsRepository);
-    expect(await repository.listSubscriptions('demo-user')).toHaveLength(8);
+    expect(await repository.listSubscriptions('demo-user')).toHaveLength(0);
   });
 
   it('requires a database URL for the Prisma driver', () => {

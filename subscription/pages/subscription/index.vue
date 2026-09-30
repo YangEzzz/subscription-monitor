@@ -44,6 +44,8 @@
         :busy="statsLoading"
         @action="refreshStats"
       />
+      <async-state-view v-if="notificationError && dataReady" compact title="通知状态暂不可用"
+        :description="notificationError" action-label="重新加载" :busy="loading || mutating" @action="refreshData" />
       <view v-if="statsLoading && activeView === 'stats'" class="api-status" role="status"
         >正在加载统计…</view
       >
@@ -164,12 +166,11 @@
           @notification-change="handleNotificationSwitch"
           @notification-history="showNotificationHistory"
           @open-reminder-settings="openReminderSettings"
-          @weekly-summary-change="updateSetting('weeklySummary', $event)"
           @default-currency-change="updateDefaultCurrency"
           @export="exportData"
           @trash="openTrash"
           @privacy="showPrivacy"
-          @reset-demo="resetDemoData"
+          @refresh="refreshData"
         />
 
         <!-- 会员中心 -->
@@ -177,9 +178,8 @@
           v-else-if="activeView === 'membership'"
           :is-member="isMember"
           :free-quota-value="freeQuotaValue"
+          :subscription-limit="subscriptionLimit"
           @back="goBackView('profile')"
-          @activate="activateMembership"
-          @restore="restoreFreePlan"
         />
 
         <!-- 详情 -->
