@@ -146,6 +146,6 @@ displayStatus 是结合周期、提醒窗口和到期日计算的展示状态；
 
 ## 微信订阅消息
 
-`GET /notifications` 返回通知配置、启用状态、估计授权次数和近期发送结果。`POST /notifications/authorization` 提交原生授权回执，参数为唯一 requestId、当前 templateId 和 accept/reject/ban。相同回执重复提交不会增加次数。
+`GET /notifications` 返回通知配置、启用状态、授权类型 `subscriptionType`（once / long_term）、授权状态 `authorized` 和近期发送结果。一次性模式 `credits` 为估计剩余次数；长期模式为 null，发送后保留授权。`POST /notifications/authorization` 提交原生授权回执，参数为唯一 requestId、当前 templateId 和 accept/reject/ban。相同回执重复提交不会重复新增授权。长期模式 reject/ban 或微信返回 43101 会停用；模板变更后须重新授权。部署配置及字段映射见 deploy/微信通知部署.md。
 
 设置接口不再接受旧的 weeklySummary 和 notificationAuthorization 字段；旧字段会被白名单过滤，也不再返回。通知授权仅通过专用回执接口处理。

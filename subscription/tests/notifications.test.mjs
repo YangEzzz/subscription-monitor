@@ -1,6 +1,29 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { requestNotificationAuthorization, syncPendingAuthorization } from '../api/notifications.js'
+import { remoteComputed, remoteMethods } from '../pages/subscription/subscription-remote.js'
+
+test('long-term notification states show authorization, pause and failure without a credit counter', () => {
+  const page = { notifications: { configured: true, schedulerEnabled: true, identityLinked: true, subscriptionType: 'long_term', authorized: true, credits: null }, settings: { notificationEnabled: true } }
+  Object.defineProperty(page, 'notificationAuthorized', { get: () => remoteComputed.notificationAuthorized.call(page) })
+  assert.equal(remoteComputed.notificationReady.call(page), true)
+  assert.match(remoteComputed.notificationDescription.call(page), /已开启长期提醒/)
+  page.settings.notificationEnabled = false
+  assert.equal(remoteComputed.notificationReady.call(page), false)
+  assert.match(remoteComputed.notificationDescription.call(page), /长期授权已保留/)
+  page.notifications.authorized = false
+  assert.match(remoteComputed.notificationDescription.call(page), /点击授权长期提醒/)
+  page.notificationError = 'offline'
+  assert.match(remoteComputed.notificationDescription.call(page), /重新加载/)
+})
+
+test('resuming existing long-term authorization does not open another native authorization dialog', async () => {
+  let resumed = false
+  globalThis.uni = { getStorageSync: () => ({ accessToken: 'token', expiresAt: '2099-01-01T00:00:00Z', user: { id: 'user' } }), requestSubscribeMessage() { assert.fail('should reuse existing authorization') } }
+  const page = { currentUserId: 'user', dataReady: true, notificationAuthorized: true, notifications: { configured: true, schedulerEnabled: true, subscriptionType: 'long_term' }, settings: { notificationEnabled: false }, updateSetting(key, value) { assert.equal(key, 'notificationEnabled'); resumed = value } }
+  await remoteMethods.enableNotification.call(page)
+  assert.equal(resumed, true)
+})
 
 test('calls native authorization immediately, persists receipts and safely retries the same request', async () => {
   const storage = new Map()

@@ -7,12 +7,17 @@ const confirm = options => new Promise(resolve => uni.showModal({ ...options, su
 const toast = title => uni.showToast({ title, icon: 'none' })
 
 export const remoteComputed = {
-	notificationReady() { return Boolean(!this.notificationError && this.notifications.configured && this.notifications.schedulerEnabled && this.notifications.identityLinked && this.settings.notificationEnabled && this.notifications.credits > 0) },
+	notificationAuthorized() { return this.notifications.subscriptionType === 'long_term' ? this.notifications.authorized === true : this.notifications.credits > 0 },
+	notificationReady() { return Boolean(!this.notificationError && this.notifications.configured && this.notifications.schedulerEnabled && this.notifications.identityLinked && this.settings.notificationEnabled && this.notificationAuthorized) },
 	notificationDescription() {
 		if (this.notificationError) return '通知状态暂不可用，请重新加载'
 		if (this.notificationAuthorizing) return '正在确认授权，请稍候'
 		if (!this.notifications.configured) return '微信通知服务尚未配置'
 		if (!this.notifications.schedulerEnabled) return '微信通知暂未开放，请稍后再试'
+		if (this.notifications.subscriptionType === 'long_term') {
+			if (!this.notificationAuthorized) return '点击授权长期提醒，可随时暂停'
+			return this.settings.notificationEnabled ? '已开启长期提醒 · 仅发送已填写金额的记录' : '长期授权已保留 · 点击恢复通知'
+		}
 		if (!this.settings.notificationEnabled) return this.notifications.credits > 0 ? `已暂停 · 剩余 ${this.notifications.credits} 次授权，点击恢复通知` : '点击授权，每次允许可发送一条通知'
 		if (!this.notifications.credits) return '授权次数已用完，点击再次授权'
 		return `剩余 ${this.notifications.credits} 次授权 · 点击增加；仅发送已填写金额的记录`
@@ -332,28 +337,31 @@ export const remoteMethods = {
 			return toast(this.loadError)
 		}
 		if (this.notificationError || !this.notifications.configured || !this.notifications.schedulerEnabled) return toast(this.notificationDescription)
-		if (!this.settings.notificationEnabled && this.notifications.credits > 0) return this.updateSetting('notificationEnabled', true)
+		if (this.notificationAuthorized) {
+			if (!this.settings.notificationEnabled) return this.updateSetting('notificationEnabled', true)
+			if (this.notifications.subscriptionType === 'long_term') return toast('长期提醒已开启')
+		}
 		this.notificationAuthorizing = true
 		try {
 			const { status, answer } = await requestNotificationAuthorization(this.notifications.templateId, this.currentUserId)
 			this.notifications = status
 			this.settings.notificationEnabled = status.enabled
-			toast(answer === 'accept' ? '已增加一次通知授权' : answer === 'ban' ? '微信通知已关闭' : '本次未授权')
+			toast(answer === 'accept' ? (status.subscriptionType === 'long_term' ? '已开启长期提醒' : '已增加一次通知授权') : answer === 'ban' ? '微信通知已关闭' : '本次未授权')
 		} catch (error) { toast(error.message + '；授权记录将在刷新时重新确认') }
 		finally { this.notificationAuthorizing = false }
 	},
 	showNotificationHistory() {
 		const labels = { sent: '已发送', failed: '发送失败', unknown: '结果未知，不自动重发', sending: '发送中', skipped: '记录已变更，未发送' }
 		const rows = this.notifications.recentDeliveries || []
-		uni.showModal({ title: '最近通知记录', content: rows.length ? rows.slice(0, 8).map(row => `${row.subscriptionName} · ${row.billingDate}\n${labels[row.status] || row.status}${row.errorCode ? `（${row.errorCode}）` : ''}`).join('\n\n') : '暂无发送记录。授权后会按提醒日期与时间发送；每条消息使用一次授权。', showCancel: false })
+		uni.showModal({ title: '最近通知记录', content: rows.length ? rows.slice(0, 8).map(row => `${row.subscriptionName} · ${row.billingDate}\n${labels[row.status] || row.status}${row.errorCode ? `（${row.errorCode}）` : ''}`).join('\n\n') : `暂无发送记录。授权后会按提醒日期与时间发送；${this.notifications.subscriptionType === 'long_term' ? '长期授权可持续接收提醒，可随时暂停。' : '每条消息使用一次授权。'}`, showCancel: false })
 	},
 	handleNotificationSwitch(value) { if (value) this.enableNotification(); else this.updateSetting('notificationEnabled', false) },
 	nextReminderText(item) {
 		if (['paused', 'cancelled', 'archived'].includes(item.status)) return '已停止提醒'
 		if (item.amount === null) return '请填写金额后接收微信通知'
-		if (this.notificationReady) return `按提醒节点于 ${this.settings.reminderTime} 发送微信通知，每条使用一次授权`
+		if (this.notificationReady) return `按提醒节点于 ${this.settings.reminderTime} 发送微信通知${this.notifications.subscriptionType === 'long_term' ? '' : '，每条使用一次授权'}`
 		const reminder = this.serverReminders.find(row => row.subscription.id === item.id)
 		return reminder ? (reminder.nextReminderInDays === 0 ? '当前有站内到期待办，请授权微信通知' : `${reminder.nextReminderInDays} 天后进入站内提醒窗口`) : '请在“我的”中开启微信通知'
 	},
-	showPrivacy() { uni.showModal({ title: '隐私与数据说明', content: '小程序通过微信登录识别账号，订阅、备注和设置发送至后端并按账号保存。后端保存微信账号标识，用于发送你授权的订阅消息，消息含扣费日期和金额。每次授权允许发送一条消息；可在“我的”中暂停。登录凭证保存在本机，不获取昵称、头像或手机号。', showCancel: false }) }
+	showPrivacy() { uni.showModal({ title: '隐私与数据说明', content: `小程序通过微信登录识别账号，订阅、备注和设置发送至后端并按账号保存。后端保存微信账号标识，用于发送你授权的订阅消息，消息含扣费日期和金额。${this.notifications.subscriptionType === 'long_term' ? '长期授权后可持续接收提醒' : '每次授权允许发送一条消息'}；可在“我的”中暂停。登录凭证保存在本机，不获取昵称、头像或手机号。`, showCancel: false }) }
 }

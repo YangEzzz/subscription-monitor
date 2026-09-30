@@ -94,7 +94,7 @@
         <settings-row
           v-if="settings.notificationEnabled"
           icon="notification" title="暂停微信通知"
-          description="暂停发送，保留已有授权次数" action
+          description="暂停发送，保留已有授权" action
           :disabled="notificationBusy"
           @tap="$emit('notification-change', false)"
         />

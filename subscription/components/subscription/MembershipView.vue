@@ -11,7 +11,7 @@
       <view class="settings-card">
         <settings-row icon="list" title="订阅额度" :description="'已使用 ' + freeQuotaValue" />
         <settings-row icon="cloud-upload" title="账号数据" description="订阅和设置跟随你的微信账号保存" />
-        <settings-row icon="notification" title="微信续费通知" description="需授权，每条通知使用一次授权" />
+        <settings-row icon="notification" title="微信续费通知" description="授权后按提醒设置发送，可随时暂停" />
         <settings-row icon="bars" title="支出统计" description="按币种查看月均、年度和未来 30 天支出" />
       </view>
     </view>

@@ -45,6 +45,7 @@ export class MemorySubscriptionsRepository implements SubscriptionsRepository {
     requestId: string,
     templateId: string,
     result: AuthorizationResult,
+    longTerm = false,
   ): Promise<void> {
     const key = `${userId}:${requestId}`;
     if (this.grants.has(key)) return Promise.resolve();
@@ -56,7 +57,7 @@ export class MemorySubscriptionsRepository implements SubscriptionsRepository {
     });
     const settings = this.settings.get(userId);
     if (result === 'accept' && settings) settings.notificationEnabled = true;
-    if (result === 'ban') {
+    if (result === 'ban' || (longTerm && result === 'reject')) {
       for (const grant of this.grants.values())
         if (
           grant.userId === userId &&
@@ -101,6 +102,7 @@ export class MemorySubscriptionsRepository implements SubscriptionsRepository {
   claimNotificationDelivery(
     input: DeliveryInput,
     now: Date,
+    longTerm = false,
   ): Promise<NotificationDelivery | null> {
     const record = this.records.find(
       (r) => r.id === input.subscriptionId && r.userId === input.userId,
@@ -133,7 +135,7 @@ export class MemorySubscriptionsRepository implements SubscriptionsRepository {
         g.status === 'available',
     );
     if (!grant) return Promise.resolve(null);
-    grant.status = 'consumed';
+    if (!longTerm) grant.status = 'consumed';
     const delivery: NotificationDelivery = {
       ...input,
       id: prior?.id || randomUUID(),
@@ -166,7 +168,10 @@ export class MemorySubscriptionsRepository implements SubscriptionsRepository {
     const grant = [...this.grants.values()].find(
       (g) => g.id === delivery.grantId,
     );
-    if ((status === 'failed' || status === 'skipped') && grant)
+    if (
+      (status === 'failed' || status === 'skipped') &&
+      grant?.status === 'consumed'
+    )
       grant.status = 'available';
     if (errorCode === '43101') {
       for (const value of this.grants.values())

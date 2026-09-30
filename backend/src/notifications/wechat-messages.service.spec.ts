@@ -14,13 +14,14 @@ describe('WeChat template sender', () => {
           wechatAppSecret: 'private',
           wechatReminderTemplateId: 'template',
           wechatMessageState: 'formal',
+          wechatSubscriptionType: 'long_term',
         },
       }),
     );
     fetchMock = jest.spyOn(global, 'fetch');
   });
   afterEach(() => jest.restoreAllMocks());
-  it('maps date12 and amount4, links to the record, and caches the token', async () => {
+  it('maps time22 and amount4, links to the record, and caches the token', async () => {
     fetchMock
       .mockResolvedValueOnce(
         response({ access_token: 'server-token', expires_in: 7200 }),
@@ -31,7 +32,7 @@ describe('WeChat template sender', () => {
     expect(fetchMock).toHaveBeenCalledTimes(3);
     const body = JSON.parse(fetchMock.mock.calls[1][1].body);
     expect(body.data).toEqual({
-      date12: { value: '2026年10月03日' },
+      time22: { value: '2026年10月03日' },
       amount4: { value: '25.00元' },
     });
     expect(body.page).toBe(

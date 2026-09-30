@@ -13,6 +13,7 @@ process.env.WECHAT_APP_ID = 'wx-integration-app'
 process.env.WECHAT_APP_SECRET = 'integration-provider-secret'
 process.env.AUTH_TOKEN_SECRET = 'integration-session-secret-with-more-than-32-bytes'
 process.env.WECHAT_REMINDER_TEMPLATE_ID = 'integration-template'
+process.env.WECHAT_SUBSCRIPTION_TYPE = 'once'
 
 const require = createRequire(new URL('../../backend/package.json', import.meta.url))
 require('reflect-metadata')

@@ -58,6 +58,9 @@ export class NotificationsService implements OnModuleInit, OnModuleDestroy {
       this.config.get('app.wechatAppSecret'),
     );
   }
+  get longTerm(): boolean {
+    return this.config.get('app.wechatSubscriptionType') === 'long_term';
+  }
   get schedulerEnabled(): boolean {
     return (
       this.config.get('app.persistenceDriver') === 'prisma' &&
@@ -69,16 +72,19 @@ export class NotificationsService implements OnModuleInit, OnModuleDestroy {
     const settings = await this.subscriptions.getSettings(userId);
     const identity = await this.repository.findWechatIdentity(userId);
     const deliveries = await this.repository.listNotificationDeliveries(userId);
+    const available = await this.repository.countNotificationCredits(
+      userId,
+      this.templateId,
+    );
     return {
       configured: this.configured,
       schedulerEnabled: this.schedulerEnabled,
       templateId: this.configured ? this.templateId : null,
       enabled: settings.notificationEnabled,
       identityLinked: identity?.appId === this.config.get('app.wechatAppId'),
-      credits: await this.repository.countNotificationCredits(
-        userId,
-        this.templateId,
-      ),
+      subscriptionType: this.longTerm ? 'long_term' : 'once',
+      authorized: available > 0,
+      credits: this.longTerm ? null : available,
       recentDeliveries: deliveries.map(
         ({
           id,
@@ -122,6 +128,7 @@ export class NotificationsService implements OnModuleInit, OnModuleDestroy {
       requestId,
       templateId,
       result,
+      this.longTerm,
     );
     return this.status(userId);
   }
@@ -205,6 +212,7 @@ export class NotificationsService implements OnModuleInit, OnModuleDestroy {
           templateId: this.templateId,
         },
         now,
+        this.longTerm,
       );
       if (!delivery) continue;
       const current = await this.repository.findSubscription(userId, record.id);
@@ -247,7 +255,8 @@ export class NotificationsService implements OnModuleInit, OnModuleDestroy {
           delivery.id,
           failure.uncertain ? 'unknown' : 'failed',
           failure.code,
-          (failure.retryable || failure.code === '43101') && delivery.attempts < 3
+          (failure.retryable || failure.code === '43101') &&
+            delivery.attempts < 3
             ? new Date(now.getTime() + delivery.attempts * 300000)
             : undefined,
         );

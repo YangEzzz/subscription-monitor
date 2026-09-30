@@ -125,6 +125,10 @@ export default registerAs<AppConfig>('app', () => {
     authTokenSecret: process.env.AUTH_TOKEN_SECRET,
     authTokenTtlSeconds,
     wechatReminderTemplateId: process.env.WECHAT_REMINDER_TEMPLATE_ID,
+    wechatSubscriptionType:
+      process.env.WECHAT_SUBSCRIPTION_TYPE === 'long_term'
+        ? 'long_term'
+        : 'once',
     wechatMessageState: ['formal', 'developer', 'trial'].includes(
       process.env.WECHAT_MESSAGE_STATE || 'formal',
     )

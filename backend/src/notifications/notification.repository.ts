@@ -40,12 +40,14 @@ export interface NotificationRepository {
     requestId: string,
     templateId: string,
     result: AuthorizationResult,
+    longTerm?: boolean,
   ): Promise<void>;
   countNotificationCredits(userId: string, templateId: string): Promise<number>;
   listNotificationUsers(afterId?: string, limit?: number): Promise<string[]>;
   claimNotificationDelivery(
     input: DeliveryInput,
     now: Date,
+    longTerm?: boolean,
   ): Promise<NotificationDelivery | null>;
   finishNotificationDelivery(
     id: string,

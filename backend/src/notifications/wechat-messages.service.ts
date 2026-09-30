@@ -86,7 +86,9 @@ export class WechatMessagesService {
       miniprogram_state: this.config.get('app.wechatMessageState') || 'formal',
       lang: 'zh_CN',
       data: {
-        date12: { value: `${year}年${month}月${day}日` },
+        [this.config.get('app.wechatSubscriptionType') === 'long_term'
+          ? 'time22'
+          : 'date12']: { value: `${year}年${month}月${day}日` },
         amount4: { value: `${amount.toFixed(2)}${units[currency]}` },
       },
     };

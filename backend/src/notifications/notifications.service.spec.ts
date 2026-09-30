@@ -12,19 +12,22 @@ describe('WeChat reminder dispatch', () => {
   let subscriptions: SubscriptionsService;
   let notifications: NotificationsService;
   let send: jest.Mock;
+  let config: ConfigService;
   beforeEach(async () => {
     repository = new MemorySubscriptionsRepository([]);
     subscriptions = new SubscriptionsService(repository);
     send = jest.fn().mockResolvedValue(undefined);
+    config = new ConfigService({
+      app: {
+        wechatAppId: 'wx-test',
+        wechatAppSecret: 'secret',
+        wechatReminderTemplateId: templateId,
+        wechatSubscriptionType: 'once',
+        persistenceDriver: 'memory',
+      },
+    });
     notifications = new NotificationsService(
-      new ConfigService({
-        app: {
-          wechatAppId: 'wx-test',
-          wechatAppSecret: 'secret',
-          wechatReminderTemplateId: templateId,
-          persistenceDriver: 'memory',
-        },
-      }),
+      config,
       repository,
       subscriptions,
       { send } as unknown as WechatMessagesService,
@@ -48,6 +51,54 @@ describe('WeChat reminder dispatch', () => {
   });
   const authorize = (service: NotificationsService, id = randomUUID()) =>
     service.authorize('user', id, templateId, 'accept');
+  it('retains long-term authorization across reminder nodes and billing periods without duplicates', async () => {
+    config.set('app.wechatSubscriptionType', 'long_term');
+    await authorize(notifications);
+    await notifications.runOnce(now);
+    await notifications.runOnce(now);
+    await notifications.runOnce(new Date('2026-10-02T01:00:00Z'));
+    const [record] = await repository.listSubscriptions('user');
+    await repository.saveSubscription({
+      ...record,
+      nextBillingDate: '2026-11-03',
+    });
+    await notifications.runOnce(new Date('2026-10-31T01:00:00Z'));
+    expect(send).toHaveBeenCalledTimes(3);
+    expect(await notifications.status('user')).toMatchObject({
+      subscriptionType: 'long_term',
+      authorized: true,
+      credits: null,
+    });
+  });
+  it('pauses and resumes long-term reminders without consuming the grant, and revokes on reject', async () => {
+    config.set('app.wechatSubscriptionType', 'long_term');
+    await authorize(notifications);
+    await subscriptions.updateSettings('user', { notificationEnabled: false });
+    await notifications.runOnce(now);
+    expect(send).not.toHaveBeenCalled();
+    expect((await notifications.status('user')).authorized).toBe(true);
+    await subscriptions.updateSettings('user', { notificationEnabled: true });
+    await notifications.runOnce(now);
+    await notifications.authorize('user', randomUUID(), templateId, 'reject');
+    expect(await notifications.status('user')).toMatchObject({
+      authorized: false,
+      enabled: false,
+    });
+  });
+  it('invalidates long-term authorization on provider refusal and requires new template authorization', async () => {
+    config.set('app.wechatSubscriptionType', 'long_term');
+    await authorize(notifications);
+    send.mockRejectedValueOnce(new MessageError('43101'));
+    await notifications.runOnce(now);
+    expect(await notifications.status('user')).toMatchObject({
+      authorized: false,
+      enabled: false,
+    });
+    await authorize(notifications);
+    config.set('app.wechatReminderTemplateId', 'replacement-template');
+    expect((await notifications.status('user')).authorized).toBe(false);
+    await expect(authorize(notifications)).rejects.toThrow('通知模板已更新');
+  });
   it('records receipts once, isolates history and hides OpenID', async () => {
     const id = randomUUID();
     await authorize(notifications, id);
@@ -132,7 +183,9 @@ describe('WeChat reminder dispatch', () => {
     send.mockResolvedValue(undefined);
     await authorize(notifications);
     await notifications.runOnce(new Date(now.getTime() + 600000));
-    expect((await notifications.status('user')).recentDeliveries[0].status).toBe('sent');
+    expect(
+      (await notifications.status('user')).recentDeliveries[0].status,
+    ).toBe('sent');
   });
   it('uses the configured timezone and rejects invalid timezone settings', async () => {
     expect(

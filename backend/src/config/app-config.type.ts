@@ -15,6 +15,7 @@ export type AppConfig = {
   authTokenSecret?: string;
   authTokenTtlSeconds?: number;
   wechatReminderTemplateId?: string;
+  wechatSubscriptionType?: 'once' | 'long_term';
   wechatMessageState?: 'formal' | 'developer' | 'trial';
   notificationSchedulerEnabled?: boolean;
 };

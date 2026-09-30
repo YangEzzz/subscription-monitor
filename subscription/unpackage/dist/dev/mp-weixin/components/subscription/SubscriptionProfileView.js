@@ -98,23 +98,23 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     }),
     t: $props.settings.notificationEnabled
   }, $props.settings.notificationEnabled ? {
-    v: common_vendor.o(($event) => _ctx.$emit("notification-change", false), "84"),
+    v: common_vendor.o(($event) => _ctx.$emit("notification-change", false), "0b"),
     w: common_vendor.p({
       icon: "notification",
       title: "暂停微信通知",
-      description: "暂停发送，保留已有授权次数",
+      description: "暂停发送，保留已有授权",
       action: true,
       disabled: $props.notificationBusy
     })
   } : {}, {
-    x: common_vendor.o(($event) => _ctx.$emit("notification-history"), "e1"),
+    x: common_vendor.o(($event) => _ctx.$emit("notification-history"), "cd"),
     y: common_vendor.p({
       icon: "list",
       title: "通知发送记录",
       description: "查看最近的发送结果",
       action: true
     }),
-    z: common_vendor.o(($event) => _ctx.$emit("open-reminder-settings"), "28"),
+    z: common_vendor.o(($event) => _ctx.$emit("open-reminder-settings"), "d1"),
     A: common_vendor.p({
       icon: "calendar",
       ["icon-class"]: "orange-bg",
@@ -132,8 +132,8 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       action: true
     }),
     C: $props.currencies,
-    D: common_vendor.o((...args) => $options.changeDefaultCurrency && $options.changeDefaultCurrency(...args), "e8"),
-    E: common_vendor.o(($event) => _ctx.$emit("export"), "91"),
+    D: common_vendor.o((...args) => $options.changeDefaultCurrency && $options.changeDefaultCurrency(...args), "49"),
+    E: common_vendor.o(($event) => _ctx.$emit("export"), "12"),
     F: common_vendor.p({
       icon: "download",
       ["icon-class"]: "green-bg",
@@ -142,7 +142,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       description: "生成 CSV 或复制表格数据",
       action: true
     }),
-    G: common_vendor.o(($event) => _ctx.$emit("trash"), "1f"),
+    G: common_vendor.o(($event) => _ctx.$emit("trash"), "90"),
     H: common_vendor.p({
       icon: "trash",
       ["icon-class"]: "orange-bg",
@@ -151,7 +151,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       description: $props.deletedSubscriptions.length ? `${$props.deletedSubscriptions.length} 条可恢复订阅` : "暂无已删除订阅",
       action: true
     }),
-    I: common_vendor.o(($event) => _ctx.$emit("privacy"), "a8"),
+    I: common_vendor.o(($event) => _ctx.$emit("privacy"), "3f"),
     J: common_vendor.p({
       icon: "locked",
       ["icon-class"]: "blue-bg",
@@ -160,7 +160,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       description: "了解账号登录与数据保存",
       action: true
     }),
-    K: common_vendor.o(($event) => _ctx.$emit("refresh"), "25"),
+    K: common_vendor.o(($event) => _ctx.$emit("refresh"), "f0"),
     L: common_vendor.p({
       icon: "refresh",
       ["icon-class"]: "red-bg",

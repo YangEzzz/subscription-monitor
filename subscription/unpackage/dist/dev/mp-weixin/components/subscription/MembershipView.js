@@ -42,7 +42,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     f: common_vendor.p({
       icon: "notification",
       title: "微信续费通知",
-      description: "需授权，每条通知使用一次授权"
+      description: "授权后按提醒设置发送，可随时暂停"
     }),
     g: common_vendor.p({
       icon: "bars",

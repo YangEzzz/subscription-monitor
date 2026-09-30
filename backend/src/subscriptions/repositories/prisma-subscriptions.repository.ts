@@ -138,6 +138,7 @@ export class PrismaSubscriptionsRepository
     requestId: string,
     templateId: string,
     result: AuthorizationResult,
+    longTerm = false,
   ): Promise<void> {
     await this.locked(userId, async (repository) => {
       const executor = repository.executor;
@@ -160,7 +161,7 @@ export class PrismaSubscriptionsRepository
           where: { userId },
           data: { notificationEnabled: true },
         });
-      if (result === 'ban') {
+      if (result === 'ban' || (longTerm && result === 'reject')) {
         await executor.notificationGrant.updateMany({
           where: { userId, templateId, status: 'available' },
           data: { status: 'revoked' },
@@ -199,6 +200,7 @@ export class PrismaSubscriptionsRepository
   async claimNotificationDelivery(
     input: DeliveryInput,
     now: Date,
+    longTerm = false,
   ): Promise<NotificationDelivery | null> {
     return this.locked(input.userId, async (repository) => {
       const executor = repository.executor;
@@ -244,10 +246,11 @@ export class PrismaSubscriptionsRepository
         orderBy: { createdAt: 'asc' },
       });
       if (!grant) return null;
-      await executor.notificationGrant.update({
-        where: { id: grant.id },
-        data: { status: 'consumed' },
-      });
+      if (!longTerm)
+        await executor.notificationGrant.update({
+          where: { id: grant.id },
+          data: { status: 'consumed' },
+        });
       const data = {
         ...input,
         billingDate: toDate(input.billingDate),
