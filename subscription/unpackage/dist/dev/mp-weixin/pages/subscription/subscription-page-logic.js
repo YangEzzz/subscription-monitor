@@ -37,6 +37,8 @@ function createSubscriptionPageState() {
     trashPage: 0,
     notifications: { configured: false, schedulerEnabled: false, credits: 0, recentDeliveries: [] },
     notificationAuthorizing: false,
+    notificationLoading: false,
+    notificationRequestId: 0,
     notificationError: "",
     subscriptionLimit: null,
     searchKeyword: "",

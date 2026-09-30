@@ -29,7 +29,7 @@ export function createSubscriptionPageState() {
 					subscriptions: [], settings: createDefaultSettings(),
 					authStatus: 'pending', currentUserId: '', loading: false, mutating: false, dataReady: false, loadError: '', loadErrorCode: '', loadErrorRequestId: '',
 					serverStats: {}, serverReminders: [], statsRequestId: 0, statsLoading: false, statsError: '', statsErrorCode: '', statsErrorRequestId: '', trashPage: 0,
-					notifications: { configured: false, schedulerEnabled: false, credits: 0, recentDeliveries: [] }, notificationAuthorizing: false, notificationError: '',
+					notifications: { configured: false, schedulerEnabled: false, credits: 0, recentDeliveries: [] }, notificationAuthorizing: false, notificationLoading: false, notificationRequestId: 0, notificationError: '',
 				subscriptionLimit: null,
 				searchKeyword: '', activeCategory: '全部', activeStatus: 'default', sortMode: 'date', sortSheetVisible: false,
 				sortOptions: [

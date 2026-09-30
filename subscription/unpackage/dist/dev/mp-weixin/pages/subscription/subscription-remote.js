@@ -11,13 +11,15 @@ const remoteComputed = {
     return this.notifications.subscriptionType === "long_term" ? this.notifications.authorized === true : this.notifications.credits > 0;
   },
   notificationReady() {
-    return Boolean(!this.notificationError && this.notifications.configured && this.notifications.schedulerEnabled && this.notifications.identityLinked && this.settings.notificationEnabled && this.notificationAuthorized);
+    return Boolean(!this.notificationLoading && !this.notificationError && this.notifications.configured && this.notifications.schedulerEnabled && this.notifications.identityLinked && this.settings.notificationEnabled && this.notificationAuthorized);
   },
   notificationDescription() {
     if (this.notificationError)
       return "通知状态暂不可用，请重新加载";
     if (this.notificationAuthorizing)
       return "正在确认授权，请稍候";
+    if (this.notificationLoading)
+      return "正在读取通知状态，请稍候";
     if (!this.notifications.configured)
       return "微信通知服务尚未配置";
     if (!this.notifications.schedulerEnabled)
@@ -81,6 +83,8 @@ const remoteMethods = {
     this.settings = pages_subscription_subscriptionData.createDefaultSettings();
     this.notifications = { configured: false, schedulerEnabled: false, credits: 0, recentDeliveries: [] };
     this.notificationError = "";
+    this.notificationRequestId++;
+    this.notificationLoading = false;
     this.serverStats = {};
     this.serverReminders = [];
     this.statsRequestId++;
@@ -129,25 +133,12 @@ const remoteMethods = {
       }
       this.currentUserId = session.user.id;
       this.authStatus = "authenticated";
+      this.notificationRequestId++;
+      this.statsRequestId++;
+      this.notificationLoading = true;
       this.notificationError = "";
-      try {
-        let notifications = await api_notifications.notificationApi.status();
-        if (notifications.configured && !notifications.identityLinked) {
-          api_auth.clearSession(session.accessToken);
-          session = await api_auth.ensureSession();
-          if (this.currentUserId !== session.user.id)
-            this.clearAccountData();
-          this.currentUserId = session.user.id;
-          notifications = await api_notifications.notificationApi.status();
-        }
-        if (notifications.configured)
-          notifications = await api_notifications.syncPendingAuthorization(this.currentUserId) || notifications;
-        this.notifications = notifications;
-      } catch (error) {
-        if (error.status === 401 || ["WECHAT_LOGIN_FAILED", "WECHAT_UNAVAILABLE", "AUTH_NOT_CONFIGURED"].includes(error.code))
-          throw error;
-        this.notificationError = error.message;
-      }
+      this.statsLoading = false;
+      const notificationRead = api_notifications.notificationApi.status().then((value) => ({ value }), (error) => ({ error }));
       const [subscriptions, settings, membership, catalog, reminders] = await Promise.all([
         api_subscriptions.subscriptionApi.listAll(),
         api_subscriptions.subscriptionApi.settings(),
@@ -171,7 +162,8 @@ const remoteMethods = {
         this.selectedId = null;
         this.switchTab("all");
       }
-      await this.refreshStats();
+      void this.refreshNotifications(notificationRead);
+      void this.refreshStats();
       return true;
     } catch (error) {
       if (error.status === 401 || ["WECHAT_LOGIN_FAILED", "WECHAT_UNAVAILABLE", "AUTH_NOT_CONFIGURED"].includes(error.code)) {
@@ -179,6 +171,7 @@ const remoteMethods = {
         this.clearAccountData();
       }
       this.loadError = error.message;
+      this.notificationLoading = false;
       this.loadErrorCode = error.code || "UNKNOWN_ERROR";
       this.loadErrorRequestId = error.requestId || "";
       return false;
@@ -186,9 +179,58 @@ const remoteMethods = {
       this.loading = false;
     }
   },
+  async refreshNotifications(initialRead) {
+    var _a;
+    const sequence = ++this.notificationRequestId;
+    const userId = this.currentUserId;
+    const isCurrent = () => {
+      var _a2;
+      return sequence === this.notificationRequestId && this.currentUserId === userId && ((_a2 = api_auth.getSession()) == null ? void 0 : _a2.user.id) === userId;
+    };
+    this.notificationLoading = true;
+    this.notificationError = "";
+    try {
+      const outcome = initialRead ? await initialRead : { value: await api_notifications.notificationApi.status() };
+      if (outcome.error)
+        throw outcome.error;
+      let notifications = outcome.value;
+      if (!isCurrent())
+        return;
+      if (notifications.configured && !notifications.identityLinked) {
+        api_auth.clearSession((_a = api_auth.getSession()) == null ? void 0 : _a.accessToken);
+        const session = await api_auth.ensureSession();
+        if (sequence !== this.notificationRequestId)
+          return;
+        if (session.user.id !== userId) {
+          this.clearAccountData();
+          this.loadError = "账号已切换，请重新加载";
+          this.loadErrorCode = "AUTH_ACCOUNT_CHANGED";
+          return;
+        }
+        notifications = await api_notifications.notificationApi.status();
+        if (!isCurrent())
+          return;
+      }
+      if (notifications.configured)
+        notifications = await api_notifications.syncPendingAuthorization(userId) || notifications;
+      if (!isCurrent())
+        return;
+      this.notifications = notifications;
+      if (typeof notifications.enabled === "boolean")
+        this.settings.notificationEnabled = notifications.enabled;
+    } catch (error) {
+      if (sequence === this.notificationRequestId && this.currentUserId === userId)
+        this.notificationError = error.message;
+    } finally {
+      if (sequence === this.notificationRequestId)
+        this.notificationLoading = false;
+    }
+  },
   async refreshStats() {
+    var _a;
     const sequence = ++this.statsRequestId;
     const currency = this.statsCurrency;
+    const userId = this.currentUserId;
     this.statsLoading = true;
     this.statsError = "";
     this.statsErrorCode = "";
@@ -196,7 +238,7 @@ const remoteMethods = {
     this.serverStats = {};
     try {
       const values = await Promise.all(["month", "year", "next30"].map((period) => api_subscriptions.subscriptionApi.stats(period, currency)));
-      if (sequence !== this.statsRequestId)
+      if (sequence !== this.statsRequestId || userId && (this.currentUserId !== userId || ((_a = api_auth.getSession()) == null ? void 0 : _a.user.id) !== userId))
         return;
       this.serverStats = Object.fromEntries(values.map((value) => [value.period, value]));
     } catch (error) {
@@ -433,7 +475,7 @@ const remoteMethods = {
   },
   async enableNotification() {
     var _a;
-    if (this.notificationAuthorizing || this.loading || this.mutating || !this.dataReady)
+    if (this.notificationAuthorizing || this.notificationLoading || this.loading || this.mutating || !this.dataReady)
       return;
     if (((_a = api_auth.getSession()) == null ? void 0 : _a.user.id) !== this.currentUserId) {
       this.clearAccountData();

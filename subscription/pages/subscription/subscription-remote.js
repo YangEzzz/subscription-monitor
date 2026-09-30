@@ -8,10 +8,11 @@ const toast = title => uni.showToast({ title, icon: 'none' })
 
 export const remoteComputed = {
 	notificationAuthorized() { return this.notifications.subscriptionType === 'long_term' ? this.notifications.authorized === true : this.notifications.credits > 0 },
-	notificationReady() { return Boolean(!this.notificationError && this.notifications.configured && this.notifications.schedulerEnabled && this.notifications.identityLinked && this.settings.notificationEnabled && this.notificationAuthorized) },
+	notificationReady() { return Boolean(!this.notificationLoading && !this.notificationError && this.notifications.configured && this.notifications.schedulerEnabled && this.notifications.identityLinked && this.settings.notificationEnabled && this.notificationAuthorized) },
 	notificationDescription() {
 		if (this.notificationError) return '通知状态暂不可用，请重新加载'
 		if (this.notificationAuthorizing) return '正在确认授权，请稍候'
+		if (this.notificationLoading) return '正在读取通知状态，请稍候'
 		if (!this.notifications.configured) return '微信通知服务尚未配置'
 		if (!this.notifications.schedulerEnabled) return '微信通知暂未开放，请稍后再试'
 		if (this.notifications.subscriptionType === 'long_term') {
@@ -59,6 +60,8 @@ export const remoteMethods = {
 		this.settings = createDefaultSettings()
 		this.notifications = { configured: false, schedulerEnabled: false, credits: 0, recentDeliveries: [] }
 		this.notificationError = ''
+		this.notificationRequestId++
+		this.notificationLoading = false
 		this.serverStats = {}
 		this.serverReminders = []
 		this.statsRequestId++
@@ -104,22 +107,14 @@ export const remoteMethods = {
 			}
 			this.currentUserId = session.user.id
 			this.authStatus = 'authenticated'
+			// Invalidate background reads from the previous refresh before loading current data.
+			this.notificationRequestId++
+			this.statsRequestId++
+			this.notificationLoading = true
 			this.notificationError = ''
-			try {
-				let notifications = await notificationApi.status()
-				if (notifications.configured && !notifications.identityLinked) {
-					clearSession(session.accessToken)
-					session = await ensureSession()
-					if (this.currentUserId !== session.user.id) this.clearAccountData()
-					this.currentUserId = session.user.id
-					notifications = await notificationApi.status()
-				}
-				if (notifications.configured) notifications = await syncPendingAuthorization(this.currentUserId) || notifications
-				this.notifications = notifications
-			} catch (error) {
-				if (error.status === 401 || ['WECHAT_LOGIN_FAILED', 'WECHAT_UNAVAILABLE', 'AUTH_NOT_CONFIGURED'].includes(error.code)) throw error
-				this.notificationError = error.message
-			}
+			this.statsLoading = false
+			// Capture errors immediately, including when the main data load fails first.
+			const notificationRead = notificationApi.status().then(value => ({ value }), error => ({ error }))
 			const [subscriptions, settings, membership, catalog, reminders] = await Promise.all([
 				api.listAll(), api.settings(), api.membership(), api.catalog(), api.reminders()
 			])
@@ -135,7 +130,9 @@ export const remoteMethods = {
 			if (!this.dataReady) this.statsCurrency = settings.defaultCurrency
 			this.dataReady = true
 			if (this.selectedId && !this.selectedSubscription) { this.selectedId = null; this.switchTab('all') }
-			await this.refreshStats()
+			// Secondary panels must not delay the subscription list or detail navigation.
+			void this.refreshNotifications(notificationRead)
+			void this.refreshStats()
 			return true
 		} catch (error) {
 			if (error.status === 401 || ['WECHAT_LOGIN_FAILED', 'WECHAT_UNAVAILABLE', 'AUTH_NOT_CONFIGURED'].includes(error.code)) {
@@ -143,14 +140,50 @@ export const remoteMethods = {
 				this.clearAccountData()
 			}
 			this.loadError = error.message
+			this.notificationLoading = false
 			this.loadErrorCode = error.code || 'UNKNOWN_ERROR'
 			this.loadErrorRequestId = error.requestId || ''
 			return false
 		} finally { this.loading = false }
 	},
+	async refreshNotifications(initialRead) {
+		const sequence = ++this.notificationRequestId
+		const userId = this.currentUserId
+		const isCurrent = () => sequence === this.notificationRequestId && this.currentUserId === userId && getSession()?.user.id === userId
+		this.notificationLoading = true
+		this.notificationError = ''
+		try {
+			const outcome = initialRead ? await initialRead : { value: await notificationApi.status() }
+			if (outcome.error) throw outcome.error
+			let notifications = outcome.value
+			if (!isCurrent()) return
+			if (notifications.configured && !notifications.identityLinked) {
+				clearSession(getSession()?.accessToken)
+				const session = await ensureSession()
+				if (sequence !== this.notificationRequestId) return
+				if (session.user.id !== userId) {
+					this.clearAccountData()
+					this.loadError = '账号已切换，请重新加载'
+					this.loadErrorCode = 'AUTH_ACCOUNT_CHANGED'
+					return
+				}
+				notifications = await notificationApi.status()
+				if (!isCurrent()) return
+			}
+			if (notifications.configured) notifications = await syncPendingAuthorization(userId) || notifications
+			if (!isCurrent()) return
+			this.notifications = notifications
+			if (typeof notifications.enabled === 'boolean') this.settings.notificationEnabled = notifications.enabled
+		} catch (error) {
+			if (sequence === this.notificationRequestId && this.currentUserId === userId) this.notificationError = error.message
+		} finally {
+			if (sequence === this.notificationRequestId) this.notificationLoading = false
+		}
+	},
 	async refreshStats() {
 		const sequence = ++this.statsRequestId
 		const currency = this.statsCurrency
+		const userId = this.currentUserId
 		this.statsLoading = true
 		this.statsError = ''
 		this.statsErrorCode = ''
@@ -158,7 +191,7 @@ export const remoteMethods = {
 		this.serverStats = {}
 		try {
 			const values = await Promise.all(['month', 'year', 'next30'].map(period => api.stats(period, currency)))
-			if (sequence !== this.statsRequestId) return
+			if (sequence !== this.statsRequestId || (userId && (this.currentUserId !== userId || getSession()?.user.id !== userId))) return
 			this.serverStats = Object.fromEntries(values.map(value => [value.period, value]))
 		} catch (error) {
 			if (sequence === this.statsRequestId) {
@@ -329,7 +362,7 @@ export const remoteMethods = {
 		return this.updateSetting('defaultReminders', list.sort((a, b) => b - a))
 	},
 	async enableNotification() {
-		if (this.notificationAuthorizing || this.loading || this.mutating || !this.dataReady) return
+		if (this.notificationAuthorizing || this.notificationLoading || this.loading || this.mutating || !this.dataReady) return
 		if (getSession()?.user.id !== this.currentUserId) {
 			this.clearAccountData()
 			this.loadError = '登录状态已变化，请重新加载后授权'

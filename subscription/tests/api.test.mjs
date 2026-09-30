@@ -212,3 +212,63 @@ test('a late statistics response cannot overwrite the selected currency', async 
 	assert.equal(page.serverStats.month.currency, 'USD')
 	assert.equal(page.statsTotal, 20)
 })
+
+test('starts independent homepage requests together and renders without slow notification or statistics responses', async () => {
+	const requests = []
+	globalThis.uni = mockUni({
+		getStorageSync: key => key === 'renewal_wechat_session_v1' ? { accessToken: 'test-token', expiresAt: '2099-01-01T00:00:00Z', user: { id: 'test-user' } } : null,
+		request: options => requests.push(options)
+	})
+	const page = pageHarness()
+	const refresh = page.refreshData()
+	await new Promise(setImmediate)
+	assert.equal(requests.length, 6)
+	assert.deepEqual(requests.map(row => new URL(row.url).pathname.split('/').pop()).sort(), ['catalog', 'membership', 'notifications', 'reminders', 'settings', 'subscriptions'])
+	const data = {
+		subscriptions: { data: [{ id: 'real', nextBillingDate: '2099-01-01' }], meta: { hasMore: false } },
+		settings: { defaultCurrency: 'USD', notificationEnabled: false },
+		membership: { status: 'free', quota: { used: 1, limit: 5, remaining: 4 } },
+		catalog: { categories: [], cycles: [], paymentMethods: [], currencies: ['USD'], templates: [] },
+		reminders: { data: [] }
+	}
+	for (const options of requests.slice()) {
+		const key = new URL(options.url).pathname.split('/').pop()
+		if (key !== 'notifications') options.success({ statusCode: 200, data: data[key] })
+	}
+	assert.equal(await refresh, true)
+	await new Promise(setImmediate)
+	assert.equal(page.dataReady, true)
+	assert.equal(page.loading, false)
+	assert.equal(page.subscriptions[0].id, 'real')
+	assert.equal(page.notificationLoading, true)
+	assert.equal(page.statsLoading, true)
+	assert.match(page.notificationDescription, /正在读取/)
+	const stats = requests.filter(row => new URL(row.url).pathname.endsWith('/stats'))
+	assert.equal(stats.length, 3)
+	for (const options of stats) {
+		const url = new URL(options.url)
+		assert.equal(url.searchParams.get('currency'), 'USD')
+		options.success({ statusCode: 200, data: { period: url.searchParams.get('period'), currency: 'USD', total: 20 } })
+	}
+	requests.find(row => row.url.endsWith('/notifications')).fail({ errMsg: 'offline' })
+	await new Promise(setImmediate)
+	assert.equal(page.notificationLoading, false)
+	assert.match(page.notificationError, /无法连接/)
+	assert.equal(page.dataReady, true)
+	assert.equal(page.statsTotal, 20)
+})
+
+test('ignores an old notification response after account state is cleared', async () => {
+	let pending
+	globalThis.uni = mockUni({ request: options => { pending = options } })
+	const page = pageHarness()
+	page.currentUserId = 'test-user'
+	const refresh = page.refreshNotifications()
+	await new Promise(setImmediate)
+	page.clearAccountData()
+	pending.success({ statusCode: 200, data: { configured: true, identityLinked: true, enabled: true, recentDeliveries: [{ id: 'private-old-record' }] } })
+	await refresh
+	assert.deepEqual(page.notifications.recentDeliveries, [])
+	assert.equal(page.settings.notificationEnabled, false)
+	assert.equal(page.notificationLoading, false)
+})
