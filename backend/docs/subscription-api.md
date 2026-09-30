@@ -8,7 +8,8 @@
 - Swagger：/docs
 - OpenAPI JSON：/docs-json
 - 默认用户：demo-user
-- 可选请求头：x-demo-user-id，用于在内存中隔离不同演示用户
+- 登录：POST /api/v1/auth/wechat，提交微信登录 code，返回 accessToken、expiresAt 和 user.id
+- 业务接口请求头：Authorization: Bearer <accessToken>，服务端按验证后的微信身份隔离数据；x-demo-user-id 不再生效
 - 成功响应直接返回 JSON；错误响应沿用 NestJS 的 HTTP 错误格式
 - 日期统一使用 YYYY-MM-DD，时间统一使用 ISO 8601
 - 金额使用数字，货币使用 ISO 4217 三字母代码

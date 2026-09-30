@@ -2,6 +2,15 @@
   "findings": [
     {
       "category": "violation",
+      "file": "subscription/components/subscription/AsyncStateView.vue",
+      "line": 19,
+      "message": "Enabled literal button has no detectable action or submit behavior.",
+      "remediation": "Connect the button to a real action, make it a submit button, or disable/remove it.",
+      "ruleId": "affordance.actionless-button",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
       "file": "subscription/components/subscription/EmptyStateView.vue",
       "line": 8,
       "message": "Enabled literal button has no detectable action or submit behavior.",
@@ -363,7 +372,7 @@
     {
       "category": "violation",
       "file": "subscription/components/subscription/SubscriptionSortSheet.vue",
-      "line": 9,
+      "line": 16,
       "message": "Enabled literal button has no detectable action or submit behavior.",
       "remediation": "Connect the button to a real action, make it a submit button, or disable/remove it.",
       "ruleId": "affordance.actionless-button",
@@ -372,7 +381,7 @@
     {
       "category": "violation",
       "file": "subscription/components/subscription/SubscriptionSortSheet.vue",
-      "line": 19,
+      "line": 26,
       "message": "Enabled literal button has no detectable action or submit behavior.",
       "remediation": "Connect the button to a real action, make it a submit button, or disable/remove it.",
       "ruleId": "affordance.actionless-button",
@@ -395,34 +404,16 @@
       "remediation": "Connect the button to a real action, make it a submit button, or disable/remove it.",
       "ruleId": "affordance.actionless-button",
       "severity": "error"
-    },
-    {
-      "category": "violation",
-      "file": "subscription/pages/subscription/index.vue",
-      "line": 33,
-      "message": "Enabled literal button has no detectable action or submit behavior.",
-      "remediation": "Connect the button to a real action, make it a submit button, or disable/remove it.",
-      "ruleId": "affordance.actionless-button",
-      "severity": "error"
-    },
-    {
-      "category": "violation",
-      "file": "subscription/pages/subscription/index.vue",
-      "line": 41,
-      "message": "Enabled literal button has no detectable action or submit behavior.",
-      "remediation": "Connect the button to a real action, make it a submit button, or disable/remove it.",
-      "ruleId": "affordance.actionless-button",
-      "severity": "error"
     }
   ],
   "mode": "strict",
   "projectRoot": "D:\\project\\subscription-monitor",
   "schemaVersion": 1,
   "summary": {
-    "errors": 46,
-    "total": 46,
+    "errors": 45,
+    "total": 45,
     "unresolved": 0,
-    "violations": 46,
+    "violations": 45,
     "warnings": 0
   }
 }

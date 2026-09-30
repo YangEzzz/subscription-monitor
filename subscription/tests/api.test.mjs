@@ -4,6 +4,10 @@ import { request } from '../api/request.js'
 import { subscriptionApi, fromSubscription, toSubscription } from '../api/subscriptions.js'
 import { createSubscriptionPageState, subscriptionComputed, subscriptionMethods } from '../pages/subscription/subscription-page-logic.js'
 
+function mockUni(handlers) {
+	return { getStorageSync: () => ({ accessToken: 'test-token', expiresAt: '2099-01-01T00:00:00Z', user: { id: 'test-user' } }), ...handlers }
+}
+
 export function pageHarness() {
 	const page = createSubscriptionPageState()
 	for (const [key, value] of Object.entries(subscriptionMethods)) page[key] = value.bind(page)
@@ -13,19 +17,20 @@ export function pageHarness() {
 
 test('request encodes query values and does not retry failed writes', async () => {
 	let calls = 0
-	globalThis.uni = { request(options) {
+	globalThis.uni = mockUni({ request(options) {
 		calls++
 		assert.match(options.url, /search=a%26b/)
 		assert.equal(options.method, 'POST')
-		assert.equal(options.header['x-demo-user-id'], 'demo-user')
+		assert.equal(options.header.Authorization, 'Bearer test-token')
+		assert.equal(options.header['x-demo-user-id'], undefined)
 		options.success({ statusCode: 409, data: { code: 'BILLING_PERIOD_CHANGED' } })
-	} }
+	} })
 	await assert.rejects(request('/subscriptions/id/renew', { method: 'POST', query: { search: 'a&b' } }), /本期扣费日已改变/)
 	assert.equal(calls, 1)
 })
 
 test('network and DTO validation errors reject instead of returning mock success', async () => {
-	globalThis.uni = { request: options => options.fail({ errMsg: 'request:fail timeout' }) }
+	globalThis.uni = mockUni({ request: options => options.fail({ errMsg: 'request:fail timeout' }) })
 	await assert.rejects(request('/settings'), error => error.code === 'TIMEOUT' && error.retriable === true && /连接超时/.test(error.message))
 	globalThis.uni.request = options => options.success({ statusCode: 422, data: { code: 'VALIDATION_ERROR', errors: { name: 'name should not be empty' }, requestId: 'request-validation-1' } })
 	await assert.rejects(request('/subscriptions'), error => error.status === 422 && error.details.name.includes('empty') && error.requestId === 'request-validation-1')
@@ -33,7 +38,7 @@ test('network and DTO validation errors reject instead of returning mock success
 
 test('failed writes are marked uncertain and are never retried automatically', async () => {
 	let calls = 0
-	globalThis.uni = { request: options => { calls++; options.fail({ errMsg: 'request:fail timeout' }) } }
+	globalThis.uni = mockUni({ request: options => { calls++; options.fail({ errMsg: 'request:fail timeout' }) } })
 	await assert.rejects(request('/subscriptions', { method: 'POST', data: {} }), error => error.code === 'TIMEOUT' && error.uncertain === true && error.retriable === false)
 	assert.equal(calls, 1)
 })
@@ -65,19 +70,19 @@ test('response maps ISO times and billing history for the existing detail view',
 
 test('listAll follows every page including deleted records', async () => {
 	const pages = []
-	globalThis.uni = { request(options) {
+	globalThis.uni = mockUni({ request(options) {
 		const url = new URL(options.url)
 		const page = Number(url.searchParams.get('page'))
 		pages.push(page)
 		assert.equal(url.searchParams.get('includeDeleted'), 'true')
 		options.success({ statusCode: 200, data: { data: [{ id: `sub_${page}`, nextBillingDate: '2028-01-31' }], meta: { hasMore: page < 3 } } })
-	} }
+	} })
 	assert.equal((await subscriptionApi.listAll()).length, 3)
 	assert.deepEqual(pages, [1, 2, 3])
 })
 
 test('failed initial load exposes retry and never seeds local records', async () => {
-	globalThis.uni = { request: options => options.fail({ errMsg: 'offline' }) }
+	globalThis.uni = mockUni({ request: options => options.fail({ errMsg: 'offline' }) })
 	const page = pageHarness()
 	assert.equal(await page.refreshData(), false)
 	assert.equal(page.dataReady, false)
@@ -116,11 +121,13 @@ test('failed write preserves existing state and blocks uncertain resubmission', 
 
 test('a late statistics response cannot overwrite the selected currency', async () => {
 	const requests = []
-	globalThis.uni = { request: options => requests.push(options) }
+	globalThis.uni = mockUni({ request: options => requests.push(options) })
 	const page = pageHarness()
 	const first = page.refreshStats()
+	await Promise.resolve()
 	page.statsCurrency = 'USD'
 	const second = page.refreshStats()
+	await Promise.resolve()
 	for (const options of requests.slice(3)) {
 		const url = new URL(options.url)
 		options.success({ statusCode: 200, data: { period: url.searchParams.get('period'), currency: 'USD', total: 20 } })

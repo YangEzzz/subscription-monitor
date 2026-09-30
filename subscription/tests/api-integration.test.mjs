@@ -4,6 +4,13 @@ import { createRequire } from 'node:module'
 import { API_CONFIG } from '../api/config.js'
 import { subscriptionApi as api } from '../api/subscriptions.js'
 import { createSubscriptionPageState, subscriptionComputed, subscriptionMethods } from '../pages/subscription/subscription-page-logic.js'
+import { ensureSession, clearSession } from '../api/auth.js'
+
+process.env.NODE_ENV = 'test'
+process.env.PERSISTENCE_DRIVER = 'memory'
+process.env.WECHAT_APP_ID = 'wx-integration-app'
+process.env.WECHAT_APP_SECRET = 'integration-provider-secret'
+process.env.AUTH_TOKEN_SECRET = 'integration-session-secret-with-more-than-32-bytes'
 
 const require = createRequire(new URL('../../backend/package.json', import.meta.url))
 require('reflect-metadata')
@@ -13,14 +20,27 @@ const { AppModule } = require('./dist/app.module.js')
 const validationOptions = require('./dist/utils/validation-options.js').default
 
 test('page and uni.request adapter complete the workflow against real Nest HTTP endpoints', async () => {
+	const realFetch = globalThis.fetch
+	globalThis.fetch = async (url, options) => {
+		const address = new URL(String(url))
+		if (address.origin === 'https://api.weixin.qq.com') {
+			return new Response(JSON.stringify({ openid: address.searchParams.get('js_code'), session_key: 'never-return-this' }), { status: 200 })
+		}
+		return realFetch(url, options)
+	}
 	const app = await NestFactory.create(AppModule, { logger: false })
 	app.setGlobalPrefix('api')
 	app.enableVersioning({ type: VersioningType.URI })
 	app.useGlobalPipes(new ValidationPipe(validationOptions))
 	await app.listen(0, '127.0.0.1')
 	API_CONFIG.baseUrl = `${await app.getUrl()}/api/v1`
-	API_CONFIG.demoUserId = 'frontend-integration-user'
+	let accountCode = 'frontend-integration-user'
+	const storage = new Map()
 	globalThis.uni = {
+		getStorageSync: key => storage.get(key),
+		setStorageSync: (key, value) => storage.set(key, value),
+		removeStorageSync: key => storage.delete(key),
+		login(options) { options.success({ code: accountCode }) },
 		request(options) {
 			fetch(options.url, { method: options.method, headers: options.header, body: options.data ? JSON.stringify(options.data) : undefined })
 				.then(async response => options.success({ statusCode: response.status, data: await response.json() }))
@@ -30,9 +50,16 @@ test('page and uni.request adapter complete the workflow against real Nest HTTP 
 		showModal(options) { options.success({ confirm: true }) }
 	}
 	try {
+		// Public health remains available; all user resources reject forged demo headers.
+		assert.equal((await fetch(`${API_CONFIG.baseUrl}/health`)).status, 200)
+		for (const path of ['/subscriptions', '/settings', '/membership', '/reminders', '/dashboard/stats', '/catalog']) {
+			assert.equal((await fetch(`${API_CONFIG.baseUrl}${path}`, { headers: { 'x-demo-user-id': 'demo-user' } })).status, 401)
+		}
+		assert.equal((await fetch(`${API_CONFIG.baseUrl}/auth/wechat`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' })).status, 422)
+		const session = await ensureSession()
 		const invalidResponse = await fetch(`${API_CONFIG.baseUrl}/subscriptions`, {
 			method: 'POST',
-			headers: { 'content-type': 'application/json', 'x-demo-user-id': API_CONFIG.demoUserId, 'x-request-id': 'integration-validation-1' },
+			headers: { 'content-type': 'application/json', Authorization: `Bearer ${session.accessToken}`, 'x-request-id': 'integration-validation-1' },
 			body: '{}'
 		})
 		const invalidBody = await invalidResponse.json()
@@ -46,7 +73,8 @@ test('page and uni.request adapter complete the workflow against real Nest HTTP 
 		for (const [key, value] of Object.entries(subscriptionComputed)) Object.defineProperty(page, key, { get: value.bind(page) })
 		assert.equal(await page.refreshData(), true)
 		assert.equal(page.subscriptions.length, 0)
-		assert.equal(page.serviceTemplates.length, 3)
+		assert.equal(page.serviceTemplates.length, 2)
+		assert.equal(page.authStatus, 'authenticated')
 		page.openForm('2028-01-31')
 		Object.assign(page.form, { name: '联调订阅', amount: '20', category: '音乐' })
 		await page.saveSubscription()
@@ -97,7 +125,14 @@ test('page and uni.request adapter complete the workflow against real Nest HTTP 
 		await page.undoRenewal()
 		assert.equal(page.selectedSubscription.status, 'active')
 		const savedId = page.selectedId
-		API_CONFIG.demoUserId = 'different-integration-user'
+		clearSession()
+		accountCode = 'different-integration-user'
 		await assert.rejects(api.detail(savedId), error => error.status === 404 && error.code === 'NOT_FOUND' && Boolean(error.requestId))
-	} finally { await app.close() }
+		assert.equal((await api.listAll()).length, 0)
+		assert.equal((await api.settings()).reminderTime, '09:00')
+		assert.equal((await api.membership()).status, 'free')
+		const otherSession = await ensureSession()
+		const forged = await fetch(`${API_CONFIG.baseUrl}/subscriptions`, { headers: { Authorization: `Bearer ${otherSession.accessToken}`, 'x-demo-user-id': session.user.id } })
+		assert.equal((await forged.json()).meta.total, 0)
+	} finally { await app.close(); globalThis.fetch = realFetch }
 })

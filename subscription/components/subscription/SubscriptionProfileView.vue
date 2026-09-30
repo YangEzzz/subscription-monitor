@@ -13,7 +13,7 @@
           ><text class="profile-sub"
             >服务端数据 · {{ liveSubscriptions.length }} 项订阅</text
           ></view
-        ><text class="local-badge">演示模式</text></view
+        ><text class="local-badge">微信已登录</text></view
       ><view class="profile-metrics"
         ><view
           ><text>月均支出</text><text>{{ monthlyAverageText }}</text></view
@@ -153,7 +153,7 @@
           icon-class="blue-bg"
           icon-color="#3c7fc1"
           title="隐私与数据说明"
-          description="了解当前演示的数据边界"
+          description="了解账号登录与数据保存"
           action
           @tap="$emit('privacy')"
         />

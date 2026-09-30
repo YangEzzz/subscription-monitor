@@ -1,24 +1,22 @@
-import { Controller, Get, Headers, Query } from '@nestjs/common';
-import {
-  ApiOkResponse,
-  ApiOperation,
-  ApiTags,
-} from '@nestjs/swagger';
+import { ApiBearerAuth } from '@nestjs/swagger';
+import { CurrentUserId } from '../auth/auth.decorators';
+import { Controller, Get, Query } from '@nestjs/common';
+import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { StatsQueryDto } from './dto/stats-query.dto';
 import { SubscriptionsService } from './subscriptions.service';
 
+@ApiBearerAuth()
 @ApiTags('Dashboard')
 @Controller({ path: 'dashboard', version: '1' })
 export class DashboardController {
   constructor(private readonly subscriptionsService: SubscriptionsService) {}
 
   @Get('stats')
-  @ApiOperation({ summary: 'Get spending totals, category mix, and six-month trend' })
+  @ApiOperation({
+    summary: 'Get spending totals, category mix, and six-month trend',
+  })
   @ApiOkResponse({ description: 'Dashboard statistics' })
-  stats(
-    @Headers('x-demo-user-id') userId: string | undefined,
-    @Query() query: StatsQueryDto,
-  ) {
+  stats(@CurrentUserId() userId: string, @Query() query: StatsQueryDto) {
     return this.subscriptionsService.stats(userId, query);
   }
 }

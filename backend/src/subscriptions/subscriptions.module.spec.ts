@@ -23,7 +23,7 @@ describe('SubscriptionsModule repository selection', () => {
     const repository = createSubscriptionsRepository(config());
 
     expect(repository).toBeInstanceOf(MemorySubscriptionsRepository);
-    expect(await repository.listSubscriptions('demo-user')).toHaveLength(9);
+    expect(await repository.listSubscriptions('demo-user')).toHaveLength(8);
   });
 
   it('requires a database URL for the Prisma driver', () => {

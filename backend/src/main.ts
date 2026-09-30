@@ -25,9 +25,7 @@ async function bootstrap() {
     type: VersioningType.URI,
   });
   app.useGlobalPipes(new ValidationPipe(validationOptions));
-  app.useGlobalInterceptors(
-    new ClassSerializerInterceptor(app.get(Reflector)),
-  );
+  app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)));
 
   const options = new DocumentBuilder()
     .setTitle('Subscription Monitor API')
@@ -35,14 +33,7 @@ async function bootstrap() {
       'Subscription monitor API with configurable memory or PostgreSQL persistence.',
     )
     .setVersion('0.1.0')
-    .addGlobalParameters({
-      in: 'header',
-      required: false,
-      name: 'x-demo-user-id',
-      schema: {
-        example: 'demo-user',
-      },
-    })
+    .addBearerAuth()
     .build();
 
   const document = SwaggerModule.createDocument(app, options);

@@ -29,7 +29,7 @@ export function createSubscriptionPageState() {
 					{ key: 'profile', label: '我的', icon: 'person', activeIcon: 'person-filled' }
 					],
 					subscriptions: [], settings: createDefaultSettings(),
-					authStatus: 'demo', loading: false, mutating: false, dataReady: false, loadError: '', loadErrorCode: '', loadErrorRequestId: '',
+					authStatus: 'pending', currentUserId: '', loading: false, mutating: false, dataReady: false, loadError: '', loadErrorCode: '', loadErrorRequestId: '',
 					serverStats: {}, serverReminders: [], statsRequestId: 0, statsLoading: false, statsError: '', statsErrorCode: '', statsErrorRequestId: '', trashPage: 0,
 					subscribeTemplateIds: [], // 填写微信公众平台中的订阅消息模板 ID
 				subscriptionLimit: 5,
@@ -50,8 +50,7 @@ export function createSubscriptionPageState() {
 				serviceTemplates: [
 					{ name: '腾讯视频 VIP', short: '腾讯视频', plan: '连续包月', logo: '视', icon: 'videocam-filled', color: '#19a768', category: '影音娱乐', amount: 25, payment: '微信支付' },
 					{ name: '网易云音乐黑胶 VIP', short: '网易云', plan: '黑胶 VIP', logo: '音', icon: 'headphones', color: '#ef3943', category: '音乐', amount: 15, payment: '微信支付' },
-					{ name: 'iCloud+ 200GB', short: 'iCloud', plan: '200GB', logo: '云', icon: 'cloud-upload-filled', color: '#3f98ee', category: '云存储', amount: 21, payment: 'App Store' },
-					{ name: 'ChatGPT Plus', short: 'ChatGPT', plan: 'Plus', logo: 'AI', icon: 'loop', color: '#1f9c70', category: 'AI 工具', amount: 145, payment: '信用卡' }
+					{ name: 'iCloud+ 200GB', short: 'iCloud', plan: '200GB', logo: '云', icon: 'cloud-upload-filled', color: '#3f98ee', category: '云存储', amount: 21, payment: 'App Store' }
 				],
 				form: {}
 			}

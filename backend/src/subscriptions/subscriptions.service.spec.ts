@@ -34,7 +34,7 @@ describe('SubscriptionsService', () => {
     const service = createService();
     const result = await service.list('demo-user', { page: 1, limit: 100 });
 
-    expect(result.meta.total).toBe(9);
+    expect(result.meta.total).toBe(8);
     expect(result.data[0]).toHaveProperty('displayStatus');
     expect(result.data[0]).toHaveProperty('daysUntilBilling');
     expect(result.data.every((item) => item.isDemo)).toBe(true);

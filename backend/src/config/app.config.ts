@@ -68,9 +68,33 @@ export default registerAs<AppConfig>('app', () => {
   const persistenceDriver =
     (process.env.PERSISTENCE_DRIVER as PersistenceDriver | undefined) ??
     PersistenceDriver.Memory;
-  if (persistenceDriver === PersistenceDriver.Prisma && !process.env.DATABASE_URL) {
+  if (
+    persistenceDriver === PersistenceDriver.Prisma &&
+    !process.env.DATABASE_URL
+  ) {
     throw new Error(
       'DATABASE_URL is required when PERSISTENCE_DRIVER is set to prisma',
+    );
+  }
+
+  const authTokenTtlSeconds = Number(
+    process.env.AUTH_TOKEN_TTL_SECONDS || 604800,
+  );
+  if (
+    !Number.isInteger(authTokenTtlSeconds) ||
+    authTokenTtlSeconds < 60 ||
+    authTokenTtlSeconds > 2592000
+  ) {
+    throw new Error('AUTH_TOKEN_TTL_SECONDS must be between 60 and 2592000');
+  }
+  if (
+    process.env.NODE_ENV === 'production' &&
+    (!process.env.WECHAT_APP_ID ||
+      !process.env.WECHAT_APP_SECRET ||
+      Buffer.byteLength(process.env.AUTH_TOKEN_SECRET || '') < 32)
+  ) {
+    throw new Error(
+      'Production requires WECHAT_APP_ID, WECHAT_APP_SECRET and AUTH_TOKEN_SECRET (at least 32 bytes)',
     );
   }
 
@@ -90,5 +114,9 @@ export default registerAs<AppConfig>('app', () => {
     headerLanguage: process.env.APP_HEADER_LANGUAGE || 'x-custom-lang',
     databaseUrl: process.env.DATABASE_URL,
     persistenceDriver,
+    wechatAppId: process.env.WECHAT_APP_ID,
+    wechatAppSecret: process.env.WECHAT_APP_SECRET,
+    authTokenSecret: process.env.AUTH_TOKEN_SECRET,
+    authTokenTtlSeconds,
   };
 });

@@ -10,6 +10,7 @@ import { ApiExceptionFilter } from './common/http/api-exception.filter';
 import { RequestIdMiddleware } from './common/http/request-id.middleware';
 import appConfig from './config/app.config';
 import { HealthModule } from './health/health.module';
+import { AuthModule } from './auth/auth.module';
 import { SubscriptionsModule } from './subscriptions/subscriptions.module';
 
 @Module({
@@ -19,6 +20,7 @@ import { SubscriptionsModule } from './subscriptions/subscriptions.module';
       load: [appConfig],
       envFilePath: ['.env'],
     }),
+    AuthModule,
     SubscriptionsModule,
     HealthModule,
   ],

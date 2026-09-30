@@ -1,9 +1,10 @@
+import { ApiBearerAuth } from '@nestjs/swagger';
+import { CurrentUserId } from '../auth/auth.decorators';
 import {
   Body,
   Controller,
   Delete,
   Get,
-  Headers,
   HttpCode,
   HttpStatus,
   Param,
@@ -23,6 +24,7 @@ import { UpdateSubscriptionDto } from './dto/update-subscription.dto';
 import { RenewSubscriptionDto } from './dto/renew-subscription.dto';
 import { SubscriptionsService } from './subscriptions.service';
 
+@ApiBearerAuth()
 @ApiTags('Subscriptions')
 @Controller({ path: 'subscriptions', version: '1' })
 export class SubscriptionsController {
@@ -31,30 +33,21 @@ export class SubscriptionsController {
   @Get()
   @ApiOperation({ summary: 'List subscriptions with filtering and pagination' })
   @ApiOkResponse({ description: 'Paged subscription list' })
-  list(
-    @Headers('x-demo-user-id') userId: string | undefined,
-    @Query() query: QuerySubscriptionDto,
-  ) {
+  list(@CurrentUserId() userId: string, @Query() query: QuerySubscriptionDto) {
     return this.subscriptionsService.list(userId, query);
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Get one subscription' })
   @ApiOkResponse({ description: 'Subscription detail' })
-  findOne(
-    @Headers('x-demo-user-id') userId: string | undefined,
-    @Param('id') id: string,
-  ) {
+  findOne(@CurrentUserId() userId: string, @Param('id') id: string) {
     return this.subscriptionsService.findOne(userId, id);
   }
 
   @Post()
   @ApiOperation({ summary: 'Create a subscription' })
   @ApiCreatedResponse({ description: 'Created subscription' })
-  create(
-    @Headers('x-demo-user-id') userId: string | undefined,
-    @Body() body: CreateSubscriptionDto,
-  ) {
+  create(@CurrentUserId() userId: string, @Body() body: CreateSubscriptionDto) {
     return this.subscriptionsService.create(userId, body);
   }
 
@@ -62,7 +55,7 @@ export class SubscriptionsController {
   @ApiOperation({ summary: 'Update a subscription' })
   @ApiOkResponse({ description: 'Updated subscription' })
   update(
-    @Headers('x-demo-user-id') userId: string | undefined,
+    @CurrentUserId() userId: string,
     @Param('id') id: string,
     @Body() body: UpdateSubscriptionDto,
   ) {
@@ -72,21 +65,17 @@ export class SubscriptionsController {
   @Delete(':id')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Soft-delete a subscription' })
-  @ApiOkResponse({ description: 'Deleted subscription, recoverable with restore' })
-  remove(
-    @Headers('x-demo-user-id') userId: string | undefined,
-    @Param('id') id: string,
-  ) {
+  @ApiOkResponse({
+    description: 'Deleted subscription, recoverable with restore',
+  })
+  remove(@CurrentUserId() userId: string, @Param('id') id: string) {
     return this.subscriptionsService.remove(userId, id);
   }
 
   @Post(':id/restore')
   @ApiOperation({ summary: 'Restore a soft-deleted subscription' })
   @ApiOkResponse({ description: 'Restored subscription' })
-  restore(
-    @Headers('x-demo-user-id') userId: string | undefined,
-    @Param('id') id: string,
-  ) {
+  restore(@CurrentUserId() userId: string, @Param('id') id: string) {
     return this.subscriptionsService.restore(userId, id);
   }
 
@@ -94,7 +83,7 @@ export class SubscriptionsController {
   @ApiOperation({ summary: 'Advance the next billing date by one cycle' })
   @ApiOkResponse({ description: 'Renewal event and updated subscription' })
   renew(
-    @Headers('x-demo-user-id') userId: string | undefined,
+    @CurrentUserId() userId: string,
     @Param('id') id: string,
     @Body() body: RenewSubscriptionDto,
   ) {
@@ -103,11 +92,10 @@ export class SubscriptionsController {
 
   @Post(':id/undo-renewal')
   @ApiOperation({ summary: 'Undo the most recent renewal within ten minutes' })
-  @ApiOkResponse({ description: 'Subscription restored to its pre-renewal date' })
-  undoRenewal(
-    @Headers('x-demo-user-id') userId: string | undefined,
-    @Param('id') id: string,
-  ) {
+  @ApiOkResponse({
+    description: 'Subscription restored to its pre-renewal date',
+  })
+  undoRenewal(@CurrentUserId() userId: string, @Param('id') id: string) {
     return this.subscriptionsService.undoRenewal(userId, id);
   }
 }

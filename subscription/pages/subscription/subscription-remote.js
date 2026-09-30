@@ -1,11 +1,13 @@
 import { subscriptionApi as api, toSubscription, CATEGORIES, CYCLES, PAYMENTS } from '../../api/subscriptions.js'
 import { CATEGORY_COLORS, createDefaultSettings, daysUntil, formatDate } from './subscription-data.js'
+import { ensureSession } from '../../api/auth.js'
 
 const confirm = options => new Promise(resolve => uni.showModal({ ...options, success: result => resolve(result.confirm), fail: () => resolve(false) }))
 const toast = title => uni.showToast({ title, icon: 'none' })
 
 export const remoteComputed = {
 	loadErrorTitle() {
+		if (this.authStatus !== 'authenticated') return '微信登录未完成'
 		if (this.dataReady) return this.loadErrorCode === 'RESULT_UNKNOWN' ? '请确认刚才的操作' : '同步暂时中断'
 		if (this.loadErrorCode === 'TIMEOUT') return '连接等待时间过长'
 		if (this.loadErrorCode === 'NETWORK_ERROR') return '暂时无法连接'
@@ -45,7 +47,9 @@ export const remoteMethods = {
 		this.cycles = catalog.cycles.map(key => CYCLES[key] || key)
 		this.payments = catalog.paymentMethods.map(key => PAYMENTS[key] || key)
 		this.currencies = catalog.currencies
-		this.serviceTemplates = catalog.templates.map(item => ({ ...item, category: CATEGORIES[item.category], cycle: CYCLES[item.cycle], payment: PAYMENTS[item.payment], short: item.shortName, icon: 'star-filled' }))
+		this.serviceTemplates = catalog.templates
+			.filter(item => item.category !== 'ai')
+			.map(item => ({ ...item, category: CATEGORIES[item.category], cycle: CYCLES[item.cycle], payment: PAYMENTS[item.payment], short: item.shortName, icon: 'star-filled' }))
 	},
 	async refreshData() {
 		if (this.loading || this.mutating) return false
@@ -54,6 +58,20 @@ export const remoteMethods = {
 		this.loadErrorCode = ''
 		this.loadErrorRequestId = ''
 		try {
+			const session = await ensureSession()
+			if (this.currentUserId && this.currentUserId !== session.user.id) {
+				this.subscriptions = []
+				this.settings = createDefaultSettings()
+				this.serverStats = {}
+				this.serverReminders = []
+				this.selectedId = null
+				this.dataReady = false
+				this.form = {}
+				this.activeView = 'home'
+				this.viewStack = []
+			}
+			this.currentUserId = session.user.id
+			this.authStatus = 'authenticated'
 			const [subscriptions, settings, membership, catalog, reminders] = await Promise.all([
 				api.listAll(), api.settings(), api.membership(), api.catalog(), api.reminders()
 			])
@@ -64,11 +82,17 @@ export const remoteMethods = {
 			this.serverReminders = reminders.data
 			if (!this.dataReady) this.statsCurrency = settings.defaultCurrency
 			this.dataReady = true
-			this.authStatus = 'demo'
 			if (this.selectedId && !this.selectedSubscription) { this.selectedId = null; this.switchTab('all') }
 			await this.refreshStats()
 			return true
 		} catch (error) {
+			if (error.status === 401 || ['WECHAT_LOGIN_FAILED', 'WECHAT_UNAVAILABLE', 'AUTH_NOT_CONFIGURED'].includes(error.code)) {
+				this.authStatus = 'unauthenticated'
+				this.dataReady = false
+				this.subscriptions = []
+				this.serverStats = {}
+				this.serverReminders = []
+			}
 			this.loadError = error.message
 			this.loadErrorCode = error.code || 'UNKNOWN_ERROR'
 			this.loadErrorRequestId = error.requestId || ''
@@ -262,6 +286,6 @@ export const remoteMethods = {
 		const reminder = this.serverReminders.find(row => row.subscription.id === item.id)
 		return reminder ? (reminder.nextReminderInDays === 0 ? '当前有站内到期待办（不发送微信消息）' : `${reminder.nextReminderInDays} 天后进入站内提醒窗口`) : '仅站内记录，未安排微信发送'
 	},
-	showPrivacy() { uni.showModal({ title: '隐私与数据说明', content: '当前订阅、备注和设置发送至配置的后端，并存于演示服务内存。使用演示用户标识，尚未接入真实登录、数据库和消息发送；服务重启会重置数据。请勿录入敏感信息。', showCancel: false }) },
+	showPrivacy() { uni.showModal({ title: '隐私与数据说明', content: '小程序通过微信登录识别账号，订阅、备注和设置发送至后端并按账号保存。登录凭证保存在本机，用于访问你的数据；不会自动获取微信昵称、头像或手机号。续费通知目前仅支持站内待办。', showCancel: false }) },
 	resetDemoData() { return this.refreshData() }
 }

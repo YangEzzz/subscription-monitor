@@ -19,7 +19,7 @@
 
 | 表 | 用途 |
 | --- | --- |
-| `app_users` | 用户根记录，当前 `x-demo-user-id` 将来映射到该主键 |
+| `app_users` | 用户根记录，微信 AppID 与 OpenID 派生的稳定账号 ID 映射到该主键 |
 | `subscriptions` | 订阅主体、账单周期、金额、状态和软删除字段 |
 | `subscription_reminders` | 每条订阅的多个提前提醒节点 |
 | `renewal_events` | 续费历史和撤销所需的前后账单日期 |

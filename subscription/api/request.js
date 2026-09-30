@@ -1,6 +1,10 @@
 import { API_CONFIG } from './config.js'
+import { ensureSession, clearSession } from './auth.js'
 
 const messages = {
+	AUTH_NOT_CONFIGURED: '登录服务尚未配置，请稍后重试',
+	WECHAT_LOGIN_FAILED: '微信登录失败，请重试',
+	WECHAT_UNAVAILABLE: '微信登录暂时不可用，请稍后重试',
 	SUBSCRIPTION_LIMIT_REACHED: '免费订阅额度已用完',
 	RENEWAL_ALREADY_APPLIED: '本期续费已经确认，请刷新后查看',
 	RENEWAL_UNDO_WINDOW_EXPIRED: '已超过十分钟撤销期限',
@@ -34,14 +38,14 @@ const responseRequestId = response => {
 	return response.data?.requestId || headers['x-request-id'] || headers['X-Request-Id'] || ''
 }
 
-export function request(path, { method = 'GET', data, query } = {}) {
+async function sendRequest(path, { method = 'GET', data, query } = {}, accessToken) {
 	const search = Object.entries(query || {}).filter(([, value]) => value !== undefined && value !== null)
 		.map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`).join('&')
 	return new Promise((resolve, reject) => {
 		uni.request({
 			url: `${API_CONFIG.baseUrl.replace(/\/$/, '')}${path}${search ? '?' + search : ''}`,
 			method, data, timeout: API_CONFIG.timeout,
-			header: { 'Content-Type': 'application/json', 'x-demo-user-id': API_CONFIG.demoUserId },
+			header: { 'Content-Type': 'application/json', ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}) },
 			success(response) {
 				if (response.statusCode >= 200 && response.statusCode < 300) return resolve(response.data)
 				const body = response.data || {}
@@ -68,4 +72,23 @@ export function request(path, { method = 'GET', data, query } = {}) {
 			}
 		})
 	})
+}
+
+export async function request(path, options = {}) {
+	if (options.auth === false) return sendRequest(path, options)
+	const session = await ensureSession()
+	try { return await sendRequest(path, options, session.accessToken) }
+	catch (error) {
+		if (error.status !== 401) throw error
+		clearSession(session.accessToken)
+		// A rejected credential has not reached the operation. Do not replay writes;
+		// safely retry a read once after obtaining a fresh WeChat code.
+		if (options.method && options.method !== 'GET') throw error
+		const renewed = await ensureSession()
+		try { return await sendRequest(path, options, renewed.accessToken) }
+		catch (retryError) {
+			if (retryError.status === 401) clearSession(renewed.accessToken)
+			throw retryError
+		}
+	}
 }

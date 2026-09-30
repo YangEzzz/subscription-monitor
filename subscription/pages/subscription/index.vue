@@ -24,7 +24,7 @@
         role="status"
         ><view class="skeleton-title"></view><view class="skeleton-card"></view
         ><view v-for="row in 3" :key="row" class="skeleton-row"></view
-        ><text class="loading-caption">正在整理你的续订清单…</text></view
+        ><text class="loading-caption">正在登录并整理你的续订清单…</text></view
       >
       <async-state-view
         v-if="loadError"

@@ -17,6 +17,8 @@ chmod 600 deploy/.env.production
 
 将生成的密码同时写入 `POSTGRES_PASSWORD` 和 `DATABASE_URL`，并把两个示例域名换成真实域名。密码使用上面生成的十六进制字符串时不需要再做 URL 编码。
 
+微信登录还需要填写 `WECHAT_APP_ID`、`WECHAT_APP_SECRET`，并用另一次 `openssl rand -hex 32` 的结果填写 `AUTH_TOKEN_SECRET`。生产环境缺少这些配置会拒绝启动；AppSecret 仅保存在服务器私有环境文件中。详见 [微信登录接入说明](../subscription/docs/微信登录接入说明.md)。
+
 构建并启动：
 
 ~~~bash

@@ -13,7 +13,7 @@
     "start": "nest start",
     "start:dev": "nest start --watch",
     "start:prod": "node dist/main",
-    "lint": "eslint \"src/main.ts\" \"src/app.module.ts\" \"src/config/app.config.ts\" \"src/config/app-config.type.ts\" \"src/utils/validate-config.ts\" \"src/utils/validation-options.ts\" \"src/health/**/*.ts\" \"src/subscriptions/**/*.ts\" \"src/**/*.spec.ts\"",
+    "lint": "eslint \"src/main.ts\" \"src/app.module.ts\" \"src/config/app.config.ts\" \"src/config/app-config.type.ts\" \"src/utils/validate-config.ts\" \"src/utils/validation-options.ts\" \"src/health/**/*.ts\" \"src/auth/**/*.ts\" \"src/subscriptions/**/*.ts\" \"src/**/*.spec.ts\"",
     "test": "jest --passWithNoTests",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",

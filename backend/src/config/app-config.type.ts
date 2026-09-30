@@ -10,4 +10,8 @@ export type AppConfig = {
   headerLanguage: string;
   databaseUrl?: string;
   persistenceDriver: 'memory' | 'prisma';
+  wechatAppId?: string;
+  wechatAppSecret?: string;
+  authTokenSecret?: string;
+  authTokenTtlSeconds?: number;
 };

@@ -3,7 +3,7 @@
 ## Evidence and scope
 
 本次为现有单页 uni-app 的 UI 重构，依据 subscription/docs/前后端联调说明.md、subscription/api/subscriptions.js、subscription/pages/subscription/subscription-remote.js。
-旧需求中真实微信消息、登录、支付能力尚未实现；按当前服务端能力显示演示提示，不承诺已上线。
+微信小程序使用 uni.login 和后端 code2Session 建立账号会话；真实微信消息和支付能力尚未实现。
 
 ## Canonical UI Map
 
@@ -19,6 +19,7 @@
 | Sort           | SubscriptionSortSheet.vue       | subscription-page-logic.js   | 显式选中、关闭、焦点循环 | H5 键盘验证             |
 | Empty state    | EmptyStateView.vue              | SubscriptionListView.vue     | 未添加、无匹配           | 搜索空态                |
 | Async state    | AsyncStateView.vue              | subscription-remote.js       | 首次失败、过期数据、统计 | API 与浏览器状态测试    |
+| Authentication | api/auth.js + api/request.js    | 后端 auth 全局守卫           | 微信自动登录、过期重登   | 登录与 HTTP 隔离测试    |
 
 路径均相对 subscription/components/subscription，除明确标明 pages、styles 或 api 者。
 
@@ -37,6 +38,10 @@ API 分页拉取完整数据供统计；列表仅分批渲染，加载更多属�
 现有 uni-app 遮罩、模态、选择器沿用平台键盘和焦点行为；H5 按钮具备焦点环。
 
 ## Verification and migration ledger
+
+微信登录在首次读取前执行；并发请求共享同一次登录。登录凭证由后端签发，AppSecret 和微信 session_key 不进入小程序。
+令牌过期或读取返回 401 时重新登录，读请求最多重试一次；写请求不自动重发，保留表单并提示重试。
+所有用户资源以服务端验证后的身份隔离，不接受 x-demo-user-id。登录失败使用现有 AsyncStateView 和重新加载按钮；换账号时清除上一账号页面数据和草稿。
 
 保留现有 API 与业务测试；执行 Vue/Sass 编译、designmd lint 和 premium strict audit。
 运行与交互证据记录在 subscription/docs/ui-verification.md；未完成检查必须列明，不视作通过。

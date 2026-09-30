@@ -11,7 +11,7 @@
 - 表单元数据和健康检查
 - Swagger 接口文档
 
-用户认证、邮件、文件上传、社交登录和通知发送尚未接入。运行入口只加载订阅 API 和健康检查；内存模式不会创建数据库客户端。
+已接入微信小程序登录和 Bearer 令牌认证；邮件、文件上传和通知发送尚未接入。内存模式不会创建数据库客户端。
 
 ## 启动
 
@@ -51,7 +51,15 @@ pnpm db:generate
 
 ## Mock 数据说明
 
-数据只存在于当前 Node 进程。默认用户为 demo-user，可以通过 x-demo-user-id 请求头切换内存用户。服务重启后会恢复 9 条演示订阅和默认设置；演示订阅不计入免费方案的 5 条额度。
+内存模式的数据只存在于当前 Node 进程，重启会丢失。微信登录用户使用独立账号，不读取 demo-user 的演示记录；x-demo-user-id 不再生效。生产部署应使用 PostgreSQL。
+
+## 微信登录
+
+后端 `.env` 配置 `WECHAT_APP_ID`、`WECHAT_APP_SECRET` 和随机的 `AUTH_TOKEN_SECRET`（至少 32 字节）。默认会话有效期为 7 天，可用 `AUTH_TOKEN_TTL_SECONDS` 调整；更换签名密钥会使已有令牌失效。
+
+小程序调用 `uni.login({ provider: 'weixin' })`，把一次性 code 发送给 `POST /api/v1/auth/wechat`。后端调用微信 code2Session，返回 `accessToken`、`expiresAt` 和 `user.id`。后续请求使用 `Authorization: Bearer <accessToken>`；只有登录和健康检查无需令牌。服务端身份由 AppID 与 OpenID 派生，微信会话密钥不会返回客户端。
+
+配置和真机联调见 [微信登录接入说明](../subscription/docs/微信登录接入说明.md)。
 
 当前 API 通过 `SubscriptionsRepository` 接口访问数据。`PERSISTENCE_DRIVER=memory` 时使用 `MemorySubscriptionsRepository`；设置为 `prisma` 时使用 `PrismaSubscriptionsRepository`。
 
