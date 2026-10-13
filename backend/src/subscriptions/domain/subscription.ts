@@ -114,6 +114,8 @@ export interface Membership {
   status: 'free' | 'active';
   plan: 'free' | 'member';
   startedAt: string | null;
+  source?: 'legacy' | 'simulation';
+  sourceOrderId?: string | null;
 }
 
 export interface ServiceTemplate {

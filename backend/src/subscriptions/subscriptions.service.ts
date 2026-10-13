@@ -49,7 +49,9 @@ function addDays(dateKey: string, days: number): string {
 }
 
 function daysUntil(dateKey: string): number {
-  return Math.ceil((dateAtNoon(dateKey).getTime() - dateAtNoon(todayKey()).getTime()) / DAY_MS);
+  return Math.ceil(
+    (dateAtNoon(dateKey).getTime() - dateAtNoon(todayKey()).getTime()) / DAY_MS,
+  );
 }
 
 function roundMoney(value: number): number {
@@ -57,20 +59,27 @@ function roundMoney(value: number): number {
 }
 
 function uniqueReminders(reminders?: number[] | null): number[] {
-  const source = reminders && reminders.length > 0 ? reminders : DEFAULT_REMINDERS;
+  const source =
+    reminders && reminders.length > 0 ? reminders : DEFAULT_REMINDERS;
   return [...new Set(source)]
     .map((value) => Number(value))
     .filter((value) => Number.isInteger(value) && value >= 0 && value <= 30)
     .sort((left, right) => right - left);
 }
 
-function addCycle(dateKey: string, cycle: BillingCycle, cycleValue: number | null, originalAnchorDay?: number): string {
+function addCycle(
+  dateKey: string,
+  cycle: BillingCycle,
+  cycleValue: number | null,
+  originalAnchorDay?: number,
+): string {
   if (cycle === 'one_off') {
     return dateKey;
   }
 
   if (cycle === 'weekly') return addDays(dateKey, 7);
-  if (cycle === 'custom_days') return addDays(dateKey, Math.max(1, cycleValue ?? 1));
+  if (cycle === 'custom_days')
+    return addDays(dateKey, Math.max(1, cycleValue ?? 1));
 
   const monthsByCycle: Record<string, number> = {
     monthly: 1,
@@ -109,7 +118,7 @@ function monthlyEquivalent(record: SubscriptionRecord): number {
   const months =
     record.cycle === 'custom_days'
       ? Math.max(1, record.cycleValue ?? 1) / 30.4375
-      : monthsByCycle[record.cycle] ?? 1;
+      : (monthsByCycle[record.cycle] ?? 1);
   return roundMoney(record.amount / months);
 }
 
@@ -118,7 +127,8 @@ function getDisplayStatus(record: SubscriptionRecord): string {
   if (['paused', 'cancelled', 'archived', 'pending'].includes(record.status)) {
     return record.status;
   }
-  if (record.trialEndDate && daysUntil(record.trialEndDate) >= 0) return 'trial';
+  if (record.trialEndDate && daysUntil(record.trialEndDate) >= 0)
+    return 'trial';
   const days = daysUntil(record.nextBillingDate);
   if (days < 0) return 'overdue';
   const reminderWindow = Math.max(...record.reminders, 0);
@@ -135,13 +145,16 @@ function clone<T>(value: T): T {
 }
 
 function createSubscriptionRecord(
-  input: Partial<SubscriptionRecord> & Pick<SubscriptionRecord, 'id' | 'userId' | 'name' | 'category'>,
+  input: Partial<SubscriptionRecord> &
+    Pick<SubscriptionRecord, 'id' | 'userId' | 'name' | 'category'>,
 ): SubscriptionRecord {
   const now = new Date().toISOString();
   return {
     id: input.id,
     userId: input.userId,
-    anchorDay: input.anchorDay ?? Number((input.nextBillingDate || todayKey()).slice(8, 10)),
+    anchorDay:
+      input.anchorDay ??
+      Number((input.nextBillingDate || todayKey()).slice(8, 10)),
     name: input.name,
     plan: input.plan ?? null,
     logo: input.logo ?? null,
@@ -231,7 +244,9 @@ export class SubscriptionsService {
     repository = this.repository,
   ): Promise<SubscriptionRecord[]> {
     const normalizedUserId = this.normalizeUserId(userId);
-    return (await repository.listSubscriptions(normalizedUserId)).filter(record => !record.isDemo);
+    return (await repository.listSubscriptions(normalizedUserId)).filter(
+      (record) => !record.isDemo,
+    );
   }
 
   private async findRecord(
@@ -243,7 +258,8 @@ export class SubscriptionsService {
       this.normalizeUserId(userId),
       id,
     );
-    if (!record || record.isDemo) throw new NotFoundException('Subscription not found');
+    if (!record || record.isDemo)
+      throw new NotFoundException('Subscription not found');
     return record;
   }
 
@@ -259,7 +275,10 @@ export class SubscriptionsService {
     if (used >= FREE_SUBSCRIPTION_LIMIT) {
       throw new ForbiddenException({
         code: 'SUBSCRIPTION_LIMIT_REACHED',
-        message: 'Free plan allows up to ' + FREE_SUBSCRIPTION_LIMIT + ' subscriptions',
+        message:
+          'Free plan allows up to ' +
+          FREE_SUBSCRIPTION_LIMIT +
+          ' subscriptions',
         limit: FREE_SUBSCRIPTION_LIMIT,
         used,
       });
@@ -267,7 +286,11 @@ export class SubscriptionsService {
   }
 
   private toPublic(record: SubscriptionRecord): Record<string, unknown> {
-    const { userId: _userId, isDemo: _legacyDemo, ...publicRecord } = clone(record);
+    const {
+      userId: _userId,
+      isDemo: _legacyDemo,
+      ...publicRecord
+    } = clone(record);
     return {
       ...publicRecord,
       displayStatus: getDisplayStatus(record),
@@ -316,7 +339,9 @@ export class SubscriptionsService {
 
     const total = records.length;
     const start = (page - 1) * limit;
-    const data = records.slice(start, start + limit).map((record) => this.toPublic(record));
+    const data = records
+      .slice(start, start + limit)
+      .map((record) => this.toPublic(record));
     return {
       data,
       meta: {
@@ -339,213 +364,247 @@ export class SubscriptionsService {
     if (!dto.name.trim()) {
       throw new BadRequestException('Subscription name cannot be empty');
     }
+    return this.repository.transactionForUser(
+      normalizedUserId,
+      async (repository) => {
+        await this.assertQuota(normalizedUserId, repository);
+        const now = this.now();
+        const trialEndDate = dto.trialEndDate ?? null;
+        const record = createSubscriptionRecord({
+          id: 'sub_' + randomUUID(),
+          userId: normalizedUserId,
+          name: dto.name.trim(),
+          plan: dto.plan?.trim() || null,
+          logo: dto.logo?.trim() || null,
+          color: dto.color || '#16834d',
+          amount: dto.amount === undefined ? null : dto.amount,
+          currency: (dto.currency || 'CNY').toUpperCase(),
+          cycle: dto.cycle,
+          cycleValue:
+            dto.cycle === 'custom_days' ? (dto.cycleValue ?? 1) : null,
+          nextBillingDate: dto.nextBillingDate,
+          payment: dto.payment ?? 'other',
+          category: dto.category,
+          status:
+            trialEndDate && daysUntil(trialEndDate) >= 0 ? 'trial' : 'active',
+          autoRenew: dto.autoRenew ?? dto.cycle !== 'one_off',
+          reminders: uniqueReminders(dto.reminders),
+          trialEndDate,
+          note: dto.note?.trim() || '',
+          cancelGuide: dto.cancelGuide?.trim() || '',
+          createdAt: now,
+          updatedAt: now,
+          isDemo: false,
+        });
+        await repository.saveSubscription(record);
+        return this.toPublic(record);
+      },
+    );
+  }
+
+  async update(
+    userId: string | undefined,
+    id: string,
+    dto: UpdateSubscriptionDto,
+  ) {
     return this.repository.transaction(async (repository) => {
-      await this.assertQuota(normalizedUserId, repository);
-      const now = this.now();
-      const trialEndDate = dto.trialEndDate ?? null;
-      const record = createSubscriptionRecord({
-        id: 'sub_' + randomUUID(),
-        userId: normalizedUserId,
-        name: dto.name.trim(),
-        plan: dto.plan?.trim() || null,
-        logo: dto.logo?.trim() || null,
-        color: dto.color || '#16834d',
-        amount: dto.amount === undefined ? null : dto.amount,
-        currency: (dto.currency || 'CNY').toUpperCase(),
-        cycle: dto.cycle,
-        cycleValue: dto.cycle === 'custom_days' ? dto.cycleValue ?? 1 : null,
-        nextBillingDate: dto.nextBillingDate,
-        payment: dto.payment ?? 'other',
-        category: dto.category,
-        status:
-          trialEndDate && daysUntil(trialEndDate) >= 0 ? 'trial' : 'active',
-        autoRenew: dto.autoRenew ?? dto.cycle !== 'one_off',
-        reminders: uniqueReminders(dto.reminders),
-        trialEndDate,
-        note: dto.note?.trim() || '',
-        cancelGuide: dto.cancelGuide?.trim() || '',
-        createdAt: now,
-        updatedAt: now,
-        isDemo: false,
-      });
+      const record = await this.findRecord(
+        this.normalizeUserId(userId),
+        id,
+        repository,
+      );
+      if (record.deletedAt) {
+        throw new BadRequestException(
+          'Deleted subscriptions must be restored before editing',
+        );
+      }
+
+      const values = dto as unknown as Record<string, unknown>;
+      if (typeof values.name === 'string' && !values.name.trim()) {
+        throw new BadRequestException('Subscription name cannot be empty');
+      }
+      if (
+        dto.nextBillingDate &&
+        dto.nextBillingDate !== record.nextBillingDate
+      ) {
+        record.anchorDay = Number(dto.nextBillingDate.slice(8, 10));
+      }
+      const allowedKeys = [
+        'name',
+        'plan',
+        'logo',
+        'color',
+        'amount',
+        'currency',
+        'cycle',
+        'cycleValue',
+        'nextBillingDate',
+        'payment',
+        'category',
+        'status',
+        'autoRenew',
+        'reminders',
+        'trialEndDate',
+        'note',
+        'cancelGuide',
+      ];
+      for (const key of allowedKeys) {
+        if (values[key] !== undefined) {
+          (record as unknown as Record<string, unknown>)[key] = values[key];
+        }
+      }
+      if (record.cycle !== 'custom_days') record.cycleValue = null;
+      if (record.reminders)
+        record.reminders = uniqueReminders(record.reminders);
+      if (
+        record.status === 'active' &&
+        record.trialEndDate &&
+        daysUntil(record.trialEndDate) >= 0
+      ) {
+        record.status = 'trial';
+      }
+      record.updatedAt = this.now();
       await repository.saveSubscription(record);
       return this.toPublic(record);
     });
   }
 
-  async update(userId: string | undefined, id: string, dto: UpdateSubscriptionDto) {
-    return this.repository.transaction(async (repository) => {
-    const record = await this.findRecord(
-      this.normalizeUserId(userId),
-      id,
-      repository,
-    );
-    if (record.deletedAt) {
-      throw new BadRequestException('Deleted subscriptions must be restored before editing');
-    }
-
-    const values = dto as unknown as Record<string, unknown>;
-    if (typeof values.name === 'string' && !values.name.trim()) {
-      throw new BadRequestException('Subscription name cannot be empty');
-    }
-    if (dto.nextBillingDate && dto.nextBillingDate !== record.nextBillingDate) {
-      record.anchorDay = Number(dto.nextBillingDate.slice(8, 10));
-    }
-    const allowedKeys = [
-      'name',
-      'plan',
-      'logo',
-      'color',
-      'amount',
-      'currency',
-      'cycle',
-      'cycleValue',
-      'nextBillingDate',
-      'payment',
-      'category',
-      'status',
-      'autoRenew',
-      'reminders',
-      'trialEndDate',
-      'note',
-      'cancelGuide',
-    ];
-    for (const key of allowedKeys) {
-      if (values[key] !== undefined) {
-        (record as unknown as Record<string, unknown>)[key] = values[key];
-      }
-    }
-    if (record.cycle !== 'custom_days') record.cycleValue = null;
-    if (record.reminders) record.reminders = uniqueReminders(record.reminders);
-    if (
-      record.status === 'active' &&
-      record.trialEndDate &&
-      daysUntil(record.trialEndDate) >= 0
-    ) {
-      record.status = 'trial';
-    }
-    record.updatedAt = this.now();
-    await repository.saveSubscription(record);
-    return this.toPublic(record);
-    });
-  }
-
   async remove(userId: string | undefined, id: string) {
     return this.repository.transaction(async (repository) => {
-    const record = await this.findRecord(
-      this.normalizeUserId(userId),
-      id,
-      repository,
-    );
-    if (record.deletedAt) throw new BadRequestException('Subscription is already deleted');
-    record.deletedAt = this.now();
-    record.updatedAt = this.now();
-    await repository.saveSubscription(record);
-    return this.toPublic(record);
+      const record = await this.findRecord(
+        this.normalizeUserId(userId),
+        id,
+        repository,
+      );
+      if (record.deletedAt)
+        throw new BadRequestException('Subscription is already deleted');
+      record.deletedAt = this.now();
+      record.updatedAt = this.now();
+      await repository.saveSubscription(record);
+      return this.toPublic(record);
     });
   }
 
   async restore(userId: string | undefined, id: string) {
     const normalizedUserId = this.normalizeUserId(userId);
-    return this.repository.transaction(async (repository) => {
-    const record = await this.findRecord(normalizedUserId, id, repository);
-    if (!record.deletedAt) throw new BadRequestException('Subscription is not deleted');
-    await this.assertQuota(normalizedUserId, repository);
-    record.deletedAt = null;
-    record.updatedAt = this.now();
-    await repository.saveSubscription(record);
-    return this.toPublic(record);
-    });
+    return this.repository.transactionForUser(
+      normalizedUserId,
+      async (repository) => {
+        const record = await this.findRecord(normalizedUserId, id, repository);
+        if (!record.deletedAt)
+          throw new BadRequestException('Subscription is not deleted');
+        await this.assertQuota(normalizedUserId, repository);
+        record.deletedAt = null;
+        record.updatedAt = this.now();
+        await repository.saveSubscription(record);
+        return this.toPublic(record);
+      },
+    );
   }
 
   async renew(userId: string | undefined, id: string, billingDate?: string) {
     return this.repository.transaction(async (repository) => {
-    const record = await this.findRecord(
-      this.normalizeUserId(userId),
-      id,
-      repository,
-    );
-    if (billingDate) {
-      const previous = record.renewalHistory.find(event => event.previousNextBillingDate === billingDate);
-      if (previous) return { subscription: this.toPublic(record), renewal: clone(previous) };
-      if (billingDate !== record.nextBillingDate) {
-        throw new ConflictException({ code: 'BILLING_PERIOD_CHANGED', message: 'Billing period has changed; refresh the subscription' });
+      const record = await this.findRecord(
+        this.normalizeUserId(userId),
+        id,
+        repository,
+      );
+      if (billingDate) {
+        const previous = record.renewalHistory.find(
+          (event) => event.previousNextBillingDate === billingDate,
+        );
+        if (previous)
+          return {
+            subscription: this.toPublic(record),
+            renewal: clone(previous),
+          };
+        if (billingDate !== record.nextBillingDate) {
+          throw new ConflictException({
+            code: 'BILLING_PERIOD_CHANGED',
+            message: 'Billing period has changed; refresh the subscription',
+          });
+        }
       }
-    }
-    if (record.deletedAt) throw new BadRequestException('Restore the subscription before renewing');
-    if (['cancelled', 'archived', 'paused'].includes(record.status)) {
-      throw new BadRequestException('This subscription cannot be renewed in its current state');
-    }
-    const renewedAt = this.now();
-    if (
-      record.lastRenewedAt &&
-      record.lastRenewalNextBillingDate === record.nextBillingDate &&
-      Date.now() - new Date(record.lastRenewedAt).getTime() < 10 * 60 * 1000
-    ) {
-      throw new ConflictException({
-        code: 'RENEWAL_ALREADY_APPLIED',
-        message: 'This subscription was renewed recently',
-      });
-    }
+      if (record.deletedAt)
+        throw new BadRequestException(
+          'Restore the subscription before renewing',
+        );
+      if (['cancelled', 'archived', 'paused'].includes(record.status)) {
+        throw new BadRequestException(
+          'This subscription cannot be renewed in its current state',
+        );
+      }
+      const renewedAt = this.now();
+      if (
+        record.lastRenewedAt &&
+        record.lastRenewalNextBillingDate === record.nextBillingDate &&
+        Date.now() - new Date(record.lastRenewedAt).getTime() < 10 * 60 * 1000
+      ) {
+        throw new ConflictException({
+          code: 'RENEWAL_ALREADY_APPLIED',
+          message: 'This subscription was renewed recently',
+        });
+      }
 
-    const previousNextBillingDate = record.nextBillingDate;
-    const nextBillingDate = addCycle(
-      record.nextBillingDate,
-      record.cycle,
-      record.cycleValue,
-      record.anchorDay,
-    );
-    const event = {
-      id: 'renewal_' + Date.now(),
-      renewedAt,
-      previousStatus: record.status,
-      previousNextBillingDate,
-      nextBillingDate,
-      amount: record.amount,
-      currency: record.currency,
-    };
-    record.renewalHistory.push(event);
-    record.nextBillingDate = nextBillingDate;
-    record.status = record.cycle === 'one_off' ? 'archived' : 'active';
-    record.lastRenewedAt = renewedAt;
-    record.lastRenewalNextBillingDate = nextBillingDate;
-    record.updatedAt = renewedAt;
-    await repository.saveSubscription(record);
-    return {
-      subscription: this.toPublic(record),
-      renewal: clone(event),
-    };
+      const previousNextBillingDate = record.nextBillingDate;
+      const nextBillingDate = addCycle(
+        record.nextBillingDate,
+        record.cycle,
+        record.cycleValue,
+        record.anchorDay,
+      );
+      const event = {
+        id: 'renewal_' + Date.now(),
+        renewedAt,
+        previousStatus: record.status,
+        previousNextBillingDate,
+        nextBillingDate,
+        amount: record.amount,
+        currency: record.currency,
+      };
+      record.renewalHistory.push(event);
+      record.nextBillingDate = nextBillingDate;
+      record.status = record.cycle === 'one_off' ? 'archived' : 'active';
+      record.lastRenewedAt = renewedAt;
+      record.lastRenewalNextBillingDate = nextBillingDate;
+      record.updatedAt = renewedAt;
+      await repository.saveSubscription(record);
+      return {
+        subscription: this.toPublic(record),
+        renewal: clone(event),
+      };
     });
   }
 
   async undoRenewal(userId: string | undefined, id: string) {
     return this.repository.transaction(async (repository) => {
-    const record = await this.findRecord(
-      this.normalizeUserId(userId),
-      id,
-      repository,
-    );
-    const history = record.renewalHistory;
-    const event = history[history.length - 1];
-    if (
-      !event ||
-      !record.lastRenewedAt ||
-      Date.now() - new Date(record.lastRenewedAt).getTime() >= 10 * 60 * 1000 ||
-      event.nextBillingDate !== record.nextBillingDate
-    ) {
-      throw new ConflictException({
-        code: 'RENEWAL_UNDO_WINDOW_EXPIRED',
-        message: 'Renewal can only be undone within 10 minutes',
-      });
-    }
-    history.pop();
-    record.nextBillingDate = event.previousNextBillingDate;
-    record.status = event.previousStatus;
-    record.lastRenewedAt = null;
-    record.lastRenewalNextBillingDate = null;
-    record.updatedAt = this.now();
-    await repository.saveSubscription(record);
-    return this.toPublic(record);
+      const record = await this.findRecord(
+        this.normalizeUserId(userId),
+        id,
+        repository,
+      );
+      const history = record.renewalHistory;
+      const event = history[history.length - 1];
+      if (
+        !event ||
+        !record.lastRenewedAt ||
+        Date.now() - new Date(record.lastRenewedAt).getTime() >=
+          10 * 60 * 1000 ||
+        event.nextBillingDate !== record.nextBillingDate
+      ) {
+        throw new ConflictException({
+          code: 'RENEWAL_UNDO_WINDOW_EXPIRED',
+          message: 'Renewal can only be undone within 10 minutes',
+        });
+      }
+      history.pop();
+      record.nextBillingDate = event.previousNextBillingDate;
+      record.status = event.previousStatus;
+      record.lastRenewedAt = null;
+      record.lastRenewalNextBillingDate = null;
+      record.updatedAt = this.now();
+      await repository.saveSubscription(record);
+      return this.toPublic(record);
     });
   }
 
@@ -573,7 +632,9 @@ export class SubscriptionsService {
       const monthly = monthlyEquivalent(record);
       return period === 'year' ? monthly * 12 : monthly;
     };
-    const total = roundMoney(relevant.reduce((sum, record) => sum + valueFor(record), 0));
+    const total = roundMoney(
+      relevant.reduce((sum, record) => sum + valueFor(record), 0),
+    );
     const categoryValues = new Map<string, number>();
     for (const record of relevant) {
       categoryValues.set(
@@ -594,12 +655,21 @@ export class SubscriptionsService {
     trendStart.setUTCDate(1);
     for (let index = 0; index < 6; index += 1) {
       const month = new Date(
-        Date.UTC(trendStart.getUTCFullYear(), trendStart.getUTCMonth() + index, 1, 12),
+        Date.UTC(
+          trendStart.getUTCFullYear(),
+          trendStart.getUTCMonth() + index,
+          1,
+          12,
+        ),
       );
       trend.push({
         month: monthKey(month),
         value: roundMoney(
-          records.reduce((sum, record) => sum + (period === 'next30' ? 0 : monthlyEquivalent(record)), 0),
+          records.reduce(
+            (sum, record) =>
+              sum + (period === 'next30' ? 0 : monthlyEquivalent(record)),
+            0,
+          ),
         ),
       });
     }
@@ -624,7 +694,9 @@ export class SubscriptionsService {
       )
       .map((record) => {
         const days = daysUntil(record.nextBillingDate);
-        const eligibleOffsets = record.reminders.filter((offset) => offset <= days);
+        const eligibleOffsets = record.reminders.filter(
+          (offset) => offset <= days,
+        );
         const nextOffset = eligibleOffsets.length
           ? Math.max(...eligibleOffsets)
           : Math.max(...record.reminders, 0);
@@ -647,32 +719,46 @@ export class SubscriptionsService {
 
   async getMembership(userId: string | undefined) {
     const normalizedUserId = this.normalizeUserId(userId);
-    const membership = await this.getMembershipRecord(normalizedUserId);
-    const used = (await this.ownedRecords(normalizedUserId)).filter(
-      (record) => !record.deletedAt && !record.isDemo,
-    ).length;
-    return {
-      ...clone(membership),
-      quota: {
-        limit: membership.status === 'active' ? null : FREE_SUBSCRIPTION_LIMIT,
-        used,
-        remaining:
-          membership.status === 'active'
-            ? null
-            : Math.max(0, FREE_SUBSCRIPTION_LIMIT - used),
+    return this.repository.transactionForUser(
+      normalizedUserId,
+      async (repository) => {
+        const membership = await this.getMembershipRecord(
+          normalizedUserId,
+          repository,
+        );
+        const used = (
+          await this.ownedRecords(normalizedUserId, repository)
+        ).filter((record) => !record.deletedAt && !record.isDemo).length;
+        return {
+          ...clone(membership),
+          quota: {
+            limit:
+              membership.status === 'active' ? null : FREE_SUBSCRIPTION_LIMIT,
+            used,
+            remaining:
+              membership.status === 'active'
+                ? null
+                : Math.max(0, FREE_SUBSCRIPTION_LIMIT - used),
+          },
+          benefits: {
+            unlimitedSubscriptions: membership.status === 'active',
+            reminderOffsets: [14, 7, 3, 1, 0],
+            statistics: true,
+            membershipPurchaseAvailable: false,
+          },
+        };
       },
-      benefits: {
-        unlimitedSubscriptions: membership.status === 'active',
-        reminderOffsets: [14, 7, 3, 1, 0],
-        statistics: true,
-        membershipPurchaseAvailable: false,
-      },
-    };
+    );
   }
 
   async getSettings(userId: string | undefined) {
     const settings = await this.getSettingsRecord(this.normalizeUserId(userId));
-    const { userId: _userId, weeklySummary: _weeklySummary, notificationAuthorization: _authorization, ...publicSettings } = clone(settings);
+    const {
+      userId: _userId,
+      weeklySummary: _weeklySummary,
+      notificationAuthorization: _authorization,
+      ...publicSettings
+    } = clone(settings);
     return publicSettings;
   }
 
@@ -685,30 +771,35 @@ export class SubscriptionsService {
       }
     }
     return this.repository.transaction(async (repository) => {
-    const settings = await this.getSettingsRecord(
-      this.normalizeUserId(userId),
-      repository,
-    );
-    const values = dto as unknown as Record<string, unknown>;
-    for (const key of [
-      'amountVisible',
-      'notificationEnabled',
-      'defaultCurrency',
-      'defaultReminders',
-      'reminderTime',
-      'timezone',
-    ]) {
-      if (values[key] !== undefined) {
-        (settings as unknown as Record<string, unknown>)[key] = values[key];
+      const settings = await this.getSettingsRecord(
+        this.normalizeUserId(userId),
+        repository,
+      );
+      const values = dto as unknown as Record<string, unknown>;
+      for (const key of [
+        'amountVisible',
+        'notificationEnabled',
+        'defaultCurrency',
+        'defaultReminders',
+        'reminderTime',
+        'timezone',
+      ]) {
+        if (values[key] !== undefined) {
+          (settings as unknown as Record<string, unknown>)[key] = values[key];
+        }
       }
-    }
-    if (settings.defaultReminders) {
-      settings.defaultReminders = uniqueReminders(settings.defaultReminders);
-    }
-    settings.defaultCurrency = settings.defaultCurrency.toUpperCase();
-    await repository.saveSettings(settings);
-    const { userId: _userId, weeklySummary: _weeklySummary, notificationAuthorization: _authorization, ...publicSettings } = clone(settings);
-    return publicSettings;
+      if (settings.defaultReminders) {
+        settings.defaultReminders = uniqueReminders(settings.defaultReminders);
+      }
+      settings.defaultCurrency = settings.defaultCurrency.toUpperCase();
+      await repository.saveSettings(settings);
+      const {
+        userId: _userId,
+        weeklySummary: _weeklySummary,
+        notificationAuthorization: _authorization,
+        ...publicSettings
+      } = clone(settings);
+      return publicSettings;
     });
   }
 

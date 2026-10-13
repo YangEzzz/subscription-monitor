@@ -62,6 +62,7 @@ model AppUser {
   subscriptions Subscription[]
   settings      UserSettings?
   membership    Membership?
+  membershipOrders MembershipOrder[]
   wechatAppId   String?        @map("wechat_app_id") @db.VarChar(64)
   wechatOpenId  String?        @map("wechat_open_id") @db.VarChar(128)
   notificationGrants NotificationGrant[]
@@ -192,8 +193,10 @@ model UserSettings {
 }
 
 model Membership {
+  sourceOrderId String? @map("source_order_id") @db.VarChar(64)
   userId    String           @id @map("user_id") @db.VarChar(128)
   user      AppUser          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  source    String @default("legacy") @db.VarChar(24)
   status    MembershipStatus @default(free)
   plan      MembershipPlan   @default(free)
   startedAt DateTime?        @map("started_at") @db.Timestamptz(3)
@@ -201,4 +204,23 @@ model Membership {
   updatedAt DateTime         @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   @@map("memberships")
+}
+
+model MembershipOrder {
+  id String @id @db.VarChar(64)
+  userId String @map("user_id") @db.VarChar(128)
+  user AppUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+  requestId String @map("request_id") @db.VarChar(80)
+  productId String @map("product_id") @db.VarChar(32)
+  productName String @map("product_name") @db.VarChar(80)
+  amount Int
+  currency String @db.Char(3)
+  channel String @db.VarChar(24)
+  status String @db.VarChar(24)
+  paidAt DateTime? @map("paid_at") @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+  @@unique([userId, requestId], map: "membership_orders_user_request_key")
+  @@index([userId, createdAt], map: "membership_orders_user_created_idx")
+  @@map("membership_orders")
 }

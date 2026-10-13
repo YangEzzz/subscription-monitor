@@ -2,6 +2,7 @@ import { subscriptionApi as api, toSubscription, CATEGORIES, CYCLES, PAYMENTS } 
 import { CATEGORY_COLORS, createDefaultSettings, daysUntil, formatDate } from './subscription-data.js'
 import { ensureSession, clearSession, getSession } from '../../api/auth.js'
 import { notificationApi, requestNotificationAuthorization, syncPendingAuthorization } from '../../api/notifications.js'
+import { membershipMethods } from './membership-remote.js'
 
 const confirm = options => new Promise(resolve => uni.showModal({ ...options, success: result => resolve(result.confirm), fail: () => resolve(false) }))
 const toast = title => uni.showToast({ title, icon: 'none' })
@@ -55,7 +56,16 @@ export const remoteComputed = {
 }
 
 export const remoteMethods = {
+  ...membershipMethods,
 	clearAccountData() {
+    this.membershipRequestId++
+    this.membershipOrders = []
+    this.membershipOrder = null
+    this.membershipPurchaseKey = ''
+    this.membershipBusy = false
+    this.membershipLoading = false
+    this.membershipError = ''
+    this.membershipMessage = ''
 		this.subscriptions = []
 		this.settings = createDefaultSettings()
 		this.notifications = { configured: false, schedulerEnabled: false, credits: 0, recentDeliveries: [] }

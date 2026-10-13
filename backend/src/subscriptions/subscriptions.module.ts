@@ -1,3 +1,4 @@
+import { MembershipPaymentsService } from './membership-payments.service';
 import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaPg } from '@prisma/adapter-pg';
@@ -55,6 +56,7 @@ export function createSubscriptionsRepository(
         ),
     },
     SubscriptionsService,
+    MembershipPaymentsService,
   ],
   exports: [SubscriptionsService, SUBSCRIPTIONS_REPOSITORY],
 })

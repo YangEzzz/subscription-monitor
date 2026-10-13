@@ -139,5 +139,7 @@ export default registerAs<AppConfig>('app', () => {
       : 'formal',
     notificationSchedulerEnabled:
       process.env.NOTIFICATION_SCHEDULER_ENABLED !== 'false',
+    membershipSimulationEnabled:
+      process.env.MEMBERSHIP_SIMULATION_ENABLED === 'true',
   };
 });

@@ -1,4 +1,9 @@
-export type AdminSection = 'users' | 'subscriptions' | 'notifications';
+export type AdminSection =
+  | 'users'
+  | 'subscriptions'
+  | 'notifications'
+  | 'memberships'
+  | 'membershipOrders';
 export type AdminQuery = {
   section: AdminSection;
   page: number;

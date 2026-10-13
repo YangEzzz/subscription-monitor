@@ -69,7 +69,15 @@ function createSubscriptionPageState() {
     logoColors: ["#16834d", "#3f91ed", "#ef3943", "#e43c86", "#6658d9", "#202622"],
     reminderOptions: [{ value: 14, label: "提前 14 天", desc: "适合年度或高金额订阅" }, { value: 7, label: "提前 7 天", desc: "预留充分处理时间" }, { value: 3, label: "提前 3 天", desc: "默认提醒节点" }, { value: 1, label: "提前 1 天", desc: "临近扣费再次确认" }, { value: 0, label: "扣费当天", desc: "当天站内待办" }],
     serviceTemplates: [],
-    form: {}
+    form: {},
+    membershipOrders: [],
+    membershipOrder: null,
+    membershipPurchaseKey: "",
+    membershipBusy: false,
+    membershipLoading: false,
+    membershipError: "",
+    membershipMessage: "",
+    membershipRequestId: 0
   };
 }
 const subscriptionComputed = {
@@ -411,6 +419,7 @@ const subscriptionMethods = {
   },
   openMembership() {
     this.navigateToView("membership");
+    void this.loadMembershipOrders();
   },
   showMembershipLimit() {
     common_vendor.index.showModal({ title: "免费额度已用完", content: `当前账号最多保存 ${this.subscriptionLimit} 条订阅。可删除不再需要的记录后继续新增。`, confirmText: "查看额度", success: (res) => {

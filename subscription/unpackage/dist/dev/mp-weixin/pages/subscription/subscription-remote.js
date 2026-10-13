@@ -4,6 +4,7 @@ const api_subscriptions = require("../../api/subscriptions.js");
 const pages_subscription_subscriptionData = require("./subscription-data.js");
 const api_auth = require("../../api/auth.js");
 const api_notifications = require("../../api/notifications.js");
+const pages_subscription_membershipRemote = require("./membership-remote.js");
 const confirm = (options) => new Promise((resolve) => common_vendor.index.showModal({ ...options, success: (result) => resolve(result.confirm), fail: () => resolve(false) }));
 const toast = (title) => common_vendor.index.showToast({ title, icon: "none" });
 const remoteComputed = {
@@ -78,7 +79,16 @@ const remoteComputed = {
   }
 };
 const remoteMethods = {
+  ...pages_subscription_membershipRemote.membershipMethods,
   clearAccountData() {
+    this.membershipRequestId++;
+    this.membershipOrders = [];
+    this.membershipOrder = null;
+    this.membershipPurchaseKey = "";
+    this.membershipBusy = false;
+    this.membershipLoading = false;
+    this.membershipError = "";
+    this.membershipMessage = "";
     this.subscriptions = [];
     this.settings = pages_subscription_subscriptionData.createDefaultSettings();
     this.notifications = { configured: false, schedulerEnabled: false, credits: 0, recentDeliveries: [] };
