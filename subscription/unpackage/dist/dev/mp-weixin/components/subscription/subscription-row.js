@@ -2,7 +2,7 @@
 const common_vendor = require("../../common/vendor.js");
 const _sfc_main = {
   name: "SubscriptionRow",
-  emits: ["tap"],
+  emits: ["activate"],
   props: { item: { type: Object, required: true } }
 };
 function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
@@ -15,7 +15,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     f: common_vendor.t($props.item.amountText),
     g: common_vendor.t($props.item.days < 0 ? "已逾期 " + Math.abs($props.item.days) + " 天" : $props.item.days === 0 ? "今天续费" : $props.item.days + " 天后"),
     h: $props.item.days <= 7 ? 1 : "",
-    i: common_vendor.o(($event) => _ctx.$emit("tap"), "69")
+    i: common_vendor.o(($event) => _ctx.$emit("activate"), "29")
   };
 }
 const Component = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render]]);

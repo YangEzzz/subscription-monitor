@@ -1,6 +1,6 @@
 "use strict";
-const pages_subscription_subscriptionPageLogic = require("./subscription-page-logic.js");
 const common_vendor = require("../../common/vendor.js");
+const pages_subscription_subscriptionPageLogic = require("./subscription-page-logic.js");
 const SubscriptionHomeView = () => "../../components/subscription/SubscriptionHomeView.js";
 const SubscriptionListView = () => "../../components/subscription/SubscriptionListView.js";
 const SubscriptionCalendarView = () => "../../components/subscription/SubscriptionCalendarView.js";
@@ -33,7 +33,14 @@ const _sfc_main = {
   },
   computed: pages_subscription_subscriptionPageLogic.subscriptionComputed,
   onLoad(options) {
+    common_vendor.index.showShareMenu({ menus: ["shareAppMessage", "shareTimeline"] });
     pages_subscription_subscriptionPageLogic.subscriptionLifecycle.onLoad.call(this, options);
+  },
+  onShareAppMessage() {
+    return pages_subscription_subscriptionPageLogic.subscriptionLifecycle.onShareAppMessage();
+  },
+  onShareTimeline() {
+    return pages_subscription_subscriptionPageLogic.subscriptionLifecycle.onShareTimeline();
   },
   onBackPress() {
     return pages_subscription_subscriptionPageLogic.subscriptionLifecycle.onBackPress.call(this);
@@ -321,5 +328,6 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   });
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-a355b6de"]]);
+_sfc_main.__runtimeHooks = 6;
 wx.createPage(MiniProgramPage);
 //# sourceMappingURL=../../../.sourcemap/mp-weixin/pages/subscription/index.js.map

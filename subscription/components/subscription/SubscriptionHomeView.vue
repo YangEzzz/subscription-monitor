@@ -94,7 +94,7 @@
         v-for="item in upcoming7"
         :key="item.id"
         :item="decorateItem(item)"
-        @tap="$emit('open-detail', item)"
+        @activate="$emit('open-detail', item)"
       />
       <view v-if="upcoming30Later.length" class="group-title second"
         ><text>未来 30 天</text
@@ -106,7 +106,7 @@
         v-for="item in upcoming30Later.slice(0, 3)"
         :key="item.id"
         :item="decorateItem(item)"
-        @tap="$emit('open-detail', item)"
+        @activate="$emit('open-detail', item)"
       />
       <view v-if="!next30Subscriptions.length" class="empty-compact"
         ><text>未来 30 天暂无扣费</text

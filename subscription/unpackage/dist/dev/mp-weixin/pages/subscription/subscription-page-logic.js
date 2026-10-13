@@ -232,6 +232,13 @@ const subscriptionComputed = {
   }
 };
 const subscriptionLifecycle = {
+  // 分享固定介绍卡片，避免使用当前页面截图或携带用户订阅参数。
+  onShareAppMessage() {
+    return { title: "续订清单｜记录订阅，及时提醒续费", path: "/pages/subscription/index", imageUrl: "/static/share-card.png" };
+  },
+  onShareTimeline() {
+    return { title: "续订清单｜记录订阅，及时提醒续费", query: "", imageUrl: "/static/share-card.png" };
+  },
   async onLoad(options = {}) {
     this.initNavigationLayout();
     if (await this.refreshData() && options.subscriptionId) {

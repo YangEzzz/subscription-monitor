@@ -2,13 +2,14 @@
 const common_vendor = require("../../common/vendor.js");
 const _sfc_main = {
   name: "SettingsRow",
-  emits: ["tap", "change"],
+  // 小程序的原生 tap/change 会冒泡，业务事件使用独立名称避免重复触发。
+  emits: ["activate", "checked-change"],
   data() {
     return { switchRevision: 0 };
   },
   methods: {
     changeSwitch(event) {
-      this.$emit("change", event.detail.value);
+      this.$emit("checked-change", event.detail.value);
       this.$nextTick(() => {
         this.switchRevision++;
       });
@@ -49,7 +50,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     f: $data.switchRevision,
     g: $props.checked,
     h: $props.disabled,
-    i: common_vendor.o((...args) => $options.changeSwitch && $options.changeSwitch(...args), "e9")
+    i: common_vendor.o((...args) => $options.changeSwitch && $options.changeSwitch(...args), "89")
   } : $props.action ? {
     k: common_vendor.p({
       type: "right",
@@ -59,7 +60,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   } : {}, {
     j: $props.action,
     l: $props.disabled,
-    m: common_vendor.o(($event) => !$props.disabled && _ctx.$emit("tap"), "82")
+    m: common_vendor.o(($event) => !$props.disabled && _ctx.$emit("activate"), "f1")
   });
 }
 const Component = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render]]);

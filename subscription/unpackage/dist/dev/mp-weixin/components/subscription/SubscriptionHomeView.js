@@ -102,12 +102,12 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     }),
     z: !$props.next30Subscriptions.length
   }, !$props.next30Subscriptions.length ? {
-    A: common_vendor.o(($event) => _ctx.$emit("open-form"), "80")
+    A: common_vendor.o(($event) => _ctx.$emit("open-form"), "6a")
   } : {}, {
     B: $props.next30Subscriptions.length > 4
   }, $props.next30Subscriptions.length > 4 ? {
     C: common_vendor.t($props.next30Subscriptions.length),
-    D: common_vendor.o(($event) => _ctx.$emit("switch-all"), "76")
+    D: common_vendor.o(($event) => _ctx.$emit("switch-all"), "af")
   } : {}, {
     E: common_vendor.t($props.actionableReminders.length),
     F: common_vendor.f($props.actionableReminders, (reminder, k0, i0) => {

@@ -506,6 +506,9 @@ button[disabled] {
 .stats-period-switch button {
   min-height: 88rpx;
   height: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-size: 24rpx;
   line-height: 1.3;
 }

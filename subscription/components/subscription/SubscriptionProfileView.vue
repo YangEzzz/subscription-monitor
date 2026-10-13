@@ -89,16 +89,16 @@
           :description="notificationDescription"
           :disabled="notificationBusy"
           action
-          @tap="$emit('notification-change', true)"
+          @activate="$emit('notification-change', true)"
         />
         <settings-row
           v-if="settings.notificationEnabled"
           icon="notification" title="暂停微信通知"
           description="暂停发送，保留已有授权" action
           :disabled="notificationBusy"
-          @tap="$emit('notification-change', false)"
+          @activate="$emit('notification-change', false)"
         />
-        <settings-row icon="list" title="通知发送记录" description="查看最近的发送结果" action @tap="$emit('notification-history')" />
+        <settings-row icon="list" title="通知发送记录" description="查看最近的发送结果" action @activate="$emit('notification-history')" />
         <settings-row
           icon="calendar"
           icon-class="orange-bg"
@@ -106,7 +106,7 @@
           title="默认提醒规则"
           :description="`提前 ${settings.defaultReminders.join('、')} 天 · ${settings.reminderTime}`"
           action
-          @tap="$emit('open-reminder-settings')"
+          @activate="$emit('open-reminder-settings')"
         />
       </view>
     </view>
@@ -132,7 +132,7 @@
           title="导出订阅数据"
           description="生成 CSV 或复制表格数据"
           action
-          @tap="$emit('export')"
+          @activate="$emit('export')"
         />
         <settings-row
           icon="trash"
@@ -145,7 +145,7 @@
               : '暂无已删除订阅'
           "
           action
-          @tap="$emit('trash')"
+          @activate="$emit('trash')"
         />
         <settings-row
           icon="locked"
@@ -154,7 +154,7 @@
           title="隐私与数据说明"
           description="了解账号登录与数据保存"
           action
-          @tap="$emit('privacy')"
+          @activate="$emit('privacy')"
         />
         <settings-row
           icon="refresh"
@@ -163,7 +163,7 @@
           title="重新加载数据"
           description="从服务端刷新订阅与设置"
           action
-          @tap="$emit('refresh')"
+          @activate="$emit('refresh')"
         />
       </view>
     </view>

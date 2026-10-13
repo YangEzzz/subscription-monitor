@@ -1,5 +1,5 @@
 <template>
-  <button role="button" tabindex="0" class="renewal-row" @tap="$emit('tap')">
+  <button role="button" tabindex="0" class="renewal-row" @tap="$emit('activate')">
     <view class="date-stamp" aria-hidden="true"
       ><text class="date-stamp-month"
         >{{ Number(item.nextBillingDate.slice(5, 7)) }}月</text
@@ -28,7 +28,7 @@
 <script>
 export default {
   name: "SubscriptionRow",
-  emits: ["tap"],
+  emits: ["activate"],
   props: { item: { type: Object, required: true } },
 };
 </script>

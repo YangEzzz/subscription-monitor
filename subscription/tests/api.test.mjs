@@ -2,7 +2,20 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import { request } from '../api/request.js'
 import { subscriptionApi, fromSubscription, toSubscription } from '../api/subscriptions.js'
-import { createSubscriptionPageState, subscriptionComputed, subscriptionMethods } from '../pages/subscription/subscription-page-logic.js'
+import { createSubscriptionPageState, subscriptionComputed, subscriptionMethods, subscriptionLifecycle } from '../pages/subscription/subscription-page-logic.js'
+
+test('sharing always opens the homepage with a static cover and no private subscription data', () => {
+    const page = { activeView: 'detail', selectedId: 'private-subscription', subscriptions: [{ name: '私人订阅', amount: 123 }], settings: { accessToken: 'private-token' } }
+    const message = subscriptionLifecycle.onShareAppMessage.call(page)
+    const timeline = subscriptionLifecycle.onShareTimeline.call(page)
+    assert.equal(message.path, '/pages/subscription/index')
+    assert.equal(timeline.query, '')
+    for (const card of [message, timeline]) {
+        assert.equal(card.imageUrl, '/static/share-card.png')
+        assert.match(card.title, /续订清单/)
+        assert.doesNotMatch(JSON.stringify(card), /private|私人订阅|123/)
+    }
+})
 
 function mockUni(handlers) {
 	return { getStorageSync: () => ({ accessToken: 'test-token', expiresAt: '2099-01-01T00:00:00Z', user: { id: 'test-user' } }), ...handlers }

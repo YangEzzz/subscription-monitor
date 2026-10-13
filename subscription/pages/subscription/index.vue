@@ -310,8 +310,19 @@ export default {
   },
   computed: subscriptionComputed,
   onLoad(options) {
+    // #ifdef MP-WEIXIN
+    uni.showShareMenu({ menus: ['shareAppMessage', 'shareTimeline'] });
+    // #endif
     subscriptionLifecycle.onLoad.call(this, options);
   },
+  // #ifdef MP-WEIXIN
+  onShareAppMessage() {
+    return subscriptionLifecycle.onShareAppMessage();
+  },
+  onShareTimeline() {
+    return subscriptionLifecycle.onShareTimeline();
+  },
+  // #endif
   onBackPress() {
     return subscriptionLifecycle.onBackPress.call(this);
   },

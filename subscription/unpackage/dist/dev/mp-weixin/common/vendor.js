@@ -3376,6 +3376,7 @@ function updateProps(instance, rawProps, rawPrevProps, optimized) {
   } = instance;
   const rawCurrentProps = toRaw(props);
   const [options] = instance.propsOptions;
+  const externalClassesSourceIsPage = false;
   let hasAttrsChanged = false;
   if (
     // always force full diff in dev
@@ -3394,7 +3395,11 @@ function updateProps(instance, rawProps, rawPrevProps, optimized) {
         if (options) {
           if (hasOwn(attrs, key)) {
             if (value !== attrs[key]) {
-              attrs[key] = normalizeInheritAttrsValue(instance, key, value);
+              attrs[key] = normalizeInheritAttrsValue(
+                instance,
+                key,
+                value
+              );
               hasAttrsChanged = true;
             }
           } else {
@@ -3405,12 +3410,17 @@ function updateProps(instance, rawProps, rawPrevProps, optimized) {
               camelizedKey,
               value,
               instance,
-              false
+              false,
+              externalClassesSourceIsPage
             );
           }
         } else {
           if (value !== attrs[key]) {
-            attrs[key] = normalizeInheritAttrsValue(instance, key, value);
+            attrs[key] = normalizeInheritAttrsValue(
+              instance,
+              key,
+              value
+            );
             hasAttrsChanged = true;
           }
         }
@@ -3462,6 +3472,7 @@ function updateProps(instance, rawProps, rawPrevProps, optimized) {
 }
 function setFullProps(instance, rawProps, props, attrs) {
   const [options, needCastKeys] = instance.propsOptions;
+  const externalClassesSourceIsPage = false;
   let hasAttrsChanged = false;
   let rawCastValues;
   if (rawProps) {
@@ -3481,7 +3492,11 @@ function setFullProps(instance, rawProps, props, attrs) {
         }
       } else if (!isEmitListener(instance.emitsOptions, key)) {
         if (!(key in attrs) || value !== attrs[key]) {
-          attrs[key] = normalizeInheritAttrsValue(instance, key, value);
+          attrs[key] = normalizeInheritAttrsValue(
+            instance,
+            key,
+            value
+          );
           hasAttrsChanged = true;
         }
       }
@@ -3498,16 +3513,17 @@ function setFullProps(instance, rawProps, props, attrs) {
         key,
         castValues[key],
         instance,
-        !hasOwn(castValues, key)
+        !hasOwn(castValues, key),
+        externalClassesSourceIsPage
       );
     }
   }
   return hasAttrsChanged;
 }
-function normalizeInheritAttrsValue(instance, key, value) {
+function normalizeInheritAttrsValue(instance, key, value, sourceIsPage) {
   return value;
 }
-function resolvePropValue$1(options, props, key, value, instance, isAbsent) {
+function resolvePropValue$1(options, props, key, value, instance, isAbsent, sourceIsPage = false) {
   const result = _resolvePropValue(
     options,
     props,
@@ -5078,8 +5094,10 @@ function initApp(app) {
 }
 const propsCaches = /* @__PURE__ */ Object.create(null);
 function renderProps(props) {
-  const { uid: uid2, __counter } = getCurrentInstance();
-  const propsId = (propsCaches[uid2] || (propsCaches[uid2] = [])).push(guardReactiveProps(props)) - 1;
+  const instance = getCurrentInstance();
+  const { uid: uid2, __counter } = instance;
+  const rawProps = guardReactiveProps(props);
+  const propsId = (propsCaches[uid2] || (propsCaches[uid2] = [])).push(rawProps) - 1;
   return uid2 + "," + propsId + "," + __counter;
 }
 function pruneComponentPropsCache(uid2) {
@@ -6038,11 +6056,42 @@ function promisify(name, api) {
   };
 }
 const CALLBACKS = ["success", "fail", "cancel", "complete"];
+const ON_API_RE = /^on[A-Z]/;
+const OFF_API_RE = /^off[A-Z]/;
+function getOnApiName(methodName) {
+  return OFF_API_RE.test(methodName) ? `on${methodName.slice(3)}` : "";
+}
 function initWrapper(protocols2) {
+  const eventCallbackMap = /* @__PURE__ */ new WeakMap();
   function processCallback(methodName, method, returnValue) {
     return function(res) {
       return method(processReturnValue(methodName, res, returnValue));
     };
+  }
+  function processEventCallback(methodName, callback, returnValue) {
+    if (ON_API_RE.test(methodName)) {
+      let methodCallbackMap = eventCallbackMap.get(callback);
+      if (!methodCallbackMap) {
+        methodCallbackMap = /* @__PURE__ */ new Map();
+        eventCallbackMap.set(callback, methodCallbackMap);
+      }
+      let eventCallback = methodCallbackMap.get(methodName);
+      if (!eventCallback) {
+        eventCallback = processCallback(methodName, callback, returnValue);
+        methodCallbackMap.set(methodName, eventCallback);
+      }
+      return eventCallback;
+    }
+    if (OFF_API_RE.test(methodName)) {
+      const onMethodName = getOnApiName(methodName);
+      const methodCallbackMap = eventCallbackMap.get(callback);
+      const eventCallback = methodCallbackMap === null || methodCallbackMap === void 0 ? void 0 : methodCallbackMap.get(onMethodName);
+      if (eventCallback) {
+        return eventCallback;
+      }
+      return callback;
+    }
+    return processCallback(methodName, callback, returnValue);
   }
   function processArgs(methodName, fromArgs, argsOption = {}, returnValue = {}, keepFromArgs = false) {
     if (isPlainObject(fromArgs)) {
@@ -6079,7 +6128,7 @@ function initWrapper(protocols2) {
       if (isFunction(argsOption)) {
         argsOption(fromArgs, {});
       }
-      fromArgs = processCallback(methodName, fromArgs, returnValue);
+      fromArgs = processEventCallback(methodName, fromArgs, returnValue);
     }
     return fromArgs;
   }
@@ -6092,10 +6141,12 @@ function initWrapper(protocols2) {
   }
   return function wrapper(methodName, method) {
     const hasProtocol = hasOwn(protocols2, methodName);
+    const onMethodName = getOnApiName(methodName);
+    const hasOnProtocol = !!onMethodName && hasOwn(protocols2, onMethodName);
     if (!hasProtocol && typeof wx[methodName] !== "function") {
       return method;
     }
-    const needWrapper = hasProtocol || isFunction(protocols2.returnValue) || isContextApi(methodName) || isTaskApi(methodName);
+    const needWrapper = hasProtocol || hasOnProtocol || isFunction(protocols2.returnValue) || isContextApi(methodName) || isTaskApi(methodName);
     const hasMethod = hasProtocol || isFunction(method);
     if (!hasProtocol && !method) {
       return function() {
@@ -6184,7 +6235,7 @@ function addSafeAreaInsets(fromRes, toRes) {
     };
   }
 }
-function getOSInfo(system, platform) {
+function getOSInfo(system = "", platform = "") {
   let osName = "";
   let osVersion = "";
   if (platform && false) {
@@ -6217,9 +6268,9 @@ function getOSInfo(system, platform) {
       break;
   }
   return {
-    osName,
-    osVersion,
-    system
+    osName: osName.trim(),
+    osVersion: osVersion.trim(),
+    system: system.trim()
   };
 }
 function getPlatform(platform) {
@@ -6232,7 +6283,7 @@ function getPlatform(platform) {
   return platform;
 }
 function populateParameters(fromRes, toRes) {
-  const { brand = "", model = "", system = "", language = "", theme, version: version2, platform, fontSizeSetting, SDKVersion, pixelRatio, deviceOrientation } = fromRes;
+  let { brand = "", model = "", system = "", language = "", theme, version: version2 = "", platform = "", fontSizeSetting, SDKVersion, pixelRatio, deviceOrientation } = fromRes;
   const { osName, osVersion, system: updatedSystem } = getOSInfo(system, platform);
   let hostVersion = version2;
   let deviceType = getGetDeviceType(fromRes, model);
@@ -6248,9 +6299,9 @@ function populateParameters(fromRes, toRes) {
     appVersion: "1.0.0",
     appVersionCode: "100",
     appLanguage: getAppLanguage(hostLanguage),
-    uniCompileVersion: "5.24",
-    uniCompilerVersion: "5.24",
-    uniRuntimeVersion: "5.24",
+    uniCompileVersion: "5.26",
+    uniCompilerVersion: "5.26",
+    uniRuntimeVersion: "5.26",
     uniPlatform: "mp-weixin",
     deviceBrand,
     deviceModel: model,
@@ -6280,7 +6331,7 @@ function populateParameters(fromRes, toRes) {
   };
   extend(toRes, parameters);
 }
-function getGetDeviceType(fromRes, model) {
+function getGetDeviceType(fromRes, model = "") {
   const platform = fromRes.platform || "";
   let deviceType = fromRes.deviceType || "phone";
   {
@@ -6377,7 +6428,7 @@ const showActionSheet = {
 };
 const getDeviceInfo = {
   returnValue: (fromRes, toRes) => {
-    const { brand, model, system = "", platform = "" } = fromRes;
+    let { brand, model, system = "", platform = "" } = fromRes;
     let deviceType = getGetDeviceType(fromRes, model);
     let deviceBrand = getDeviceBrand(brand);
     useDeviceId()(fromRes, toRes);
@@ -6410,9 +6461,9 @@ const getAppBaseInfo = {
       hostTheme: theme,
       isUniAppX: false,
       uniPlatform: "mp-weixin",
-      uniCompileVersion: "5.24",
-      uniCompilerVersion: "5.24",
-      uniRuntimeVersion: "5.24"
+      uniCompileVersion: "5.26",
+      uniCompilerVersion: "5.26",
+      uniRuntimeVersion: "5.26"
     };
     try {
       if (typeof wx.getAccountInfoSync === "function") {
@@ -6833,15 +6884,16 @@ function initOnError() {
   };
 }
 function formatMessage(type, args) {
+  const messageType = type === "warn" ? "warning" : type;
   try {
     return {
-      type,
+      type: messageType,
       args: formatArgs(args)
     };
   } catch (e2) {
   }
   return {
-    type,
+    type: messageType,
     args: []
   };
 }
@@ -7207,9 +7259,9 @@ function isConsoleWritable() {
 }
 const UNI_CONSOLE_RUNTIME_PROMISE = "__uni_console_runtime_promise__";
 function initRuntimeSocketService() {
-  const hosts = "192.168.201.37,127.0.0.1";
+  const hosts = "192.168.201.93,127.0.0.1";
   const port = "8090";
-  const id = "mp-weixin_aVDUO_";
+  const id = "mp-weixin_j_JX0-";
   const runtimeGlobal = getRuntimeGlobal();
   const existingPromise = runtimeGlobal === null || runtimeGlobal === void 0 ? void 0 : runtimeGlobal[UNI_CONSOLE_RUNTIME_PROMISE];
   if (existingPromise) {
@@ -7938,7 +7990,7 @@ function updateMiniProgramComponentProperties(up, mpInstance) {
     mpInstance.setData(nextProps);
   }
 }
-function updateComponentProps(up, instance) {
+function updateComponentProps(up, instance, extraProps) {
   const prevProps = toRaw(instance.props);
   const nextProps = findComponentPropsData(up) || {};
   if (hasPropsChanged(prevProps, nextProps)) {

@@ -1,5 +1,5 @@
 <template>
-  <view class="setting-row" :aria-disabled="disabled" @tap="!disabled && $emit('tap')">
+  <view class="setting-row" :aria-disabled="disabled" @tap="!disabled && $emit('activate')">
     <view class="setting-icon" :class="iconClass"
       ><uni-icons :type="icon" size="18" :color="iconColor"
     /></view>
@@ -22,13 +22,14 @@
 <script>
 export default {
   name: "SettingsRow",
-  emits: ["tap", "change"],
+  // 小程序的原生 tap/change 会冒泡，业务事件使用独立名称避免重复触发。
+  emits: ["activate", "checked-change"],
   data() {
     return { switchRevision: 0 };
   },
   methods: {
     changeSwitch(event) {
-      this.$emit("change", event.detail.value);
+      this.$emit("checked-change", event.detail.value);
       // 异步保存期间以父级已确认值为准，失败时不留下原生开关的临时状态。
       this.$nextTick(() => {
         this.switchRevision++;

@@ -1,5 +1,13 @@
 # UI 重构验证记录
 
+## 2026-10-13 重复点击事件修复
+
+- `SettingsRow` 与 `SubscriptionRow` 的业务事件由 `tap` 改为 `activate`，避免微信小程序原生 tap 冒泡与组件自定义事件同时执行父级处理函数。设置行的 switch 同步改用 `checked-change`，避免相同的 change 冲突。
+- 同步更新“我的”全部设置入口及首页订阅行；币种 picker 保留原生 tap 冒泡。排序弹层与首页通知按钮已有 stop 修饰符，无需修改。
+- `node --test tests/api.test.mjs tests/auth.test.mjs tests/notifications.test.mjs tests/component-events.test.mjs`：30/30 通过。新增测试模拟组件事件与原生冒泡同时到达父级，验证单次执行、禁用态、switch 布尔值传递，并扫描所有订阅组件的原生事件命名冲突。
+- 检查 HBuilderX 自动更新的 `unpackage/dist/dev/mp-weixin`：我的页面 8 个 settings-row、首页 2 个 subscription-row 均绑定 `bindactivate`，没有在这些组件上保留 `bindtap`。
+- 未在微信真机执行点击验证；发布需重新发行并上传小程序。
+
 ## 2026-09-30 微信登录验证
 
 - 前端登录与接口测试 16/16，通过并发登录合并、过期缓存、401 单次重登、停止重复重登、写请求不重发及失败恢复验证。
