@@ -449,6 +449,7 @@ export default {
   color: $green;
   font-size: 24rpx;
 }
+/* #ifdef H5 */
 button[disabled] {
   opacity: 0.5;
 }
@@ -456,6 +457,7 @@ button:focus-visible {
   outline: 3px solid $green;
   outline-offset: 3px;
 }
+/* #endif */
 .membership-feedback {
   min-height: 64rpx;
   font-size: 26rpx;
