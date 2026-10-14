@@ -1,1 +1,59 @@
-"use strict";const e=require("../../common/vendor.js"),t={name:"StatSummaryCard",emits:["currency-change","period-change"],props:{currencies:{type:Array,default:()=>[]},statsCurrency:{type:String,default:"CNY"},statsLabel:{type:String,default:""},statPeriods:{type:Array,default:()=>[]},statsPeriod:{type:String,default:"month"},statsTotal:{type:Number,default:0},statsSubscriptionCount:{type:Number,default:0},formatMoney:{type:Function,required:!0}},methods:{changeCurrency(e){const t=this.currencies[e.detail.value];this.$emit("currency-change",t)}}};if(!Array){e.resolveComponent("uni-icons")()}Math;const r=e._export_sfc(t,[["render",function(t,r,a,s,n,c){return{a:e.t(a.statsLabel),b:e.t(a.statsCurrency),c:e.p({type:"down",size:"12",color:"#177e4b"}),d:a.currencies,e:a.currencies.indexOf(a.statsCurrency),f:e.o(((...e)=>c.changeCurrency&&c.changeCurrency(...e)),"34"),g:e.t(a.formatMoney(a.statsTotal,a.statsCurrency)),h:e.t(a.statsSubscriptionCount),i:e.t(a.statsCurrency),j:e.f(a.statPeriods,((r,s,n)=>({a:e.t(r.label),b:r.value,c:a.statsPeriod===r.value,d:a.statsPeriod===r.value?1:"",e:e.o((e=>t.$emit("period-change",r.value)),r.value)})))}}]]);wx.createComponent(r);
+"use strict";
+const common_vendor = require("../../common/vendor.js");
+const _sfc_main = {
+  name: "StatSummaryCard",
+  emits: ["currency-change", "period-change"],
+  props: {
+    currencies: { type: Array, default: () => [] },
+    statsCurrency: { type: String, default: "CNY" },
+    statsLabel: { type: String, default: "" },
+    statPeriods: { type: Array, default: () => [] },
+    statsPeriod: { type: String, default: "month" },
+    statsTotal: { type: Number, default: 0 },
+    statsSubscriptionCount: { type: Number, default: 0 },
+    formatMoney: { type: Function, required: true }
+  },
+  methods: {
+    changeCurrency(event) {
+      const currency = this.currencies[event.detail.value];
+      this.$emit("currency-change", currency);
+    }
+  }
+};
+if (!Array) {
+  const _easycom_uni_icons2 = common_vendor.resolveComponent("uni-icons");
+  _easycom_uni_icons2();
+}
+const _easycom_uni_icons = () => "../../uni_modules/uni-icons/components/uni-icons/uni-icons.js";
+if (!Math) {
+  _easycom_uni_icons();
+}
+function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
+  return {
+    a: common_vendor.t($props.statsLabel),
+    b: common_vendor.t($props.statsCurrency),
+    c: common_vendor.p({
+      type: "down",
+      size: "12",
+      color: "#177e4b"
+    }),
+    d: $props.currencies,
+    e: $props.currencies.indexOf($props.statsCurrency),
+    f: common_vendor.o((...args) => $options.changeCurrency && $options.changeCurrency(...args), "34"),
+    g: common_vendor.t($props.formatMoney($props.statsTotal, $props.statsCurrency)),
+    h: common_vendor.t($props.statsSubscriptionCount),
+    i: common_vendor.t($props.statsCurrency),
+    j: common_vendor.f($props.statPeriods, (period, k0, i0) => {
+      return {
+        a: common_vendor.t(period.label),
+        b: period.value,
+        c: $props.statsPeriod === period.value,
+        d: $props.statsPeriod === period.value ? 1 : "",
+        e: common_vendor.o(($event) => _ctx.$emit("period-change", period.value), period.value)
+      };
+    })
+  };
+}
+const Component = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render]]);
+wx.createComponent(Component);
+//# sourceMappingURL=../../../.sourcemap/mp-weixin/components/subscription/StatSummaryCard.js.map

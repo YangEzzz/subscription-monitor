@@ -1,1 +1,216 @@
-"use strict";const e=require("../../common/vendor.js"),r={name:"MembershipView",components:{SettingsRow:()=>"./SettingsRow.js",AsyncStateView:()=>"./AsyncStateView.js"},emits:["back","purchase","pay","simulate","refresh","select-order","refund"],data:()=>({refundConfirm:!1}),watch:{"order.id"(){this.refundConfirm=!1}},props:{isMember:{type:Boolean,default:!1},freeQuotaValue:{type:String,default:""},subscriptionLimit:{type:Number,default:null},membership:{type:Object,default:()=>({})},orders:{type:Array,default:()=>[]},order:{type:Object,default:null},busy:{type:Boolean,default:!1},loading:{type:Boolean,default:!1},error:{type:String,default:""},message:{type:String,default:""}},methods:{channelText:e=>({virtual:"虚拟支付",wechat:"微信支付（历史）",simulation:"模拟支付"}[e]||e),price:e=>"¥"+(Number(e)/100).toFixed(2),statusText:(e,r)=>["virtual","wechat"].includes(r)?{pending:"待支付",paid:"已支付",cancelled:"已关闭",failed:"支付失败",refunded:"已退款"}[e]||e:{pending:"待模拟支付",paid:"模拟成功",cancelled:"已取消",failed:"模拟失败",refunded:"已撤销测试权益"}[e]||e,dateText(e){const r=new Date(e);return Number.isFinite(r.getTime())?new Intl.DateTimeFormat("zh-CN",{timeZone:"Asia/Shanghai",year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",hour12:!1}).format(r):"—"}}};if(!Array){(e.resolveComponent("uni-icons")+e.resolveComponent("settings-row")+e.resolveComponent("async-state-view"))()}Math;const t=e._export_sfc(r,[["render",function(r,t,i,n,a,o){var l,d,s,u,m,c,p,b,h,f,g,v,y,w,C,x,M;return e.e({a:e.p({type:"left",size:"24",color:"#172a22"}),b:i.busy,c:e.o((e=>r.$emit("back")),"59"),d:e.t(i.isMember?"永久会员":"免费版"),e:e.t(i.isMember?"所有订阅，一处管理":"给每一笔续费留个位置"),f:e.t(i.isMember?"订阅数量不限，权益跟随你的微信账号。":"当前已使用 "+i.freeQuotaValue+" 条订阅额度。"),g:i.isMember&&"simulation"===i.membership.source},(i.isMember&&i.membership.source,{}),{h:e.p({icon:"list",title:"不限数量的订阅",description:"一次开通，无到期日，也不会自动续费"}),i:e.p({icon:"cloud-upload",title:"跟随微信账号",description:"换手机或重新登录，仍可读取会员权益"}),j:e.p({icon:"notification",title:"保留所有基础功能",description:"免费版同样支持已授权提醒、统计和导出"}),k:e.t(i.membership.product?o.price(i.membership.product.amount):"—"),l:e.t((null==(l=i.membership.product)?void 0:l.notice)||"会员购买暂未开放。"),m:"virtual"===(null==(d=i.membership.product)?void 0:d.channel)},(null==(s=i.membership.product)||s.channel,{}),{n:e.t(i.isMember?"已开通永久会员":i.busy?"正在处理订单…":(null==(u=i.membership.product)?void 0:u.available)?"virtual"===i.membership.product.channel?`微信支付 ${o.price(i.membership.product.amount)} 开通`:"创建模拟支付订单":"会员购买暂未开放"),o:i.isMember||i.busy||i.loading||!!i.error||!(null==(m=i.membership.product)?void 0:m.available),p:i.busy?"true":"false",q:e.o((e=>r.$emit("purchase")),"5f"),r:i.error},i.error?{s:e.o((e=>r.$emit("refresh")),"90"),t:e.p({title:"订单或权益需要重新确认",description:i.error,"action-label":"刷新订单与权益",busy:i.busy||i.loading})}:i.loading?{w:e.p({tone:"loading",title:"正在读取订单与权益",description:"订单状态以服务器记录为准"})}:{},{v:i.loading,x:i.message},i.message?{y:e.t(i.message)}:{},{z:i.order},i.order?e.e({A:e.t("pending"===i.order.status?"virtual"===i.order.channel?"待支付订单":"simulation"===i.order.channel?"模拟收银台":"历史订单详情":"订单详情"),B:e.t(i.order.productName),C:e.t(o.price(i.order.amount)),D:e.t(i.order.id),E:e.t(o.statusText(i.order.status,i.order.channel)),F:e.t(o.channelText(i.order.channel)),G:"pending"===i.order.status&&"simulation"===i.order.channel&&"virtual"!==(null==(c=i.membership.product)?void 0:c.channel)},"pending"===i.order.status&&"simulation"===i.order.channel&&"virtual"!==(null==(p=i.membership.product)?void 0:p.channel)?{H:e.t(i.busy?"正在处理…":"模拟支付成功"),I:i.busy||i.loading||!!i.error||!(null==(b=i.membership.product)?void 0:b.available),J:e.o((e=>r.$emit("simulate","success")),"fd"),K:i.busy||i.loading||!!i.error||!(null==(h=i.membership.product)?void 0:h.available),L:e.o((e=>r.$emit("simulate","cancel")),"5d"),M:i.busy||i.loading||!!i.error||!(null==(f=i.membership.product)?void 0:f.available),N:e.o((e=>r.$emit("simulate","failure")),"24")}:{},{O:"pending"===i.order.status&&"virtual"===i.order.channel},"pending"===i.order.status&&"virtual"===i.order.channel?{P:e.t(i.busy?"正在确认订单…":"继续微信支付"),Q:i.busy||i.loading||!!i.error||!(null==(g=i.membership.product)?void 0:g.available)||"virtual"!==(null==(v=i.membership.product)?void 0:v.channel),R:i.busy?"true":"false",S:e.o((e=>r.$emit("pay")),"47")}:{}):{},{T:i.order&&"paid"===i.order.status&&"simulation"===i.order.channel&&"virtual"!==(null==(y=i.membership.product)?void 0:y.channel)},i.order&&"paid"===i.order.status&&"simulation"===i.order.channel&&"virtual"!==(null==(w=i.membership.product)?void 0:w.channel)?e.e({U:!a.refundConfirm},a.refundConfirm?{X:i.busy||i.loading||!!i.error||!(null==(x=i.membership.product)?void 0:x.available),Y:e.o((e=>{r.$emit("refund"),a.refundConfirm=!1}),"a5"),Z:i.busy,aa:e.o((e=>a.refundConfirm=!1),"13")}:{V:i.busy||i.loading||!!i.error||!(null==(C=i.membership.product)?void 0:C.available),W:e.o((e=>a.refundConfirm=!0),"27")}):{},{ab:e.t(i.loading?"读取中…":"刷新订单与权益"),ac:i.busy||i.loading,ad:e.o((e=>r.$emit("refresh")),"25"),ae:!i.orders.length&&!i.loading},i.orders.length||i.loading?{af:e.f(i.orders,((t,i,n)=>({a:e.t(t.productName),b:e.t(o.price(t.amount)),c:e.t(o.statusText(t.status,t.channel)),d:e.t(t.id),e:e.t(o.dateText(t.createdAt)),f:e.t(o.channelText(t.channel)),g:e.t("pending"===t.status&&"virtual"===t.channel?" · 点击查看":""),h:t.id,i:e.o((e=>r.$emit("select-order",t)),t.id)}))),ag:i.busy||i.loading}:{},{ah:e.t("virtual"===(null==(M=i.membership.product)?void 0:M.channel)?"支付与会员权益以服务器确认结果为准。":"模拟支付不会产生实际扣款。"),ai:e.t(i.subscriptionLimit??5)})}],["__scopeId","data-v-393bb5fe"]]);wx.createComponent(t);
+"use strict";
+const common_vendor = require("../../common/vendor.js");
+const SettingsRow = () => "./SettingsRow.js";
+const AsyncStateView = () => "./AsyncStateView.js";
+const _sfc_main = {
+  name: "MembershipView",
+  components: { SettingsRow, AsyncStateView },
+  emits: [
+    "back",
+    "purchase",
+    "pay",
+    "simulate",
+    "refresh",
+    "select-order",
+    "refund"
+  ],
+  data() {
+    return { refundConfirm: false };
+  },
+  watch: {
+    "order.id"() {
+      this.refundConfirm = false;
+    }
+  },
+  props: {
+    isMember: { type: Boolean, default: false },
+    freeQuotaValue: { type: String, default: "" },
+    subscriptionLimit: { type: Number, default: null },
+    membership: { type: Object, default: () => ({}) },
+    orders: { type: Array, default: () => [] },
+    order: { type: Object, default: null },
+    busy: { type: Boolean, default: false },
+    loading: { type: Boolean, default: false },
+    error: { type: String, default: "" },
+    message: { type: String, default: "" }
+  },
+  methods: {
+    channelText(channel) {
+      return {
+        virtual: "虚拟支付",
+        wechat: "微信支付（历史）",
+        simulation: "模拟支付"
+      }[channel] || channel;
+    },
+    price(amount) {
+      return "¥" + (Number(amount) / 100).toFixed(2);
+    },
+    statusText(status, channel) {
+      if (["virtual", "wechat"].includes(channel))
+        return {
+          pending: "待支付",
+          paid: "已支付",
+          cancelled: "已关闭",
+          failed: "支付失败",
+          refunded: "已退款"
+        }[status] || status;
+      return {
+        pending: "待模拟支付",
+        paid: "模拟成功",
+        cancelled: "已取消",
+        failed: "模拟失败",
+        refunded: "已撤销测试权益"
+      }[status] || status;
+    },
+    dateText(value) {
+      const date = new Date(value);
+      if (!Number.isFinite(date.getTime()))
+        return "—";
+      return new Intl.DateTimeFormat("zh-CN", {
+        timeZone: "Asia/Shanghai",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false
+      }).format(date);
+    }
+  }
+};
+if (!Array) {
+  const _easycom_uni_icons2 = common_vendor.resolveComponent("uni-icons");
+  const _component_settings_row = common_vendor.resolveComponent("settings-row");
+  const _component_async_state_view = common_vendor.resolveComponent("async-state-view");
+  (_easycom_uni_icons2 + _component_settings_row + _component_async_state_view)();
+}
+const _easycom_uni_icons = () => "../../uni_modules/uni-icons/components/uni-icons/uni-icons.js";
+if (!Math) {
+  _easycom_uni_icons();
+}
+function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
+  var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q;
+  return common_vendor.e({
+    a: common_vendor.p({
+      type: "left",
+      size: "24",
+      color: "#172a22"
+    }),
+    b: $props.busy,
+    c: common_vendor.o(($event) => _ctx.$emit("back"), "59"),
+    d: common_vendor.t($props.isMember ? "永久会员" : "免费版"),
+    e: common_vendor.t($props.isMember ? "所有订阅，一处管理" : "给每一笔续费留个位置"),
+    f: common_vendor.t($props.isMember ? "订阅数量不限，权益跟随你的微信账号。" : "当前已使用 " + $props.freeQuotaValue + " 条订阅额度。"),
+    g: $props.isMember && $props.membership.source === "simulation"
+  }, $props.isMember && $props.membership.source === "simulation" ? {} : {}, {
+    h: common_vendor.p({
+      icon: "list",
+      title: "不限数量的订阅",
+      description: "一次开通，无到期日，也不会自动续费"
+    }),
+    i: common_vendor.p({
+      icon: "cloud-upload",
+      title: "跟随微信账号",
+      description: "换手机或重新登录，仍可读取会员权益"
+    }),
+    j: common_vendor.p({
+      icon: "notification",
+      title: "保留所有基础功能",
+      description: "免费版同样支持已授权提醒、统计和导出"
+    }),
+    k: common_vendor.t($props.membership.product ? $options.price($props.membership.product.amount) : "—"),
+    l: common_vendor.t(((_a = $props.membership.product) == null ? void 0 : _a.notice) || "会员购买暂未开放。"),
+    m: ((_b = $props.membership.product) == null ? void 0 : _b.channel) === "virtual"
+  }, ((_c = $props.membership.product) == null ? void 0 : _c.channel) === "virtual" ? {} : {}, {
+    n: common_vendor.t($props.isMember ? "已开通永久会员" : $props.busy ? "正在处理订单…" : ((_d = $props.membership.product) == null ? void 0 : _d.available) ? $props.membership.product.channel === "virtual" ? `微信支付 ${$options.price($props.membership.product.amount)} 开通` : "创建模拟支付订单" : "会员购买暂未开放"),
+    o: $props.isMember || $props.busy || $props.loading || !!$props.error || !((_e = $props.membership.product) == null ? void 0 : _e.available),
+    p: $props.busy ? "true" : "false",
+    q: common_vendor.o(($event) => _ctx.$emit("purchase"), "5f"),
+    r: $props.error
+  }, $props.error ? {
+    s: common_vendor.o(($event) => _ctx.$emit("refresh"), "90"),
+    t: common_vendor.p({
+      title: "订单或权益需要重新确认",
+      description: $props.error,
+      ["action-label"]: "刷新订单与权益",
+      busy: $props.busy || $props.loading
+    })
+  } : $props.loading ? {
+    w: common_vendor.p({
+      tone: "loading",
+      title: "正在读取订单与权益",
+      description: "订单状态以服务器记录为准"
+    })
+  } : {}, {
+    v: $props.loading,
+    x: $props.message
+  }, $props.message ? {
+    y: common_vendor.t($props.message)
+  } : {}, {
+    z: $props.order
+  }, $props.order ? common_vendor.e({
+    A: common_vendor.t($props.order.status === "pending" ? $props.order.channel === "virtual" ? "待支付订单" : $props.order.channel === "simulation" ? "模拟收银台" : "历史订单详情" : "订单详情"),
+    B: common_vendor.t($props.order.productName),
+    C: common_vendor.t($options.price($props.order.amount)),
+    D: common_vendor.t($props.order.id),
+    E: common_vendor.t($options.statusText($props.order.status, $props.order.channel)),
+    F: common_vendor.t($options.channelText($props.order.channel)),
+    G: $props.order.status === "pending" && $props.order.channel === "simulation" && ((_f = $props.membership.product) == null ? void 0 : _f.channel) !== "virtual"
+  }, $props.order.status === "pending" && $props.order.channel === "simulation" && ((_g = $props.membership.product) == null ? void 0 : _g.channel) !== "virtual" ? {
+    H: common_vendor.t($props.busy ? "正在处理…" : "模拟支付成功"),
+    I: $props.busy || $props.loading || !!$props.error || !((_h = $props.membership.product) == null ? void 0 : _h.available),
+    J: common_vendor.o(($event) => _ctx.$emit("simulate", "success"), "fd"),
+    K: $props.busy || $props.loading || !!$props.error || !((_i = $props.membership.product) == null ? void 0 : _i.available),
+    L: common_vendor.o(($event) => _ctx.$emit("simulate", "cancel"), "5d"),
+    M: $props.busy || $props.loading || !!$props.error || !((_j = $props.membership.product) == null ? void 0 : _j.available),
+    N: common_vendor.o(($event) => _ctx.$emit("simulate", "failure"), "24")
+  } : {}, {
+    O: $props.order.status === "pending" && $props.order.channel === "virtual"
+  }, $props.order.status === "pending" && $props.order.channel === "virtual" ? {
+    P: common_vendor.t($props.busy ? "正在确认订单…" : "继续微信支付"),
+    Q: $props.busy || $props.loading || !!$props.error || !((_k = $props.membership.product) == null ? void 0 : _k.available) || ((_l = $props.membership.product) == null ? void 0 : _l.channel) !== "virtual",
+    R: $props.busy ? "true" : "false",
+    S: common_vendor.o(($event) => _ctx.$emit("pay"), "47")
+  } : {}) : {}, {
+    T: $props.order && $props.order.status === "paid" && $props.order.channel === "simulation" && ((_m = $props.membership.product) == null ? void 0 : _m.channel) !== "virtual"
+  }, $props.order && $props.order.status === "paid" && $props.order.channel === "simulation" && ((_n = $props.membership.product) == null ? void 0 : _n.channel) !== "virtual" ? common_vendor.e({
+    U: !$data.refundConfirm
+  }, !$data.refundConfirm ? {
+    V: $props.busy || $props.loading || !!$props.error || !((_o = $props.membership.product) == null ? void 0 : _o.available),
+    W: common_vendor.o(($event) => $data.refundConfirm = true, "27")
+  } : {
+    X: $props.busy || $props.loading || !!$props.error || !((_p = $props.membership.product) == null ? void 0 : _p.available),
+    Y: common_vendor.o(($event) => {
+      _ctx.$emit("refund");
+      $data.refundConfirm = false;
+    }, "a5"),
+    Z: $props.busy,
+    aa: common_vendor.o(($event) => $data.refundConfirm = false, "13")
+  }) : {}, {
+    ab: common_vendor.t($props.loading ? "读取中…" : "刷新订单与权益"),
+    ac: $props.busy || $props.loading,
+    ad: common_vendor.o(($event) => _ctx.$emit("refresh"), "25"),
+    ae: !$props.orders.length && !$props.loading
+  }, !$props.orders.length && !$props.loading ? {} : {
+    af: common_vendor.f($props.orders, (item, k0, i0) => {
+      return {
+        a: common_vendor.t(item.productName),
+        b: common_vendor.t($options.price(item.amount)),
+        c: common_vendor.t($options.statusText(item.status, item.channel)),
+        d: common_vendor.t(item.id),
+        e: common_vendor.t($options.dateText(item.createdAt)),
+        f: common_vendor.t($options.channelText(item.channel)),
+        g: common_vendor.t(item.status === "pending" && item.channel === "virtual" ? " · 点击查看" : ""),
+        h: item.id,
+        i: common_vendor.o(($event) => _ctx.$emit("select-order", item), item.id)
+      };
+    }),
+    ag: $props.busy || $props.loading
+  }, {
+    ah: common_vendor.t(((_q = $props.membership.product) == null ? void 0 : _q.channel) === "virtual" ? "支付与会员权益以服务器确认结果为准。" : "模拟支付不会产生实际扣款。"),
+    ai: common_vendor.t($props.subscriptionLimit ?? 5)
+  });
+}
+const Component = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-7124b7df"]]);
+wx.createComponent(Component);
+//# sourceMappingURL=../../../.sourcemap/mp-weixin/components/subscription/MembershipView.js.map

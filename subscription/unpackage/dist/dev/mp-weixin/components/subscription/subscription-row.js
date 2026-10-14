@@ -1,1 +1,23 @@
-"use strict";const t=require("../../common/vendor.js"),e={name:"SubscriptionRow",emits:["activate"],props:{item:{type:Object,required:!0}}};const i=t._export_sfc(e,[["render",function(e,i,a,m,s,n){return{a:t.t(Number(a.item.nextBillingDate.slice(5,7))),b:t.t(a.item.nextBillingDate.slice(8,10)),c:t.t(a.item.name),d:t.t(a.item.shortDate),e:t.t(a.item.displayStatus||"待续费"),f:t.t(a.item.amountText),g:t.t(a.item.days<0?"已逾期 "+Math.abs(a.item.days)+" 天":0===a.item.days?"今天续费":a.item.days+" 天后"),h:a.item.days<=7?1:"",i:t.o((t=>e.$emit("activate")),"36")}}]]);wx.createComponent(i);
+"use strict";
+const common_vendor = require("../../common/vendor.js");
+const _sfc_main = {
+  name: "SubscriptionRow",
+  emits: ["activate"],
+  props: { item: { type: Object, required: true } }
+};
+function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
+  return {
+    a: common_vendor.t(Number($props.item.nextBillingDate.slice(5, 7))),
+    b: common_vendor.t($props.item.nextBillingDate.slice(8, 10)),
+    c: common_vendor.t($props.item.name),
+    d: common_vendor.t($props.item.shortDate),
+    e: common_vendor.t($props.item.displayStatus || "待续费"),
+    f: common_vendor.t($props.item.amountText),
+    g: common_vendor.t($props.item.days < 0 ? "已逾期 " + Math.abs($props.item.days) + " 天" : $props.item.days === 0 ? "今天续费" : $props.item.days + " 天后"),
+    h: $props.item.days <= 7 ? 1 : "",
+    i: common_vendor.o(($event) => _ctx.$emit("activate"), "36")
+  };
+}
+const Component = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render]]);
+wx.createComponent(Component);
+//# sourceMappingURL=../../../.sourcemap/mp-weixin/components/subscription/subscription-row.js.map
