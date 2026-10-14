@@ -2,6 +2,8 @@
 
 适用于安装了 Docker Engine、Docker Compose 插件和 Nginx 的 Ubuntu 服务器。
 
+独立 Vue 管理后台的部署、访问与更新步骤见 [vue-admin.md](vue-admin.md)。后台源码在 `admin/`，有独立 Docker 镜像，使用标准 dist 资源部署。
+
 ## 首次部署
 
 ~~~bash

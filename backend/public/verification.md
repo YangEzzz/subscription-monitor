@@ -1,5 +1,7 @@
 # 临时后台验证
 
+本文记录已退役 HTML 后台的历史验证。2026-10-14 起，管理界面改为独立 Vue 项目；当前验证见 `admin/docs/verification.md`，部署见 `deploy/vue-admin.md`，不再运行本文中的旧文件检查脚本。
+
 ## 2026-09-30：修正后端域名
 
 - 用户提供的地址少一个 z；依据现有 subscription/api/config.js 修正默认地址及部署说明为 subscription.yangezzz.top。

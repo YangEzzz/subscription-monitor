@@ -1,7 +1,7 @@
 {
   "profile": "product-admin",
   "sourceRoots": [
-    "backend/public",
+    "admin/src",
     "subscription/components/subscription",
     "subscription/pages/subscription",
     "subscription/styles"
@@ -19,7 +19,12 @@
   "commands": {
     "unit": "pnpm --dir subscription test",
     "integration": "pnpm --dir subscription test:integration",
-    "designLint": "npx -p @google/design.md designmd lint DESIGN.md"
+    "designLint": "npx -p @google/design.md designmd lint DESIGN.md",
+    "adminFormat": "pnpm --dir admin format:check",
+    "adminTypecheck": "pnpm --dir admin typecheck",
+    "adminUnit": "pnpm --dir admin test",
+    "adminBuild": "pnpm --dir admin build",
+    "adminE2e": "pnpm --dir admin test:e2e"
   },
-  "evidence": { "runtime": ["subscription/docs/ui-verification.md"] }
+  "evidence": { "runtime": ["subscription/docs/ui-verification.md", "admin/docs/verification.md"] }
 }

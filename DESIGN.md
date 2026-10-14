@@ -46,7 +46,11 @@ components:
 运行时唯一来源为 subscription/styles/\_tokens.scss，本文件镜像其值（Model B）。
 primary 用于主操作、选中态；foreground 用于主文字；muted 用于辅助文字；border 分隔；tint 标注次要选中面。
 danger 与 amber 同时配状态文字；第三方品牌色仅用于服务标识。图表类别颜色由现有数据映射保留。
-当前仅提供浅色主题。高对比度模式保留系统边框和焦点。
+移动应用仅提供浅色主题。桌面 Vue 管理后台增加独立的深色主题，不改变移动应用。高对比度模式保留系统边框和焦点。
+
+管理后台由 `admin/src/style.css` 提供桌面适配：primary→`--primary`、deep→`--primary-hover`、foreground→`--foreground`、muted→`--muted-foreground`、border→`--border`/`--input`、background→`--background`、surface→`--card`、tint→`--accent`、danger→`--danger`、amber→`--warning`。数值与移动端镜像一致；Tailwind v4 `@theme inline` 将语义变量映射到共享 UI 控件。
+
+后台深色语义值：background `#111a16`、foreground `#e3ece6`、card/sidebar `#19251f`/`#16211b`、muted/secondary text `#24342b`/`#a3b5aa`、border/input `#30453a`、primary/hover `#7dcaa4`/`#a1ddbe`、primary text `#10261a`、accent `#263f31`、danger/surface `#ff9aa5`/`#3a242c`、warning/surface `#edbd79`/`#352d1f`。后台 CSS 是这些桌面扩展值的运行时来源，本文件记录镜像（Model B）。
 
 ## Typography
 
@@ -60,6 +64,8 @@ danger 与 amber 同时配状态文字；第三方品牌色仅用于服务标识
 H5 容器最大 480px，宽屏居中呈现同一完整移动应用；底部导航匹配容器。
 页面使用一个 scroll-view，底部留出导航及安全区。筛选和模板使用横向滚动。
 小程序标题预留胶囊区域。初次加载提供静态骨架，刷新保留当前内容。
+
+桌面管理后台按用户指定的 shadcn-vue-admin 参考采用 240px 侧栏、68px 顶栏、32px 内容留白和四列概览卡片。保留品牌绿和账簿的数据秩序，以订阅名称、金额、扣费日期作为订阅速览重点；不引入虚构增长率或装饰图表。960px 以下采用模态导航抽屉，600px 以下统计卡片两列；数据表格仅自身横向滚动，页面自然纵向滚动。后台标题 27px，正文 14px，表格 12px；共享数字字体用于统计、金额和日期。完整长值通过记录详情可访问。
 
 ## Elevation & Depth
 
@@ -76,6 +82,8 @@ SubscriptionRow 负责首页续费行；SubscriptionTabBar 负责导航；EmptyS
 StatSummaryCard 将周期筛选独立为整行，避免金额与筛选竞争空间。
 uni-app picker、switch、showModal 使用平台交互；详见 UX-CONTRACT.md。
 按钮具备焦点、按下、禁用态；减少动态效果偏好下停用动画。
+
+管理后台是独立 Vue 3 桌面表面，替代旧原生 HTML 实现：`admin/src/components/ui` 拥有 shadcn 风格 Button/Badge 与 Reka Dialog；AdminTable、AsyncState、ServiceStatus 和 `lib/useAdmin.ts` 拥有跨页面查询与反馈。标准 Vite 构建输出 `admin/dist/index.html` 与 `assets` 中独立 JS/CSS，前端 Nginx 镜像与后端 API 分别构建部署；不手工修改生成文件。浅色面板维持无阴影，遮罩对话框可使用阴影；圆角仍为面板 12px、控件 8px。主题只持久化偏好，不持久化业务记录和接口地址。
 
 ## Do's and Don'ts
 

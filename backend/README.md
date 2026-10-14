@@ -24,6 +24,12 @@ pnpm start:dev
 
 默认端口为 3001，也可以通过 APP_PORT 修改。
 
+## 管理后台
+
+Vue 3 后台参考 [shadcn-vue-admin](https://github.com/Whbbit1999/shadcn-vue-admin) 开发，提供概览、用户、订阅、会员、订单、通知的只读查询，支持搜索、服务器分页、详情与深浅色主题。
+
+设置 `LOCAL_ADMIN_ENABLED=true` 后，后端提供 http://127.0.0.1:3002/overview 和 /data 只读接口。管理界面是仓库根 `admin/` 下的独立 Vue 项目，分别安装、构建和部署；见 [admin/README.md](../admin/README.md) 与 [Vue 后台部署](../deploy/vue-admin.md)。后端不再提供旧 HTML 页面。
+
 - API：http://localhost:3001/api/v1
 - Swagger：http://localhost:3001/docs
 - 健康检查：http://localhost:3001/api/v1/health

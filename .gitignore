@@ -4,6 +4,12 @@ subscription/cache/
 .npm-cache/
 backend/src/generated/
 backend/dist/
+admin/dist/
+admin/test-results/
+admin/playwright-report/
+admin/.browsers/
+admin/.env.local
+admin/.env.*.local
 backend/.env
 deploy/.env.production
 *.log

@@ -4,14 +4,35 @@
 
 业务依据：`deploy/模拟会员支付.md`、`subscription/docs/会员功能设计.md` 与服务端 MembershipPaymentsService。`MembershipView.vue` 使用现有 SettingsRow、AsyncStateView 和 tokens，模拟收银台是同页展开区域，不是模态框。提交期间锁定操作，错误在 AsyncStateView 中提供刷新入口；订单与会员状态以服务端读取结果为准，不由客户端支付结果直接修改。撤销测试权益用页面内两步确认，显示数据保留及无实际退款说明。
 
-本人订单和购买状态由 `membership-remote.js` 拥有；请求序号与账号检查阻止旧响应覆盖新账号，账号切换清除订单和幂等请求号。金额、模拟开关、权益来源从后端读取；网络失败后刷新确认，不自动重发支付写请求。页面使用既有颜色和字体，不增加主题。HTML 后台增加只读会员/订单栏目，跨账号只读范围由用户明确授权；写操作仍走本人 Bearer 接口。
+本人订单和购买状态由 `membership-remote.js` 拥有；请求序号与账号检查阻止旧响应覆盖新账号，账号切换清除订单和幂等请求号。金额、模拟开关、权益来源从后端读取；网络失败后刷新确认，不自动重发支付写请求。页面使用既有颜色和字体，不增加主题。Vue 后台提供只读会员/订单栏目，跨账号只读范围由用户明确授权；写操作仍走本人 Bearer 接口。
 
-## 临时桌面管理后台
+## Vue 桌面管理后台
 
-本地 HTML 的连接表单由 `backend/public/admin.html` 拥有，复用现有 field、toolbar、message。双击文件自动请求 `https://subscription.yangezzz.top/admin/`，无需密钥；仅在切换后端时使用地址表单。地址支持 HTTPS 管理接口及本机 HTTP，保留代理路径前缀；验证错误关联字段并聚焦。`file://` 下不写 history，查询与 HTTP 页面共用 load/get/render 和取消过期请求机制。权限依据 `deploy/临时管理后台.md` 与 `backend/src/admin/admin.module.ts`：用户明确选择无鉴权的只读文件访问，跨域允许 Origin null，默认关闭管理服务。
+用户明确要求独立、可部署的 Vue 项目，后台源码位于仓库根 `admin/`。Vue + Vite 构建输出标准 `dist`（index.html、assets/JS、assets/CSS），使用独立 Nginx Docker 镜像部署；后端 3002 端口只提供 /overview 和 /data，不再提供 HTML 页面。前端默认相对资源路径和 `./api/` 接口，支持根目录与 /admin/ 子目录部署；开发/preview 使用 Vite 代理，生产通过可信的前端 Nginx 内网代理。部署开关和接口只读范围沿用既有约定；Docker 宿主发布端口默认 127.0.0.1:8080，公网入口的 Nginx 认证配置见 deploy/vue-admin.md。未新增应用层管理员登录或用户数据写入能力。
 
-`backend/public/admin.html` 是独立原生 HTML 界面，复用 `_tokens.scss` 的颜色和字体镜像，不依赖 uni-app 的平台组件。原生 select 接受操作系统弹窗；table 为语义表格，由表格区域承担水平滚动，文档承担纵向滚动。所有查询共享 load、message、paging 和 render 函数；错误、空态、加载占用稳定表格区域。搜索显式提交、支持中文输入、清除立即查询，AbortController 与序号忽略旧响应。HTTP 页面筛选和页码存 URL，本地文件页面保留在内存；搜索不涉及秘密凭证。第一版只有读取，不提供写入或外部副作用。后台查询由独立管理服务器提供，本地文件可通过HTTPS 转发访问，默认禁用，部署见 `deploy/临时管理后台.md`。
+视觉依据 DESIGN.md 桌面适配，参考 shadcn-vue-admin 的侧栏、概览卡片和表格。接口地址通过部署配置指定，连接状态页只展示地址与「检查连接」，没有本地文件访问或运行时远程地址输入。主题偏好可存 localStorage，不持久化业务记录。
 
+所有查询由 `admin/src/lib/useAdmin.ts` 和 `lib/data.ts` 拥有；服务端每页固定 20 条，搜索 300ms 防抖，显式提交立即查询，中文合成期间不提交，清除立即查询并恢复输入焦点。请求超时为 20 秒；AbortController 和请求序号阻止旧请求覆盖新页面。切换搜索/页面清除不对应的旧记录，同页刷新失败保留并标记已读数据；概览与列表错误独立呈现。查询后自动收敛超出范围的页码。
+
+视图、搜索与页码写入 URL，支持 Back/刷新，内存记住各列表搜索和页码。导航更新文档标题 `{页面} · 续订清单管理后台`，焦点放到标题；详情与窄屏导航使用 Reka Dialog，支持焦点锁定、Escape 与焦点恢复。table 语义化，由表格区域承担水平滚动，文档承担纵向滚动；不提供未经 API 支持的排序、状态过滤、批量选择或写操作。点击所属用户进入用户列表并按该用户 ID 搜索。详情只展示接口已经返回的字段，无私密接口读取。403 显示访问权限/代理说明；网络、无效响应和 5xx 提供重试，导航仍可用。
+
+概览未删除订阅数与列表含删除记录明确区分；订单金额已由服务端从分转换为元，UI 不再次换算。paid 配合 simulation 渠道显示「模拟成功」，时间统一 Asia/Shanghai。加载/空态/无结果/错误复用 AsyncState，概览失败显示破折号而非虚构零值，刷新失败保留读取时间。
+
+### 共享与桌面后台 Canonical UI Map
+
+| Capability | Canonical owner | Source of truth | Allowed variants | Verification |
+| --- | --- | --- | --- | --- |
+| Navigation | admin/src/App.vue + useAdmin.ts | URL 视图与 DESIGN.md | 侧栏、窄屏 Dialog | browser E2E、Back |
+| Form | App.vue search form | 搜索与分页接口契约 | 防抖、显式查询、清除 | 中文输入/无结果/焦点 E2E |
+| Scrollbar | admin/src/style.css | DESIGN.md | 文档纵向、表格横向 | 窄屏 E2E |
+| Toast | App.vue status live region + AsyncState | useAdmin.ts | 成功状态、持久错误 | 错误恢复 E2E |
+| CRUD | useAdmin.ts + 原有 /data /overview | admin-read.ts | 只读分页/搜索/刷新 | 后端与浏览器测试 |
+| Dialog | components/ui/AppDialog.vue | Reka UI | 记录详情、导航抽屉 | Escape、焦点 E2E |
+| Async state | components/AsyncState.vue | useAdmin.ts | 首次、刷新、无记录/无匹配 | 失败/竞争 E2E |
+| Select/Listbox | 移动端 uni-app picker | SubscriptionFormView.vue | 平台选择器，桌面无此能力 | 既有 H5 打开与取消 |
+| Date | 移动端 uni-app picker | SubscriptionFormView.vue | 日期/时间，桌面仅格式化显示 | 既有小程序编译 |
+
+桌面后台不包含 Select/Listbox、日期输入、写表单和批量选择，平台 picker 的既有所有权继续适用于移动应用。
 ## Evidence and scope
 
 本次为现有单页 uni-app 的 UI 重构，依据 subscription/docs/前后端联调说明.md、subscription/api/subscriptions.js、subscription/pages/subscription/subscription-remote.js。

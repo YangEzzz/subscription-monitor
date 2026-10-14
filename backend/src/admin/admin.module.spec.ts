@@ -64,8 +64,9 @@ describe('Local admin server', () => {
     if (original === undefined) delete process.env.LOCAL_ADMIN_ENABLED;
     else process.env.LOCAL_ADMIN_ENABLED = original;
   });
-  it('serves HTML and real paged records without exposing OpenID', async () => {
-    expect((await read('/')).body).toContain('临时管理后台');
+  it('serves real paged API records without exposing OpenID or a legacy HTML page', async () => {
+    expect((await read('/')).status).toBe(404);
+    expect((await read('/admin.html')).status).toBe(404);
     const result = await read('/data?section=users');
     expect(result.status).toBe(200);
     expect(JSON.parse(result.body).items[0].id).toBe('wx-test');

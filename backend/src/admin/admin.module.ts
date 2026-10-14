@@ -8,8 +8,6 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createServer, Server } from 'node:http';
-import { readFile } from 'node:fs/promises';
-import { join } from 'node:path';
 import {
   SUBSCRIPTIONS_REPOSITORY,
   SubscriptionsRepository,
@@ -78,13 +76,6 @@ export class LocalAdminServer
           return;
         }
         const url = new URL(request.url || '/', 'http://localhost:3002');
-        if (url.pathname === '/' || url.pathname === '/admin.html') {
-          response.setHeader('Content-Type', 'text/html; charset=utf-8');
-          response.end(
-            await readFile(join(__dirname, '../../public/admin.html')),
-          );
-          return;
-        }
         response.setHeader('Content-Type', 'application/json; charset=utf-8');
         if (url.pathname === '/overview') {
           const counts = await this.repository.adminOverview();

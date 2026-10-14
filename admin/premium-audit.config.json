@@ -1,0 +1,12 @@
+{
+  "profile": "product-admin",
+  "sourceRoots": ["admin/src"],
+  "canonicalMap": "UX-CONTRACT.md",
+  "requiredCapabilities": ["Form", "Scrollbar", "Toast", "CRUD"],
+  "commands": {
+    "typecheck": "pnpm --dir admin typecheck",
+    "unit": "pnpm --dir admin test",
+    "e2e": "pnpm --dir admin test:e2e"
+  },
+  "evidence": { "runtime": "admin/docs/verification.md" }
+}

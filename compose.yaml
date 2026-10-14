@@ -78,6 +78,28 @@ services:
         max-size: 10m
         max-file: "3"
 
+  admin:
+    profiles: ["admin"]
+    image: subscription-monitor-admin:${IMAGE_TAG:-local}
+    build:
+      context: ./admin
+      dockerfile: Dockerfile
+    environment:
+      ADMIN_API_UPSTREAM: api:3002
+    ports:
+      - "127.0.0.1:8080:80"
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - backend
+    logging:
+      driver: local
+      options:
+        max-size: 10m
+        max-file: "3"
+
 volumes:
   postgres-data:
 
