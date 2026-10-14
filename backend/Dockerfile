@@ -7,7 +7,7 @@ RUN corepack enable && corepack prepare pnpm@9.13.2 --activate
 
 WORKDIR /app
 
-COPY package.json pnpm-lock.yaml ./
+COPY package.json pnpm-lock.yaml .npmrc ./
 RUN pnpm install --frozen-lockfile
 
 COPY . .
@@ -23,7 +23,7 @@ RUN corepack enable && corepack prepare pnpm@9.13.2 --activate
 
 WORKDIR /app
 
-COPY --from=build --chown=node:node /app/package.json /app/pnpm-lock.yaml ./
+COPY --from=build --chown=node:node /app/package.json /app/pnpm-lock.yaml /app/.npmrc ./
 COPY --from=build --chown=node:node /app/node_modules ./node_modules
 COPY --from=build --chown=node:node /app/dist ./dist
 COPY --from=build --chown=node:node /app/prisma ./prisma

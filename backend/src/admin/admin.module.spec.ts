@@ -176,7 +176,7 @@ describe('Local admin server', () => {
       requestId: 'private-request-key',
       productId: 'lifetime',
       productName: '永久会员',
-      amount: 2990,
+      amount: 990,
       currency: 'CNY',
       channel: 'simulation',
       status: 'paid',
@@ -192,7 +192,7 @@ describe('Local admin server', () => {
       '/data?section=membershipOrders&search=admin-test-order',
       { Origin: 'null' },
     );
-    expect(JSON.parse(orders.body).items[0].amount).toBe(29.9);
+    expect(JSON.parse(orders.body).items[0].amount).toBe(9.9);
     expect(orders.body).not.toContain('private-request-key');
   });
 });

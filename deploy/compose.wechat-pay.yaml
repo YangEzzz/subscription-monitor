@@ -1,5 +1,0 @@
-# Use with: docker compose -f compose.yaml -f deploy/compose.wechat-pay.yaml ...
-services:
-  api:
-    volumes:
-      - ./deploy/secrets/wechat-pay:/run/wechat-pay:ro

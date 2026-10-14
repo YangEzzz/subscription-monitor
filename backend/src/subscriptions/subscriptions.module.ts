@@ -1,6 +1,6 @@
 import { MembershipPaymentsService } from './membership-payments.service';
-import { WechatPayService } from './wechat-pay.service';
-import { WechatPayNotifyController } from './wechat-pay-notify.controller';
+import { VirtualPayService } from './virtual-pay.service';
+import { VirtualPayNotifyController } from './virtual-pay-notify.controller';
 import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaPg } from '@prisma/adapter-pg';
@@ -45,7 +45,7 @@ export function createSubscriptionsRepository(
     DashboardController,
     RemindersController,
     MembershipController,
-    WechatPayNotifyController,
+    VirtualPayNotifyController,
     SettingsController,
     CatalogController,
   ],
@@ -60,7 +60,7 @@ export function createSubscriptionsRepository(
     },
     SubscriptionsService,
     MembershipPaymentsService,
-    WechatPayService,
+    VirtualPayService,
   ],
   exports: [SubscriptionsService, SUBSCRIPTIONS_REPOSITORY],
 })

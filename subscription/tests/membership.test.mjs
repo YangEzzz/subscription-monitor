@@ -6,7 +6,7 @@ import { createSubscriptionPageState } from "../pages/subscription/subscription-
 const user = "membership-test-user";
 const membership = {
   status: "free",
-  product: { available: true, amount: 2990 },
+  product: { available: true, amount: 990 },
   quota: { limit: 5, remaining: 1, used: 4 },
 };
 function harness(handler) {
@@ -16,7 +16,16 @@ function harness(handler) {
       expiresAt: "2099-01-01T00:00:00Z",
       user: { id: user },
     }),
-    request: handler,
+    setStorageSync: () => {},
+    login: (options) => options.success({ code: "fresh-code" }),
+    request: (options) =>
+      options.url.endsWith("/auth/wechat")
+        ? ok(options, {
+            accessToken: "fresh-token",
+            expiresAt: "2099-01-01T00:00:00Z",
+            user: { id: user },
+          })
+        : handler(options),
   };
   const page = {
     ...createSubscriptionPageState(),
@@ -40,13 +49,13 @@ function harness(handler) {
 }
 const ok = (options, data) => options.success({ statusCode: 200, data });
 
-test("ordinary payment invokes the cashier once and confirms server entitlement", async () => {
-  globalThis.wx = {};
+test("virtual payment invokes the cashier once and confirms server entitlement", async () => {
+  globalThis.wx = { requestVirtualPayment: () => {} };
   const order = {
     id: "wechat-order",
-    channel: "wechat",
+    channel: "virtual",
     status: "pending",
-    amount: 2990,
+    amount: 990,
   };
   let creates = 0,
     cashierCalls = 0;
@@ -58,21 +67,21 @@ test("ordinary payment invokes the cashier once and confirms server entitlement"
       ok(options, {
         order,
         payment: {
-          timeStamp: "123",
-          nonceStr: "nonce",
-          package: "prepay_id=test",
-          signType: "RSA",
-          paySign: "signature",
+          mode: "short_series_goods",
+          signData: '{"goodsPrice":990}',
+          paySig: "pay",
+          signature: "user",
         },
       });
     else if (options.url.endsWith("/orders/wechat-order"))
       ok(options, { ...order, status: "paid" });
-    else ok(options, { ...membership, status: "active", source: "wechat" });
+    else ok(options, { ...membership, status: "active", source: "virtual" });
   });
-  page.settings.membership.product.channel = "wechat";
-  uni.requestPayment = (options) => {
+  page.settings.membership.product.channel = "virtual";
+  wx.requestVirtualPayment = (options) => {
     cashierCalls++;
-    assert.equal(options.package, "prepay_id=test");
+    assert.equal(options.mode, "short_series_goods");
+    assert.equal(JSON.parse(options.signData).goodsPrice, 990);
     assert.equal(page.isMember, false);
     options.success({});
   };
@@ -91,15 +100,23 @@ test("ordinary payment invokes the cashier once and confirms server entitlement"
 });
 
 test("cashier cancellation preserves the pending order and never grants membership", async () => {
-  globalThis.wx = {};
-  const order = { id: "wechat-order", channel: "wechat", status: "pending" };
+  globalThis.wx = { requestVirtualPayment: () => {} };
+  const order = { id: "wechat-order", channel: "virtual", status: "pending" };
   const page = harness((options) =>
     options.url.endsWith("/pay")
-      ? ok(options, { order, payment: { package: "prepay_id=test" } })
+      ? ok(options, {
+          order,
+          payment: {
+            mode: "short_series_goods",
+            signData: "{}",
+            paySig: "pay",
+            signature: "user",
+          },
+        })
       : ok(options, order),
   );
-  page.settings.membership.product.channel = "wechat";
-  uni.requestPayment = (options) =>
+  page.settings.membership.product.channel = "virtual";
+  wx.requestVirtualPayment = (options) =>
     options.fail({ errMsg: "requestPayment:fail cancel" });
   try {
     await page.beginMembershipPurchase();
@@ -113,17 +130,25 @@ test("cashier cancellation preserves the pending order and never grants membersh
 });
 
 test("an account switch while requesting cashier parameters prevents payment launch", async () => {
-  globalThis.wx = {};
+  globalThis.wx = { requestVirtualPayment: () => {} };
   let finishPayment;
-  const order = { id: "wechat-order", channel: "wechat", status: "pending" };
+  const order = { id: "wechat-order", channel: "virtual", status: "pending" };
   const page = harness((options) =>
     options.url.endsWith("/pay")
       ? (finishPayment = () =>
-          ok(options, { order, payment: { package: "prepay_id=test" } }))
+          ok(options, {
+            order,
+            payment: {
+              mode: "short_series_goods",
+              signData: "{}",
+              paySig: "pay",
+              signature: "user",
+            },
+          }))
       : ok(options, order),
   );
   page.membershipOrder = order;
-  uni.requestPayment = () =>
+  wx.requestVirtualPayment = () =>
     assert.fail("Cashier must not launch for a previous account");
   try {
     const pending = page.payMembershipOrder();
@@ -138,13 +163,13 @@ test("an account switch while requesting cashier parameters prevents payment lau
   }
 });
 
-test("ordinary payment is unavailable in H5 and creates no chargeable order", async () => {
+test("virtual payment is unavailable in H5 and creates no chargeable order", async () => {
   const page = harness(() =>
     assert.fail("H5 must not submit a payment request"),
   );
-  page.settings.membership.product.channel = "wechat";
+  page.settings.membership.product.channel = "virtual";
   await page.beginMembershipPurchase();
-  assert.match(page.membershipError, /微信小程序/);
+  assert.match(page.membershipError, /暂不支持会员支付/);
 });
 
 test("purchase has no client price, blocks duplicate submits and waits for server entitlement", async () => {
@@ -156,7 +181,7 @@ test("purchase has no client price, blocks duplicate submits and waits for serve
       assert.equal(options.data.productId, "lifetime");
       assert.equal(options.data.amount, undefined);
       resolveCreate = () =>
-        ok(options, { id: "order", status: "pending", amount: 2990 });
+        ok(options, { id: "order", status: "pending", amount: 990 });
     } else ok(options, membership);
   });
   const pending = page.beginMembershipPurchase();
@@ -218,4 +243,53 @@ test("an account switch ignores a late purchase response", async () => {
   await pending;
   assert.equal(page.membershipOrder, null);
   assert.equal(page.isMember, false);
+});
+
+test("iOS without Apple IAP refuses purchase before creating an order", async () => {
+  globalThis.wx = {
+    requestVirtualPayment: () => assert.fail("Must not launch iOS payment"),
+    getDeviceInfo: () => ({ platform: "ios" }),
+    getAppBaseInfo: () => ({ version: "8.0.68" }),
+  };
+  try {
+    const page = harness(() =>
+      assert.fail("Unsupported iOS must create no order"),
+    );
+    page.settings.membership.product.channel = "virtual";
+    page.settings.membership.product.iosEnabled = false;
+    await page.beginMembershipPurchase();
+    assert.match(page.membershipError, /暂不支持/);
+  } finally {
+    delete globalThis.wx;
+  }
+});
+
+test("a previously issued payment returns no SDK parameters and never launches again", async () => {
+  let launches = 0;
+  globalThis.wx = {
+    requestVirtualPayment: () => {
+      launches++;
+    },
+  };
+  try {
+    const order = {
+      id: "existing-order",
+      channel: "virtual",
+      status: "pending",
+      amount: 990,
+    };
+    const page = harness((options) =>
+      options.url.endsWith("/pay")
+        ? ok(options, { order, payment: null })
+        : ok(options, membership),
+    );
+    page.settings.membership.product.channel = "virtual";
+    page.membershipOrder = order;
+    await page.payMembershipOrder();
+    assert.equal(launches, 0);
+    assert.equal(page.membershipOrder.status, "pending");
+    assert.equal(page.isMember, false);
+  } finally {
+    delete globalThis.wx;
+  }
 });

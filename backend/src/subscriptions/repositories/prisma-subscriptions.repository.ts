@@ -301,7 +301,14 @@ export class PrismaSubscriptionsRepository
   }
 
   async saveWechatIdentity(identity: WechatIdentity): Promise<void> {
-    const data = { wechatAppId: identity.appId, wechatOpenId: identity.openId };
+    const data = {
+      wechatAppId: identity.appId,
+      wechatOpenId: identity.openId,
+      wechatSessionKeyEncrypted: identity.sessionKeyEncrypted ?? null,
+      wechatSessionUpdatedAt: identity.sessionUpdatedAt
+        ? new Date(identity.sessionUpdatedAt)
+        : null,
+    };
     await this.executor.appUser.upsert({
       where: { id: identity.userId },
       create: { id: identity.userId, ...data },
@@ -314,7 +321,13 @@ export class PrismaSubscriptionsRepository
       where: { id: userId },
     });
     return row?.wechatAppId && row.wechatOpenId
-      ? { userId, appId: row.wechatAppId, openId: row.wechatOpenId }
+      ? {
+          userId,
+          appId: row.wechatAppId,
+          openId: row.wechatOpenId,
+          sessionKeyEncrypted: row.wechatSessionKeyEncrypted,
+          sessionUpdatedAt: row.wechatSessionUpdatedAt?.toISOString() || null,
+        }
       : null;
   }
 
@@ -700,6 +713,8 @@ export class PrismaSubscriptionsRepository
       createdAt: row.createdAt.toISOString(),
       updatedAt: row.updatedAt.toISOString(),
       paidAt: row.paidAt?.toISOString() || null,
+      paymentRequestedAt: row.paymentRequestedAt?.toISOString() || null,
+      deliveryConfirmedAt: row.deliveryConfirmedAt?.toISOString() || null,
     }));
   }
   async findMembershipOrder(
@@ -717,6 +732,8 @@ export class PrismaSubscriptionsRepository
           createdAt: row.createdAt.toISOString(),
           updatedAt: row.updatedAt.toISOString(),
           paidAt: row.paidAt?.toISOString() || null,
+          paymentRequestedAt: row.paymentRequestedAt?.toISOString() || null,
+          deliveryConfirmedAt: row.deliveryConfirmedAt?.toISOString() || null,
         }
       : null;
   }
@@ -727,6 +744,12 @@ export class PrismaSubscriptionsRepository
       createdAt: new Date(order.createdAt),
       updatedAt: new Date(order.updatedAt),
       paidAt: order.paidAt ? new Date(order.paidAt) : null,
+      paymentRequestedAt: order.paymentRequestedAt
+        ? new Date(order.paymentRequestedAt)
+        : null,
+      deliveryConfirmedAt: order.deliveryConfirmedAt
+        ? new Date(order.deliveryConfirmedAt)
+        : null,
     };
     await this.executor.membershipOrder.upsert({
       where: { id: order.id },
@@ -735,8 +758,38 @@ export class PrismaSubscriptionsRepository
     });
   }
   async findMembershipOrderById(id: string): Promise<MembershipOrder | null> {
-    const row = await this.executor.membershipOrder.findUnique({ where: { id } });
+    const row = await this.executor.membershipOrder.findUnique({
+      where: { id },
+    });
     return row ? this.findMembershipOrder(row.userId, id) : null;
+  }
+  async listVirtualOrdersToReconcile(
+    afterId = '',
+    limit = 100,
+  ): Promise<MembershipOrder[]> {
+    const rows = await this.executor.membershipOrder.findMany({
+      where: {
+        channel: 'virtual',
+        paymentRequestedAt: { not: null },
+        id: { gt: afterId },
+        OR: [
+          { status: 'pending' },
+          { status: 'paid', deliveryConfirmedAt: null },
+        ],
+      },
+      orderBy: { id: 'asc' },
+      take: limit,
+    });
+    return rows.map((row) => ({
+      ...row,
+      channel: row.channel as MembershipOrder['channel'],
+      status: row.status as MembershipOrder['status'],
+      createdAt: row.createdAt.toISOString(),
+      updatedAt: row.updatedAt.toISOString(),
+      paidAt: row.paidAt?.toISOString() || null,
+      paymentRequestedAt: row.paymentRequestedAt?.toISOString() || null,
+      deliveryConfirmedAt: row.deliveryConfirmedAt?.toISOString() || null,
+    }));
   }
   transactionForUser<T>(
     userId: string,

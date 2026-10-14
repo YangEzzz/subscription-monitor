@@ -21,7 +21,7 @@ describe('simulated membership purchases', () => {
       }),
     ]);
     expect(second.id).toBe(first.id);
-    expect(first.amount).toBe(2990);
+    expect(first.amount).toBe(990);
     expect(first.channel).toBe('simulation');
     const results = await Promise.all([
       service.simulate('alice', first.id, { outcome: 'success' }),

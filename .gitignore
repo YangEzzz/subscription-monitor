@@ -1,6 +1,7 @@
 node_modules/
 subscription/.preview/
 subscription/cache/
+subscription/unpackage/dist/dev/.sourcemap/
 .npm-cache/
 backend/src/generated/
 backend/dist/

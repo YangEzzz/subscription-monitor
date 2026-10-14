@@ -1,3 +1,5 @@
+process.env.WECHAT_VIRTUAL_PAY_ENABLED = 'false';
+process.env.WECHAT_PAY_ENABLED = 'false';
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
@@ -67,7 +69,7 @@ test("simulated orders enforce HTTP authentication, DTOs, entitlement and the se
         amount: 1,
       })
     ).json();
-    assert.equal(order.amount, 2990);
+    assert.equal(order.amount, 990);
     assert.equal(order.channel, "simulation");
     assert.equal(
       (await call(`/membership/orders/${order.id}`, bob)).status,

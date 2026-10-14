@@ -1,2 +1,2 @@
-// Keep membership purchase entry points hidden until launch.
-export const MEMBERSHIP_ENTRY_ENABLED = false;
+// Membership entry enabled for local testing.
+export const MEMBERSHIP_ENTRY_ENABLED = true;

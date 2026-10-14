@@ -1,4 +1,10 @@
-export type WechatIdentity = { userId: string; appId: string; openId: string };
+export type WechatIdentity = {
+  userId: string;
+  appId: string;
+  openId: string;
+  sessionKeyEncrypted?: string | null;
+  sessionUpdatedAt?: string | null;
+};
 export type DeliveryStatus =
   | 'sending'
   | 'sent'

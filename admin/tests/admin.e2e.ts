@@ -7,7 +7,7 @@ const subscriptions = Array.from({ length: 26 }, (_, index) => ({
       ? '家庭影音订阅 · 长名称用于核对详情中的完整展示'
       : `订阅 ${index}`,
   userId: `wx-user-${index}`,
-  amount: index === 1 ? null : 29.9,
+  amount: index === 1 ? null : 9.9,
   currency: index === 2 ? 'USD' : 'CNY',
   nextBillingDate: '2026-10-20',
   status: index === 3 ? 'paused' : 'active',
@@ -46,7 +46,7 @@ async function mockApi(page: Page) {
                   id: 'order-1',
                   productName: '永久会员',
                   userId: 'wx-user-0',
-                  amount: 29.9,
+                  amount: 9.9,
                   currency: 'CNY',
                   status: 'paid',
                   channel: 'simulation',
@@ -126,7 +126,7 @@ test('详情完整字段、键盘关闭与焦点恢复，模拟金额不重复�
   await trigger.click();
   const dialog = page.getByRole('dialog');
   await expect(dialog.getByText('order-1', { exact: true })).toBeVisible();
-  await expect(dialog.getByText('¥29.90', { exact: true })).toBeVisible();
+  await expect(dialog.getByText('¥9.90', { exact: true })).toBeVisible();
   await page.keyboard.press('Escape');
   await expect(dialog).not.toBeVisible();
   await expect(trigger).toBeFocused();

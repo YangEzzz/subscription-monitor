@@ -31,6 +31,10 @@ export interface SubscriptionsRepository extends NotificationRepository {
   ): Promise<MembershipOrder | null>;
   saveMembershipOrder(order: MembershipOrder): Promise<void>;
   findMembershipOrderById(id: string): Promise<MembershipOrder | null>;
+  listVirtualOrdersToReconcile(
+    afterId?: string,
+    limit?: number,
+  ): Promise<MembershipOrder[]>;
   transactionForUser<T>(
     userId: string,
     work: (repository: SubscriptionsRepository) => Promise<T>,

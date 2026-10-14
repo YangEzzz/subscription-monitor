@@ -5,7 +5,7 @@ afterEach(() => vi.unstubAllGlobals());
 describe('后台数据口径', () => {
   it('金额未知不显示成零，保留币种，不再次换算服务端已转换的订单金额', () => {
     expect(format('amount', null, { currency: 'CNY' })).toBe('—');
-    expect(format('amount', 29.9, { currency: 'CNY' })).toContain('29.90');
+    expect(format('amount', 9.9, { currency: 'CNY' })).toContain('9.90');
     expect(format('amount', 12.99, { currency: 'USD' })).toContain('12.99');
   });
   it('模拟成功和真实支付状态分别展示，未知标识原样保留', () => {

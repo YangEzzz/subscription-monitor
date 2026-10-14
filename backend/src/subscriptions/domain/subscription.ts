@@ -114,7 +114,7 @@ export interface Membership {
   status: 'free' | 'active';
   plan: 'free' | 'member';
   startedAt: string | null;
-  source?: 'legacy' | 'simulation' | 'wechat';
+  source?: 'legacy' | 'simulation' | 'wechat' | 'virtual';
   sourceOrderId?: string | null;
 }
 

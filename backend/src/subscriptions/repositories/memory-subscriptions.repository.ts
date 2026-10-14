@@ -381,11 +381,42 @@ export class MemorySubscriptionsRepository implements SubscriptionsRepository {
     return Promise.resolve(order?.userId === userId ? clone(order) : null);
   }
   saveMembershipOrder(order: MembershipOrder): Promise<void> {
+    if (
+      order.transactionId &&
+      [...this.orders.values()].some(
+        (existing) =>
+          existing.id !== order.id &&
+          existing.transactionId === order.transactionId,
+      )
+    )
+      throw new Error(
+        'Platform transaction ID is already assigned to another order',
+      );
     this.orders.set(order.id, clone(order));
     return Promise.resolve();
   }
   findMembershipOrderById(id: string): Promise<MembershipOrder | null> {
     return Promise.resolve(clone(this.orders.get(id) || null));
+  }
+  listVirtualOrdersToReconcile(
+    afterId = '',
+    limit = 100,
+  ): Promise<MembershipOrder[]> {
+    return Promise.resolve(
+      clone(
+        [...this.orders.values()]
+          .filter(
+            (order) =>
+              order.channel === 'virtual' &&
+              !!order.paymentRequestedAt &&
+              (order.status === 'pending' ||
+                (order.status === 'paid' && !order.deliveryConfirmedAt)) &&
+              order.id > afterId,
+          )
+          .sort((a, b) => a.id.localeCompare(b.id))
+          .slice(0, limit),
+      ),
+    );
   }
   transactionForUser<T>(
     _userId: string,

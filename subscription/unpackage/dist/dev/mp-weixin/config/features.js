@@ -1,1 +1,1 @@
-"use strict";exports.MEMBERSHIP_ENTRY_ENABLED=!1;
+"use strict";exports.MEMBERSHIP_ENTRY_ENABLED=!0;

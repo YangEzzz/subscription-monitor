@@ -65,6 +65,8 @@ model AppUser {
   membershipOrders MembershipOrder[]
   wechatAppId   String?        @map("wechat_app_id") @db.VarChar(64)
   wechatOpenId  String?        @map("wechat_open_id") @db.VarChar(128)
+  wechatSessionKeyEncrypted String? @map("wechat_session_key_encrypted") @db.Text
+  wechatSessionUpdatedAt DateTime? @map("wechat_session_updated_at") @db.Timestamptz(3)
   notificationGrants NotificationGrant[]
   notificationDeliveries NotificationDelivery[]
 
@@ -207,6 +209,8 @@ model Membership {
 }
 
 model MembershipOrder {
+  paymentRequestedAt DateTime? @map("payment_requested_at") @db.Timestamptz(3)
+  deliveryConfirmedAt DateTime? @map("delivery_confirmed_at") @db.Timestamptz(3)
   transactionId String? @unique @map("transaction_id") @db.VarChar(64)
   id String @id @db.VarChar(64)
   userId String @map("user_id") @db.VarChar(128)
@@ -223,5 +227,6 @@ model MembershipOrder {
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
   @@unique([userId, requestId], map: "membership_orders_user_request_key")
   @@index([userId, createdAt], map: "membership_orders_user_created_idx")
+  @@index([channel, status, id], map: "membership_orders_reconcile_idx")
   @@map("membership_orders")
 }

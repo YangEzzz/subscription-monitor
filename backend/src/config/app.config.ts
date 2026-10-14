@@ -133,21 +133,22 @@ export default registerAs<AppConfig>('app', () => {
       process.env.WECHAT_MESSAGE_STATE || 'formal',
     )
       ? ((process.env.WECHAT_MESSAGE_STATE || 'formal') as
-          'formal' | 'developer' | 'trial')
+          | 'formal'
+          | 'developer'
+          | 'trial')
       : 'formal',
     notificationSchedulerEnabled:
       process.env.NOTIFICATION_SCHEDULER_ENABLED !== 'false',
     membershipSimulationEnabled:
       process.env.MEMBERSHIP_SIMULATION_ENABLED === 'true',
-    wechatPay: {
-      enabled: process.env.WECHAT_PAY_ENABLED === 'true',
-      mchId: process.env.WECHAT_PAY_MCH_ID,
-      serialNo: process.env.WECHAT_PAY_SERIAL_NO,
-      privateKeyPath: process.env.WECHAT_PAY_PRIVATE_KEY_PATH,
-      apiV3Key: process.env.WECHAT_PAY_API_V3_KEY,
-      publicKeyId: process.env.WECHAT_PAY_PUBLIC_KEY_ID,
-      publicKeyPath: process.env.WECHAT_PAY_PUBLIC_KEY_PATH,
-      notifyUrl: process.env.WECHAT_PAY_NOTIFY_URL,
+    virtualPay: {
+      enabled: process.env.WECHAT_VIRTUAL_PAY_ENABLED === 'true',
+      offerId: process.env.WECHAT_VIRTUAL_PAY_OFFER_ID,
+      appKey: process.env.WECHAT_VIRTUAL_PAY_APP_KEY,
+      productId: process.env.WECHAT_VIRTUAL_PAY_PRODUCT_ID,
+      notifyToken: process.env.WECHAT_VIRTUAL_PAY_NOTIFY_TOKEN,
+      encodingAESKey: process.env.WECHAT_VIRTUAL_PAY_ENCODING_AES_KEY,
+      iosEnabled: process.env.WECHAT_VIRTUAL_PAY_IOS_ENABLED === 'true',
     },
   };
 });

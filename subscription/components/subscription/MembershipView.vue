@@ -59,6 +59,13 @@
       <text class="membership-notice">{{
         membership.product?.notice || "会员购买暂未开放。"
       }}</text>
+      <text
+        v-if="membership.product?.channel === 'virtual'"
+        class="membership-notice"
+      >
+        本小程序全终端每月支付限额为10万元。安卓退款请联系客服；iOS退款由Apple处理。
+        安卓技术服务费1%，结算T+3；iOS佣金12%，结算45–60天。目前未开放iOS购买。
+      </text>
       <button
         class="membership-primary"
         :disabled="
@@ -77,8 +84,8 @@
             : busy
               ? "正在处理订单…"
               : membership.product?.available
-                ? membership.product.channel === "wechat"
-                  ? "微信支付 ¥29.90 开通"
+                ? membership.product.channel === "virtual"
+                  ? `微信支付 ${price(membership.product.amount)} 开通`
                   : "创建模拟支付订单"
                 : "会员购买暂未开放"
         }}
@@ -108,9 +115,11 @@
     <view v-if="order" class="membership-cashier">
       <text class="settings-title">{{
         order.status === "pending"
-          ? order.channel === "wechat"
+          ? order.channel === "virtual"
             ? "待支付订单"
-            : "模拟收银台"
+            : order.channel === "simulation"
+              ? "模拟收银台"
+              : "历史订单详情"
           : "订单详情"
       }}</text>
       <text class="membership-order-line"
@@ -119,13 +128,13 @@
       <text class="membership-order-id">{{ order.id }}</text>
       <text class="membership-order-line"
         >{{ statusText(order.status, order.channel) }} ·
-        {{ order.channel === "wechat" ? "微信支付订单" : "模拟订单" }}</text
+        {{ channelText(order.channel) }}订单</text
       >
       <view
         v-if="
           order.status === 'pending' &&
-          order.channel !== 'wechat' &&
-          membership.product?.channel !== 'wechat'
+          order.channel === 'simulation' &&
+          membership.product?.channel !== 'virtual'
         "
         class="membership-cashier-actions"
       >
@@ -158,14 +167,14 @@
         </button>
       </view>
       <button
-        v-if="order.status === 'pending' && order.channel === 'wechat'"
+        v-if="order.status === 'pending' && order.channel === 'virtual'"
         class="membership-primary"
         :disabled="
           busy ||
           loading ||
           !!error ||
           !membership.product?.available ||
-          membership.product?.channel !== 'wechat'
+          membership.product?.channel !== 'virtual'
         "
         :aria-busy="busy ? 'true' : 'false'"
         @tap="$emit('pay')"
@@ -178,7 +187,7 @@
         order &&
         order.status === 'paid' &&
         order.channel === 'simulation' &&
-        membership.product?.channel !== 'wechat'
+        membership.product?.channel !== 'virtual'
       "
       class="membership-cashier"
     >
@@ -246,15 +255,18 @@
         >
         <text class="membership-order-id">{{ item.id }}</text>
         <text class="membership-order-time"
-          >{{ dateText(item.createdAt) }} ·
-          {{ item.channel === "wechat" ? "微信支付" : "模拟支付"
-          }}{{ item.status === "pending" ? " · 点击继续" : "" }}</text
+          >{{ dateText(item.createdAt) }} · {{ channelText(item.channel)
+          }}{{
+            item.status === "pending" && item.channel === "virtual"
+              ? " · 点击查看"
+              : ""
+          }}</text
         >
       </button>
     </view>
     <text class="membership-footnote"
       >{{
-        membership.product?.channel === "wechat"
+        membership.product?.channel === "virtual"
           ? "支付与会员权益以服务器确认结果为准。"
           : "模拟支付不会产生实际扣款。"
       }}免费版最多
@@ -299,11 +311,20 @@ export default {
     message: { type: String, default: "" },
   },
   methods: {
+    channelText(channel) {
+      return (
+        {
+          virtual: "虚拟支付",
+          wechat: "微信支付（历史）",
+          simulation: "模拟支付",
+        }[channel] || channel
+      );
+    },
     price(amount) {
       return "¥" + (Number(amount) / 100).toFixed(2);
     },
     statusText(status, channel) {
-      if (channel === "wechat")
+      if (["virtual", "wechat"].includes(channel))
         return (
           {
             pending: "待支付",

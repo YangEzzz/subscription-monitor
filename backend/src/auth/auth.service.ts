@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createHash, createHmac, timingSafeEqual } from 'node:crypto';
+import { encryptWechatSession } from './wechat-session';
 import {
   SUBSCRIPTIONS_REPOSITORY,
   SubscriptionsRepository,
@@ -51,7 +52,7 @@ export class AuthService {
     }).toString();
     const abort = new AbortController();
     const timer = setTimeout(() => abort.abort(), 8000);
-    let result: { errcode?: number; openid?: string };
+    let result: { errcode?: number; openid?: string; session_key?: string };
     try {
       const response = await fetch(url, { signal: abort.signal });
       if (!response.ok) throw new Error('WeChat unavailable');
@@ -93,6 +94,15 @@ export class AuthService {
       userId: id,
       appId: appid,
       openId: result.openid,
+      sessionKeyEncrypted:
+        typeof result.session_key === 'string' && result.session_key
+          ? encryptWechatSession(
+              result.session_key,
+              signingSecret,
+              `${appid}:${id}`,
+            )
+          : null,
+      sessionUpdatedAt: result.session_key ? new Date().toISOString() : null,
     });
     const body = Buffer.from(JSON.stringify({ sub: id, appid, exp })).toString(
       'base64url',

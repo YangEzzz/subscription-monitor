@@ -19,5 +19,5 @@ export type AppConfig = {
   wechatMessageState?: 'formal' | 'developer' | 'trial';
   notificationSchedulerEnabled?: boolean;
   membershipSimulationEnabled?: boolean;
-  wechatPay?: import('../subscriptions/wechat-pay.service').WechatPayConfig;
+  virtualPay?: import('../subscriptions/virtual-pay.service').VirtualPayConfig;
 };
