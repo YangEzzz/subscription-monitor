@@ -734,6 +734,10 @@ export class PrismaSubscriptionsRepository
       update: data,
     });
   }
+  async findMembershipOrderById(id: string): Promise<MembershipOrder | null> {
+    const row = await this.executor.membershipOrder.findUnique({ where: { id } });
+    return row ? this.findMembershipOrder(row.userId, id) : null;
+  }
   transactionForUser<T>(
     userId: string,
     work: (repository: SubscriptionsRepository) => Promise<T>,

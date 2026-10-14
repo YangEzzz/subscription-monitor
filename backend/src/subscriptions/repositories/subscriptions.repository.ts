@@ -30,6 +30,7 @@ export interface SubscriptionsRepository extends NotificationRepository {
     id: string,
   ): Promise<MembershipOrder | null>;
   saveMembershipOrder(order: MembershipOrder): Promise<void>;
+  findMembershipOrderById(id: string): Promise<MembershipOrder | null>;
   transactionForUser<T>(
     userId: string,
     work: (repository: SubscriptionsRepository) => Promise<T>,

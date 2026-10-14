@@ -11,7 +11,7 @@ import { AppModule } from './app.module';
 import validationOptions from './utils/validation-options';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, { rawBody: true });
   useContainer(app.select(AppModule), { fallbackOnErrors: true });
   const configService = app.get(ConfigService);
 

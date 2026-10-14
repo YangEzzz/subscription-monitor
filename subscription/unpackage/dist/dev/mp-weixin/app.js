@@ -1,18 +1,1 @@
-"use strict";
-Object.defineProperty(exports, Symbol.toStringTag, { value: "Module" });
-const common_vendor = require("./common/vendor.js");
-if (!Math) {
-  "./pages/subscription/index.js";
-}
-const _sfc_main = {
-  onLaunch() {
-    common_vendor.index.__f__("log", "at App.vue:4", "续订清单启动");
-  }
-};
-function createApp() {
-  const app = common_vendor.createSSRApp(_sfc_main);
-  return { app };
-}
-createApp().app.mount("#app");
-exports.createApp = createApp;
-//# sourceMappingURL=../.sourcemap/mp-weixin/app.js.map
+"use strict";Object.defineProperty(exports,Symbol.toStringTag,{value:"Module"});const e=require("./common/vendor.js");Math;const o={onLaunch(){console.log("续订清单启动")}};function t(){return{app:e.createSSRApp(o)}}t().app.mount("#app"),exports.createApp=t;

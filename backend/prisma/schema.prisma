@@ -207,6 +207,7 @@ model Membership {
 }
 
 model MembershipOrder {
+  transactionId String? @unique @map("transaction_id") @db.VarChar(64)
   id String @id @db.VarChar(64)
   userId String @map("user_id") @db.VarChar(128)
   user AppUser @relation(fields: [userId], references: [id], onDelete: Cascade)

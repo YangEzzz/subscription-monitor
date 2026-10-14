@@ -110,6 +110,7 @@ const labels: Record<string, string> = {
   unknown: '待核实',
   skipped: '已跳过',
   simulation: '模拟支付',
+  wechat: '微信支付',
   legacy: '历史权益',
   refunded: '已撤销测试权益',
 };

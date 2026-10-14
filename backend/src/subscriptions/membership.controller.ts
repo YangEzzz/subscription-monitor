@@ -63,6 +63,11 @@ export class MembershipController {
     return this.payments.simulate(userId, id, input);
   }
 
+  @Post('orders/:id/pay')
+  payment(@CurrentUserId() userId: string, @Param('id') id: string) {
+    return this.payments.payment(userId, id);
+  }
+
   @Post('orders/:id/simulate-refund')
   refund(@CurrentUserId() userId: string, @Param('id') id: string) {
     return this.payments.simulateRefund(userId, id);

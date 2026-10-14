@@ -1,16 +1,1 @@
-"use strict";
-const api_request = require("./request.js");
-const orderPath = (id) => `/membership/orders/${encodeURIComponent(id)}`;
-const membershipApi = {
-  refund: (id) => api_request.request(orderPath(id) + "/simulate-refund", { method: "POST" }),
-  status: () => api_request.request("/membership"),
-  orders: () => api_request.request("/membership/orders"),
-  order: (id) => api_request.request(orderPath(id)),
-  create: (requestId) => api_request.request("/membership/orders", {
-    method: "POST",
-    data: { productId: "lifetime", requestId }
-  }),
-  simulate: (id, outcome) => api_request.request(orderPath(id) + "/simulate", { method: "POST", data: { outcome } })
-};
-exports.membershipApi = membershipApi;
-//# sourceMappingURL=../../.sourcemap/mp-weixin/api/membership.js.map
+"use strict";const e=require("./request.js"),r=e=>`/membership/orders/${encodeURIComponent(e)}`,t={refund:t=>e.request(r(t)+"/simulate-refund",{method:"POST"}),status:()=>e.request("/membership"),orders:()=>e.request("/membership/orders"),order:t=>e.request(r(t)),payment:t=>e.request(r(t)+"/pay",{method:"POST"}),create:r=>e.request("/membership/orders",{method:"POST",data:{productId:"lifetime",requestId:r}}),simulate:(t,s)=>e.request(r(t)+"/simulate",{method:"POST",data:{outcome:s}})};exports.membershipApi=t;

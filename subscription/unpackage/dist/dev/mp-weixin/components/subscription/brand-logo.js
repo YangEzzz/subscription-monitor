@@ -1,17 +1,1 @@
-"use strict";
-const common_vendor = require("../../common/vendor.js");
-const _sfc_main = {
-  name: "BrandLogo",
-  props: {
-    item: { type: Object, required: true }
-  }
-};
-function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
-  return {
-    a: common_vendor.t($props.item.logo),
-    b: $props.item.color
-  };
-}
-const Component = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-a931edbf"]]);
-wx.createComponent(Component);
-//# sourceMappingURL=../../../.sourcemap/mp-weixin/components/subscription/brand-logo.js.map
+"use strict";const e=require("../../common/vendor.js"),o={name:"BrandLogo",props:{item:{type:Object,required:!0}}};const t=e._export_sfc(o,[["render",function(o,t,r,n,c,a){return{a:e.t(r.item.logo),b:r.item.color}}],["__scopeId","data-v-fd0aac2f"]]);wx.createComponent(t);

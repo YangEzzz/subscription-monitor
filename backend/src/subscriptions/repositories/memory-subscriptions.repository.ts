@@ -384,6 +384,9 @@ export class MemorySubscriptionsRepository implements SubscriptionsRepository {
     this.orders.set(order.id, clone(order));
     return Promise.resolve();
   }
+  findMembershipOrderById(id: string): Promise<MembershipOrder | null> {
+    return Promise.resolve(clone(this.orders.get(id) || null));
+  }
   transactionForUser<T>(
     _userId: string,
     work: (repository: SubscriptionsRepository) => Promise<T>,

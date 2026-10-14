@@ -40,6 +40,113 @@ function harness(handler) {
 }
 const ok = (options, data) => options.success({ statusCode: 200, data });
 
+test("ordinary payment invokes the cashier once and confirms server entitlement", async () => {
+  globalThis.wx = {};
+  const order = {
+    id: "wechat-order",
+    channel: "wechat",
+    status: "pending",
+    amount: 2990,
+  };
+  let creates = 0,
+    cashierCalls = 0;
+  const page = harness((options) => {
+    if (options.url.endsWith("/orders") && options.method === "POST") {
+      creates++;
+      ok(options, order);
+    } else if (options.url.endsWith("/pay"))
+      ok(options, {
+        order,
+        payment: {
+          timeStamp: "123",
+          nonceStr: "nonce",
+          package: "prepay_id=test",
+          signType: "RSA",
+          paySign: "signature",
+        },
+      });
+    else if (options.url.endsWith("/orders/wechat-order"))
+      ok(options, { ...order, status: "paid" });
+    else ok(options, { ...membership, status: "active", source: "wechat" });
+  });
+  page.settings.membership.product.channel = "wechat";
+  uni.requestPayment = (options) => {
+    cashierCalls++;
+    assert.equal(options.package, "prepay_id=test");
+    assert.equal(page.isMember, false);
+    options.success({});
+  };
+  try {
+    await Promise.all([
+      page.beginMembershipPurchase(),
+      page.beginMembershipPurchase(),
+    ]);
+    assert.equal(creates, 1);
+    assert.equal(cashierCalls, 1);
+    assert.equal(page.isMember, true);
+    assert.equal(page.membershipMessage, "永久会员已开通。");
+  } finally {
+    delete globalThis.wx;
+  }
+});
+
+test("cashier cancellation preserves the pending order and never grants membership", async () => {
+  globalThis.wx = {};
+  const order = { id: "wechat-order", channel: "wechat", status: "pending" };
+  const page = harness((options) =>
+    options.url.endsWith("/pay")
+      ? ok(options, { order, payment: { package: "prepay_id=test" } })
+      : ok(options, order),
+  );
+  page.settings.membership.product.channel = "wechat";
+  uni.requestPayment = (options) =>
+    options.fail({ errMsg: "requestPayment:fail cancel" });
+  try {
+    await page.beginMembershipPurchase();
+    assert.equal(page.membershipOrder.id, order.id);
+    assert.equal(page.membershipOrder.status, "pending");
+    assert.equal(page.isMember, false);
+    assert.match(page.membershipError, /支付已取消/);
+  } finally {
+    delete globalThis.wx;
+  }
+});
+
+test("an account switch while requesting cashier parameters prevents payment launch", async () => {
+  globalThis.wx = {};
+  let finishPayment;
+  const order = { id: "wechat-order", channel: "wechat", status: "pending" };
+  const page = harness((options) =>
+    options.url.endsWith("/pay")
+      ? (finishPayment = () =>
+          ok(options, { order, payment: { package: "prepay_id=test" } }))
+      : ok(options, order),
+  );
+  page.membershipOrder = order;
+  uni.requestPayment = () =>
+    assert.fail("Cashier must not launch for a previous account");
+  try {
+    const pending = page.payMembershipOrder();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    page.clearAccountData();
+    finishPayment();
+    await pending;
+    assert.equal(page.membershipOrder, null);
+    assert.equal(page.isMember, false);
+  } finally {
+    delete globalThis.wx;
+  }
+});
+
+test("ordinary payment is unavailable in H5 and creates no chargeable order", async () => {
+  const page = harness(() =>
+    assert.fail("H5 must not submit a payment request"),
+  );
+  page.settings.membership.product.channel = "wechat";
+  await page.beginMembershipPurchase();
+  assert.match(page.membershipError, /微信小程序/);
+});
+
 test("purchase has no client price, blocks duplicate submits and waits for server entitlement", async () => {
   let creates = 0,
     resolveCreate;

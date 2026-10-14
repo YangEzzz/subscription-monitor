@@ -92,7 +92,7 @@ test('page and uni.request adapter complete the workflow against real Nest HTTP 
 		for (const [key, value] of Object.entries(subscriptionComputed)) Object.defineProperty(page, key, { get: value.bind(page) })
 		assert.equal(await page.refreshData(), true)
 		assert.equal(page.subscriptions.length, 0)
-		assert.equal(page.serviceTemplates.length, 2)
+		assert.equal(page.serviceTemplates.length, 5)
 		assert.equal(page.authStatus, 'authenticated')
 		page.openForm('2028-01-31')
 		Object.assign(page.form, { name: '联调订阅', amount: '20', category: '音乐' })

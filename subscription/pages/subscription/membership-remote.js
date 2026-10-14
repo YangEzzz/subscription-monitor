@@ -26,10 +26,9 @@ export const membershipMethods = {
         this.loadError = "账号已切换，请重新加载后操作";
         return;
       }
-      const [membership, orders] = await Promise.all([
-        membershipApi.status(),
-        membershipApi.orders(),
-      ]);
+      const orders = await membershipApi.orders();
+      // Reading orders reconciles pending WeChat payments before reading entitlement.
+      const membership = await membershipApi.status();
       if (
         sequence !== this.membershipRequestId ||
         userId !== this.currentUserId
@@ -62,10 +61,88 @@ export const membershipMethods = {
     )
       return;
     if (!this.settings.membership.product?.available) return;
+    if (
+      this.settings.membership.product?.channel === "wechat" &&
+      typeof wx === "undefined"
+    ) {
+      this.membershipError = "请在微信小程序内完成支付";
+      return;
+    }
     if (!this.membershipPurchaseKey) this.membershipPurchaseKey = requestKey();
-    await this.membershipWrite(() =>
-      membershipApi.create(this.membershipPurchaseKey),
-    );
+    await this.membershipWrite(async () => {
+      const sequence = this.membershipRequestId;
+      const userId = this.currentUserId;
+      const order = await membershipApi.create(this.membershipPurchaseKey);
+      if (
+        sequence !== this.membershipRequestId ||
+        userId !== this.currentUserId
+      )
+        return order;
+      if (order.channel === "wechat") {
+        this.membershipOrder = order;
+        this.membershipOrders = [
+          order,
+          ...this.membershipOrders.filter((item) => item.id !== order.id),
+        ].slice(0, 50);
+      }
+      return order.channel === "wechat" && order.status === "pending"
+        ? this.requestMembershipPayment(order.id)
+        : order;
+    });
+  },
+  async payMembershipOrder() {
+    if (
+      this.membershipError ||
+      this.membershipOrder?.channel !== "wechat" ||
+      this.membershipOrder.status !== "pending"
+    )
+      return;
+    const id = this.membershipOrder.id;
+    await this.membershipWrite(() => this.requestMembershipPayment(id));
+  },
+  async requestMembershipPayment(id) {
+    if (typeof wx === "undefined" || typeof uni.requestPayment !== "function")
+      throw new Error("请在微信小程序内完成支付");
+    const sequence = this.membershipRequestId;
+    const userId = this.currentUserId;
+    const { order, payment } = await membershipApi.payment(id);
+    if (sequence !== this.membershipRequestId || userId !== this.currentUserId)
+      return order;
+    if (!payment) return order;
+    // Keep the server-created order available when the cashier is cancelled or times out.
+    this.membershipOrder = order;
+    this.membershipOrders = [
+      order,
+      ...this.membershipOrders.filter((item) => item.id !== order.id),
+    ].slice(0, 50);
+    await new Promise((resolve, reject) => {
+      uni.requestPayment({
+        provider: "wxpay",
+        ...payment,
+        success: resolve,
+        fail: (error) =>
+          reject(
+            new Error(
+              String(error.errMsg || "").includes("cancel")
+                ? "支付已取消，未确认开通。请刷新订单与权益后继续。"
+                : "支付结果尚未确认，请刷新订单与权益，勿重复支付。",
+            ),
+          ),
+      });
+    });
+    let confirmed = order;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      if (
+        sequence !== this.membershipRequestId ||
+        userId !== this.currentUserId
+      )
+        return confirmed;
+      confirmed = await membershipApi.order(id);
+      if (confirmed.status !== "pending") return confirmed;
+      if (attempt < 2)
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+    }
+    return confirmed;
   },
   async simulateMembershipPayment(outcome) {
     if (this.membershipError) return;
@@ -113,7 +190,15 @@ export const membershipMethods = {
         failed: "模拟支付失败，未开通会员。可重新创建订单。",
         refunded: "模拟开通已撤销，正在确认账号权益；未发生实际退款。",
       };
-      this.membershipMessage = messages[order.status];
+      this.membershipMessage =
+        order.channel === "wechat"
+          ? {
+              pending: "支付结果尚未确认，请刷新订单与权益，勿重复支付。",
+              paid: "微信支付已确认，正在读取会员权益…",
+              cancelled: "订单已关闭，请重新创建订单。",
+              failed: "订单支付失败，请重新创建订单。",
+            }[order.status] || ""
+          : messages[order.status];
       // Confirm the entitlement from the server, never infer it from the client outcome.
       const membership = await membershipApi.status();
       if (
@@ -126,7 +211,12 @@ export const membershipMethods = {
         this.membershipMessage =
           "模拟开通已撤销，账号权益已重新读取；未发生实际退款。";
       if (order.status === "paid")
-        this.membershipMessage = "永久会员测试权益已开通，未发生实际扣款。";
+        this.membershipMessage =
+          order.channel === "wechat"
+            ? membership.status === "active"
+              ? "永久会员已开通。"
+              : "支付已确认，请刷新后确认会员权益。"
+            : "永久会员测试权益已开通，未发生实际扣款。";
     } catch (error) {
       if (
         sequence === this.membershipRequestId &&

@@ -7,6 +7,7 @@ export const membershipApi = {
   status: () => request("/membership"),
   orders: () => request("/membership/orders"),
   order: (id) => request(orderPath(id)),
+  payment: (id) => request(orderPath(id) + "/pay", { method: "POST" }),
   create: (requestId) =>
     request("/membership/orders", {
       method: "POST",

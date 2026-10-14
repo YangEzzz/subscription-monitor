@@ -1,12 +1,1 @@
-.api-status.data-v-a355b6de {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 20px;
-  color: #61746a;
-  font-size: 12px;
-}
-.api-status button.data-v-a355b6de {
-  margin: 0;
-  font-size: 12px;
-}
+.api-status.data-v-6cbb30a6{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;color:#61746a;font-size:12px}.api-status button.data-v-6cbb30a6{margin:0;font-size:12px}

@@ -6,7 +6,8 @@ export type MembershipOrder = {
   productName: string;
   amount: number;
   currency: string;
-  channel: 'simulation';
+  channel: 'simulation' | 'wechat';
+  transactionId?: string | null;
   status: 'pending' | 'paid' | 'cancelled' | 'failed' | 'refunded';
   createdAt: string;
   updatedAt: string;

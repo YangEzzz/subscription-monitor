@@ -21,6 +21,7 @@
       ></view
     >
     <view
+      v-if="membershipEntryEnabled"
       class="membership-entry"
       :class="{ active: isMember }"
       role="button"
@@ -189,6 +190,7 @@ export default {
     "refresh",
   ],
   props: {
+    membershipEntryEnabled: { type: Boolean, default: false },
     notificationReady: { type: Boolean, default: false },
     notificationDescription: { type: String, default: '' },
     notificationBusy: { type: Boolean, default: false },

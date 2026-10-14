@@ -56,9 +56,9 @@
           membership.product ? price(membership.product.amount) : "—"
         }}</text></view
       >
-      <text class="membership-notice"
-        >模拟支付，不会实际扣款。开通后获得永久会员测试权益。</text
-      >
+      <text class="membership-notice">{{
+        membership.product?.notice || "会员购买暂未开放。"
+      }}</text>
       <button
         class="membership-primary"
         :disabled="
@@ -77,8 +77,10 @@
             : busy
               ? "正在处理订单…"
               : membership.product?.available
-                ? "创建模拟支付订单"
-                : "模拟支付暂未开放"
+                ? membership.product.channel === "wechat"
+                  ? "微信支付 ¥29.90 开通"
+                  : "创建模拟支付订单"
+                : "会员购买暂未开放"
         }}
       </button>
     </view>
@@ -96,48 +98,90 @@
       title="正在读取订单与权益"
       description="订单状态以服务器记录为准"
     />
-    <view class="membership-feedback" role="status" aria-live="polite"
+    <view
+      v-if="message"
+      class="membership-feedback"
+      role="status"
+      aria-live="polite"
       ><text>{{ message }}</text></view
     >
     <view v-if="order" class="membership-cashier">
       <text class="settings-title">{{
-        order.status === "pending" ? "模拟收银台" : "订单详情"
+        order.status === "pending"
+          ? order.channel === "wechat"
+            ? "待支付订单"
+            : "模拟收银台"
+          : "订单详情"
       }}</text>
       <text class="membership-order-line"
         >{{ order.productName }} · {{ price(order.amount) }}</text
       >
       <text class="membership-order-id">{{ order.id }}</text>
       <text class="membership-order-line"
-        >{{ statusText(order.status) }} · 模拟订单</text
+        >{{ statusText(order.status, order.channel) }} ·
+        {{ order.channel === "wechat" ? "微信支付订单" : "模拟订单" }}</text
       >
       <view
-        v-if="order.status === 'pending'"
+        v-if="
+          order.status === 'pending' &&
+          order.channel !== 'wechat' &&
+          membership.product?.channel !== 'wechat'
+        "
         class="membership-cashier-actions"
       >
         <button
           class="membership-primary"
-          :disabled="busy || loading || !!error || !membership.product?.available"
+          :disabled="
+            busy || loading || !!error || !membership.product?.available
+          "
           @tap="$emit('simulate', 'success')"
         >
           {{ busy ? "正在处理…" : "模拟支付成功" }}
         </button>
         <button
           class="membership-secondary"
-          :disabled="busy || loading || !!error || !membership.product?.available"
+          :disabled="
+            busy || loading || !!error || !membership.product?.available
+          "
           @tap="$emit('simulate', 'cancel')"
         >
           模拟取消
         </button>
         <button
           class="membership-secondary"
-          :disabled="busy || loading || !!error || !membership.product?.available"
+          :disabled="
+            busy || loading || !!error || !membership.product?.available
+          "
           @tap="$emit('simulate', 'failure')"
         >
           模拟失败
         </button>
       </view>
+      <button
+        v-if="order.status === 'pending' && order.channel === 'wechat'"
+        class="membership-primary"
+        :disabled="
+          busy ||
+          loading ||
+          !!error ||
+          !membership.product?.available ||
+          membership.product?.channel !== 'wechat'
+        "
+        :aria-busy="busy ? 'true' : 'false'"
+        @tap="$emit('pay')"
+      >
+        {{ busy ? "正在确认订单…" : "继续微信支付" }}
+      </button>
     </view>
-    <view v-if="order && order.status === 'paid'" class="membership-cashier">
+    <view
+      v-if="
+        order &&
+        order.status === 'paid' &&
+        order.channel === 'simulation' &&
+        membership.product?.channel !== 'wechat'
+      "
+      class="membership-cashier"
+    >
       <text class="membership-notice"
         >可撤销本订单的测试权益以重测购买流程；已有订阅保留，不会发生实际退款。</text
       >
@@ -155,7 +199,9 @@
         >
         <button
           class="membership-secondary"
-          :disabled="busy || loading || !!error || !membership.product?.available"
+          :disabled="
+            busy || loading || !!error || !membership.product?.available
+          "
           @tap="
             $emit('refund');
             refundConfirm = false;
@@ -196,18 +242,22 @@
       >
         <view class="membership-order-top"
           ><text>{{ item.productName }} · {{ price(item.amount) }}</text
-          ><text>{{ statusText(item.status) }}</text></view
+          ><text>{{ statusText(item.status, item.channel) }}</text></view
         >
         <text class="membership-order-id">{{ item.id }}</text>
         <text class="membership-order-time"
-          >{{ dateText(item.createdAt) }} · 模拟支付{{
-            item.status === "pending" ? " · 点击继续" : ""
-          }}</text
+          >{{ dateText(item.createdAt) }} ·
+          {{ item.channel === "wechat" ? "微信支付" : "模拟支付"
+          }}{{ item.status === "pending" ? " · 点击继续" : "" }}</text
         >
       </button>
     </view>
     <text class="membership-footnote"
-      >模拟支付由后端配置开启。所有订单均为模拟订单，不会产生实际扣款。免费版最多
+      >{{
+        membership.product?.channel === "wechat"
+          ? "支付与会员权益以服务器确认结果为准。"
+          : "模拟支付不会产生实际扣款。"
+      }}免费版最多
       {{ subscriptionLimit ?? 5 }}
       条，删除释放额度；会员不影响基础提醒、统计和导出。</text
     >
@@ -219,7 +269,15 @@ import AsyncStateView from "./AsyncStateView.vue";
 export default {
   name: "MembershipView",
   components: { SettingsRow, AsyncStateView },
-  emits: ["back", "purchase", "simulate", "refresh", "select-order", "refund"],
+  emits: [
+    "back",
+    "purchase",
+    "pay",
+    "simulate",
+    "refresh",
+    "select-order",
+    "refund",
+  ],
   data() {
     return { refundConfirm: false };
   },
@@ -244,7 +302,17 @@ export default {
     price(amount) {
       return "¥" + (Number(amount) / 100).toFixed(2);
     },
-    statusText(status) {
+    statusText(status, channel) {
+      if (channel === "wechat")
+        return (
+          {
+            pending: "待支付",
+            paid: "已支付",
+            cancelled: "已关闭",
+            failed: "支付失败",
+            refunded: "已退款",
+          }[status] || status
+        );
       return (
         {
           pending: "待模拟支付",

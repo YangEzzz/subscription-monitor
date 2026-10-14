@@ -77,3 +77,23 @@ Canonical UI Map 未解决项为 0；textarea 统一通过 resize-none 类和全
 - 使用与组件相同排版和交互契约的隔离预览完成浏览器检查：390 × 844 与 320 × 700 均无横向溢出；两个错误区均具有 `alert` 语义；重试后按钮禁用并显示“正在重试”；空状态入口可触发；键盘 Tab 可到达下一操作按钮并显示焦点环。
 - strict 审计报告 45 个 `affordance.actionless-button`，均来自检查器不识别 uni-app `@tap`；本次新增重试按钮已绑定 `@tap`。
 - 当前从命令行直接调用 HBuilderX 的 Vite 入口会在既有 `store/index.js` 条件编译块处报重复语法，无法生成本轮微信构建产物；该文件未因本轮异常状态改造而变更。需在 HBuilderX 项目上下文中执行一次微信小程序编译并在开发者工具中确认最终视觉效果。
+
+## 2026-10-14 普通微信支付接入
+
+会员页沿用原有组件和绿色账簿样式，按服务端商品 channel 区分普通微信支付、模拟支付及未开放状态。真实支付入口显示 ¥29.90，调用微信收银台；取消和异常保留待支付订单并提示刷新。正式支付开启时历史模拟订单只读，真实订单不提供撤销模拟权益入口。支付签名和开通条件见 deploy/普通微信支付.md。
+
+- 后端 TypeScript 编译、Prisma 模型校验与客户端生成通过；后端 lint 通过，10 个测试套件 73/73 通过。
+- 小程序单元回归 39/39，通过取消支付、并发点击、账号切换与 H5 不创建付款订单等路径。
+- 本地 Nest HTTP 集成 3/3 通过；新增普通支付集成验证原始 JSON 字节验签、AES-GCM 解密、金额不匹配拒绝、跨账户隔离、回调幂等和权益开通。微信网关及登录请求均由测试拦截，不向线上写入数据。旧接口集成的服务模板数量断言由 2 修正为当前 5；未修改业务额度。
+- HBuilderX 5.26 的 H5 与 mp-weixin 完整构建通过，产物位于忽略目录 .preview/payment-h5 和 .preview/payment-mp，未改写已跟踪开发产物。保留既有 uniCloud 未配置、H5 非模块静态脚本和 6 处 Harmony UA 检测提示。
+- 实际 H5 构建 + Edge：待支付/已支付、支付入口、H5 支付拦截、刷新失败保留订单及恢复、历史模拟订单只读、模拟模式隔离、320px 无横向溢出通过；pageerror=0，付款写请求=0。截图为 .preview/payment-member-pending.png 与 payment-member-paid-320.png，执行脚本 check-payment-ui.cjs。
+- 管理后台 typecheck、5 项单元测试、生产构建通过；使用已安装 Edge 执行既有 9 项 E2E 全部通过。默认 Playwright 命令因未安装指定 Chromium 版本失败，因此用忽略目录 admin/.runtime/playwright.edge.config.mjs 仅替换浏览器 channel，保持测试内容不变。
+- 本次修改的支付文件 Prettier 检查通过，git diff --check 通过。后台完整 format:check 仍报告 18 个未修改文件的既有格式问题，未对无关代码做批量格式化。
+- designmd lint 返回 0 个错误、7 个 orphaned-token 警告。premium strict audit 返回 53 条 actionless-button，canonical unresolved=0；报告保存在 .preview/payment-audit.json。报告中的 uni-app @tap 事件未被检查器识别；会员按钮已逐一核对事件与父页方法连接，未修改检查器或隐藏报告。
+- 未提供真实商户参数，WECHAT_PAY_ENABLED 默认 false；未部署生产服务、未执行真实扣款或微信真机收银台验收。真实退款及退款后的权益回收尚未接入，不能以模拟撤销代替真实退款。
+
+### 会员入口暂时隐藏
+
+按用户要求将 MEMBERSHIP_ENTRY_ENABLED 设为 false，同时隐藏“我的”会员卡片、阻止 openMembership 导航并关闭会员页渲染。额度用完弹窗仅提示删除记录释放名额，按钮为“知道了”，不跳转会员中心。后端支付配置仍默认关闭，管理后台继续只读查询。
+
+入口隐藏后 39 项小程序回归通过；H5 和 mp-weixin 完整构建通过，已同步仓库跟踪的小程序产物；当前完整构建使用压缩输出，清理不再生成的旧源码映射，不影响运行文件。Edge 验证会员卡片不存在、程序导航不进入会员页、额度弹窗无购买跳转、320px 无横向溢出，pageerror=0。脚本与截图位于忽略目录 .preview/check-hidden-entry.cjs 和 .preview/membership-entry-hidden.png。

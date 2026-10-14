@@ -12,4 +12,6 @@ admin/.env.local
 admin/.env.*.local
 backend/.env
 deploy/.env.production
+deploy/secrets/
+admin/.runtime/
 *.log

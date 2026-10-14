@@ -44,9 +44,19 @@
         :busy="statsLoading"
         @action="refreshStats"
       />
-      <async-state-view v-if="notificationError && dataReady" compact title="通知状态暂不可用"
-        :description="notificationError" action-label="重新加载" :busy="loading || mutating" @action="refreshData" />
-      <view v-if="statsLoading && activeView === 'stats'" class="api-status" role="status"
+      <async-state-view
+        v-if="notificationError && dataReady"
+        compact
+        title="通知状态暂不可用"
+        :description="notificationError"
+        action-label="重新加载"
+        :busy="loading || mutating"
+        @action="refreshData"
+      />
+      <view
+        v-if="statsLoading && activeView === 'stats'"
+        class="api-status"
+        role="status"
         >正在加载统计…</view
       >
       <template v-if="dataReady">
@@ -56,7 +66,12 @@
           :settings="settings"
           :notification-ready="notificationReady"
           :notification-description="notificationDescription"
-          :notification-busy="notificationAuthorizing || notificationLoading || loading || mutating"
+          :notification-busy="
+            notificationAuthorizing ||
+            notificationLoading ||
+            loading ||
+            mutating
+          "
           :navigation-bar-height="navigationBarHeight"
           :next30-total-text="next30TotalText"
           :monthly-average-text="monthlyAverageText"
@@ -157,11 +172,17 @@
           :is-member="isMember"
           :free-quota-text="freeQuotaText"
           :membership-quota-percent="membershipQuotaPercent"
+          :membership-entry-enabled="membershipEntryEnabled"
           :currencies="currencies"
           :deleted-subscriptions="deletedSubscriptions"
           :notification-ready="notificationReady"
           :notification-description="notificationDescription"
-          :notification-busy="notificationAuthorizing || notificationLoading || loading || mutating"
+          :notification-busy="
+            notificationAuthorizing ||
+            notificationLoading ||
+            loading ||
+            mutating
+          "
           @open-membership="openMembership"
           @notification-change="handleNotificationSwitch"
           @notification-history="showNotificationHistory"
@@ -175,7 +196,7 @@
 
         <!-- 会员中心 -->
         <membership-view
-          v-else-if="activeView === 'membership'"
+          v-else-if="activeView === 'membership' && membershipEntryEnabled"
           :is-member="isMember"
           :free-quota-value="freeQuotaValue"
           :subscription-limit="subscriptionLimit"
@@ -187,6 +208,7 @@
           :error="membershipError"
           :message="membershipMessage"
           @purchase="beginMembershipPurchase"
+          @pay="payMembershipOrder"
           @simulate="simulateMembershipPayment"
           @refund="refundMembershipOrder"
           @refresh="loadMembershipOrders"
@@ -323,7 +345,7 @@ export default {
   computed: subscriptionComputed,
   onLoad(options) {
     // #ifdef MP-WEIXIN
-    uni.showShareMenu({ menus: ['shareAppMessage', 'shareTimeline'] });
+    uni.showShareMenu({ menus: ["shareAppMessage", "shareTimeline"] });
     // #endif
     subscriptionLifecycle.onLoad.call(this, options);
   },

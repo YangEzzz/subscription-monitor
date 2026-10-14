@@ -10,7 +10,13 @@ export default defineConfig(({ mode }) => {
       changeOrigin: true,
       rewrite: (path: string) => path.replace(/^\/api/, ''),
       configure: (server) =>
-        server.on('proxyReq', (request) => request.removeHeader('origin')),
+        server.on('proxyReq', (request) => {
+          if (env.VITE_DEV_API_ORIGIN) {
+            request.setHeader('origin', env.VITE_DEV_API_ORIGIN);
+          } else {
+            request.removeHeader('origin');
+          }
+        }),
     },
   };
   return {
