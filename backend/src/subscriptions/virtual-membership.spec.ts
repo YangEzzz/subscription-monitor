@@ -115,6 +115,15 @@ describe('virtual membership delivery', () => {
     await service.reconcilePending();
     expect(await repo.listVirtualOrdersToReconcile()).toHaveLength(0);
     expect(gateway.confirmDelivery).toHaveBeenCalledTimes(2);
+    const settled = await repo.findMembershipOrder('alice', order.id);
+    expect(settled).toMatchObject({ status: 'paid' });
+    expect(settled?.deliveryConfirmedAt).toBeTruthy();
+    expect(await repo.listMembershipOrders('alice')).toHaveLength(1);
+    expect(await service.list('alice')).toMatchObject({
+      items: [{ id: order.id, status: 'paid' }],
+    });
+    expect(gateway.payment).toHaveBeenCalledTimes(1);
+    expect(gateway.confirmDelivery).toHaveBeenCalledTimes(2);
   });
   it('full refund wins over delayed payment and never removes another entitlement source', async () => {
     const order = await service.create('alice', input);

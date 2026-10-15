@@ -330,11 +330,11 @@ export class VirtualPayService implements OnModuleInit {
     };
   }
   async confirmDelivery(id: string) {
-    // The official notify_provide_goods endpoint takes access_token, not pay_sig.
+    // Delivery acknowledgment uses the same AppKey payment signature as query_order.
     await this.request(
       '/xpay/notify_provide_goods',
       { order_id: id, env: 0 },
-      false,
+      true,
     );
   }
   parseMessage(text: string): { value: VirtualEvent; format: 'xml' | 'json' } {

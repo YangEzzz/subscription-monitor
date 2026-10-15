@@ -256,7 +256,7 @@ describe('virtual payment protocol', () => {
       gateway.challenge({ timestamp, nonce, signature, echostr: 'challenge' }),
     ).toBe('challenge');
   });
-  it('uses exact query body and signature, live env_type, unsigned delivery acknowledgment', async () => {
+  it('uses exact query body and signature, live env_type, signed delivery acknowledgment', async () => {
     const fetchMock = jest
       .spyOn(globalThis, 'fetch')
       .mockImplementation(async (url, options) => {
@@ -294,7 +294,15 @@ describe('virtual payment protocol', () => {
           );
         }
         expect(address.pathname).toBe('/xpay/notify_provide_goods');
-        expect(address.searchParams.has('pay_sig')).toBe(false);
+        expect(address.searchParams.get('access_token')).toBe('token');
+        expect(address.searchParams.get('pay_sig')).toBe(
+          virtualPaySignature(
+            '/xpay/notify_provide_goods',
+            String(options?.body),
+            settings.appKey,
+          ),
+        );
+        expect(address.searchParams.has('signature')).toBe(false);
         expect(JSON.parse(String(options?.body))).toEqual({
           order_id: 'order',
           env: 0,

@@ -54,7 +54,12 @@ test("virtual payment HTTP: fresh login, fixed product, encrypted XML/JSON, dupl
       return new Response(JSON.stringify({ errcode: 0, order: platformOrder }));
     }
     assert.equal(address.pathname, "/xpay/notify_provide_goods");
-    assert.equal(address.searchParams.has("pay_sig"), false);
+    assert.equal(
+      address.searchParams.get("pay_sig"),
+      createHmac("sha256", appKey)
+        .update(address.pathname + "&" + options.body)
+        .digest("hex"),
+    );
     deliveryCalls++;
     return new Response('{"errcode":0}');
   };
