@@ -2,6 +2,7 @@ import {
   BadGatewayException,
   BadRequestException,
   Injectable,
+  Logger,
   OnModuleInit,
   ServiceUnavailableException,
 } from '@nestjs/common';
@@ -53,8 +54,22 @@ export const virtualPaySignature = (
 export const virtualUserSignature = (body: string, sessionKey: string) =>
   createHmac('sha256', sessionKey).update(body).digest('hex');
 
+// Only allowlisted diagnostics may cross the upstream boundary. Never retain
+// URLs (which contain tokens), response bodies, errmsg or raw fetch errors.
+class VirtualPayUpstreamError extends Error {
+  constructor(
+    readonly endpoint: string,
+    readonly reason: 'http' | 'response' | 'wechat',
+    readonly httpStatus: number,
+    readonly errcode?: number,
+  ) {
+    super('Virtual payment upstream failure');
+  }
+}
+
 @Injectable()
 export class VirtualPayService implements OnModuleInit {
+  private readonly logger = new Logger(VirtualPayService.name);
   private cachedToken = '';
   private tokenExpiresAt = 0;
   private tokenPromise: Promise<string> | null = null;
@@ -164,11 +179,20 @@ export class VirtualPayService implements OnModuleInit {
       const value = await response.json();
       if (
         !response.ok ||
-        typeof value.access_token !== 'string' ||
+        typeof value?.access_token !== 'string' ||
         !value.access_token ||
         !Number.isFinite(value.expires_in)
       )
-        throw new Error();
+        throw new VirtualPayUpstreamError(
+          '/cgi-bin/stable_token',
+          !response.ok
+            ? 'http'
+            : Number.isInteger(value?.errcode)
+              ? 'wechat'
+              : 'response',
+          response.status,
+          Number.isInteger(value?.errcode) ? value.errcode : undefined,
+        );
       this.cachedToken = value.access_token;
       this.tokenExpiresAt =
         Date.now() + Math.max(0, value.expires_in - 60) * 1000;
@@ -185,11 +209,14 @@ export class VirtualPayService implements OnModuleInit {
   ) {
     this.assertEnabled();
     const body = JSON.stringify(data);
+    let endpoint = '/cgi-bin/stable_token';
     try {
       for (let attempt = 0; attempt < 2; attempt++) {
+        endpoint = '/cgi-bin/stable_token';
         const params = new URLSearchParams({
           access_token: await this.token(),
         });
+        endpoint = path;
         if (signed)
           params.set(
             'pay_sig',
@@ -205,18 +232,55 @@ export class VirtualPayService implements OnModuleInit {
           },
         );
         const result = await response.json();
-        if (!response.ok || !Number.isInteger(result.errcode))
-          throw new Error();
+        if (!response.ok || !Number.isInteger(result?.errcode))
+          throw new VirtualPayUpstreamError(
+            path,
+            !response.ok ? 'http' : 'response',
+            response.status,
+            Number.isInteger(result?.errcode) ? result.errcode : undefined,
+          );
         if ([40001, 40014, 42001].includes(result.errcode) && attempt === 0) {
           this.cachedToken = '';
           this.tokenExpiresAt = 0;
           continue;
         }
-        if (result.errcode !== 0) throw new Error();
+        if (result.errcode !== 0)
+          throw new VirtualPayUpstreamError(
+            path,
+            'wechat',
+            response.status,
+            result.errcode,
+          );
         return result;
       }
-    } catch {
-      /* Keep AppSecret, tokens, signatures, AppKey and upstream bodies out of logs. */
+    } catch (error) {
+      // Fetch/DOM exceptions may come from a different JavaScript realm.
+      const errorName =
+        typeof error === 'object' && error !== null && 'name' in error
+          ? error.name
+          : undefined;
+      this.logger.warn(
+        JSON.stringify({
+          event: 'virtual_pay_upstream_failed',
+          operation: path,
+          orderId: data.order_id,
+          endpoint:
+            error instanceof VirtualPayUpstreamError
+              ? error.endpoint
+              : endpoint,
+          reason:
+            error instanceof VirtualPayUpstreamError
+              ? error.reason
+              : errorName === 'TimeoutError' || errorName === 'AbortError'
+                ? 'timeout'
+                : errorName === 'SyntaxError'
+                  ? 'invalid_json'
+                  : 'network',
+          ...(error instanceof VirtualPayUpstreamError
+            ? { httpStatus: error.httpStatus, errcode: error.errcode }
+            : {}),
+        }),
+      );
     }
     throw new BadGatewayException({
       code: 'VIRTUAL_PAY_UNAVAILABLE',

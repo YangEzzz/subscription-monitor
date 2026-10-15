@@ -1,4 +1,5 @@
 import { ConfigService } from '@nestjs/config';
+import { Logger } from '@nestjs/common';
 import { createCipheriv, createHash, randomBytes } from 'node:crypto';
 import {
   encryptWechatSession,
@@ -37,6 +38,77 @@ describe('virtual payment protocol', () => {
     );
   });
   afterEach(() => jest.restoreAllMocks());
+  it.each(['token', 'query'] as const)(
+    'records safe diagnostics for %s failures without leaking upstream secrets',
+    async (stage) => {
+      const warn = jest
+        .spyOn(Logger.prototype, 'warn')
+        .mockImplementation(() => undefined);
+      const fetchMock = jest.spyOn(globalThis, 'fetch');
+      if (stage === 'query')
+        fetchMock.mockResolvedValueOnce(
+          new Response(
+            JSON.stringify({ access_token: 'private-token', expires_in: 7200 }),
+          ),
+        );
+      fetchMock.mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            errcode: 40164,
+            errmsg:
+              'private upstream data test-app-secret openid private-token',
+          }),
+        ),
+      );
+      await expect(
+        gateway.query({ id: 'order' } as any, 'openid'),
+      ).rejects.toMatchObject({
+        response: { code: 'VIRTUAL_PAY_UNAVAILABLE' },
+      });
+      expect(warn).toHaveBeenCalledTimes(1);
+      expect(JSON.parse(warn.mock.calls[0][0])).toEqual({
+        event: 'virtual_pay_upstream_failed',
+        operation: '/xpay/query_order',
+        orderId: 'order',
+        endpoint:
+          stage === 'token' ? '/cgi-bin/stable_token' : '/xpay/query_order',
+        reason: 'wechat',
+        httpStatus: 200,
+        errcode: 40164,
+      });
+      expect(JSON.stringify(warn.mock.calls)).not.toMatch(
+        /private|openid|test-app-secret/,
+      );
+    },
+  );
+  it.each([
+    [
+      'timeout',
+      () =>
+        Promise.reject(new DOMException('private token URL', 'TimeoutError')),
+    ],
+    ['network', () => Promise.reject(new TypeError('private token URL'))],
+    [
+      'invalid_json',
+      () => Promise.resolve(new Response('private malformed response')),
+    ],
+  ] as const)(
+    'classifies %s without logging raw errors',
+    async (reason, response) => {
+      const warn = jest
+        .spyOn(Logger.prototype, 'warn')
+        .mockImplementation(() => undefined);
+      jest.spyOn(globalThis, 'fetch').mockImplementation(response);
+      await expect(
+        gateway.query({ id: 'order' } as any, 'openid'),
+      ).rejects.toThrow();
+      expect(JSON.parse(warn.mock.calls[0][0])).toMatchObject({
+        reason,
+        endpoint: '/cgi-bin/stable_token',
+      });
+      expect(JSON.stringify(warn.mock.calls)).not.toContain('private');
+    },
+  );
   function envelope(message: string, tail = appId) {
     const bytes = Buffer.from(message);
     const length = Buffer.alloc(4);
