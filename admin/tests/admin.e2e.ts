@@ -77,6 +77,25 @@ test.beforeEach(async ({ page }) => {
   await mockApi(page);
 });
 
+test('页面使用官方 shadcn-vue 组件，搜索和详情均由生成的组件承载', async ({
+  page,
+}) => {
+  await page.goto('/?view=users');
+  await expect(page.locator('[data-slot="card"]')).toBeVisible();
+  await expect(page.locator('[data-slot="input"]')).toBeVisible();
+  await expect(page.locator('[data-slot="table"]')).toBeVisible();
+  await expect(page.locator('[data-slot="badge"]').first()).toBeVisible();
+  await page.locator('tbody tr').first().getByRole('button').click();
+  await expect(page.locator('[data-slot="dialog-content"]')).toBeVisible();
+  await page.getByRole('button', { name: '关闭窗口', exact: true }).click();
+  await expect(page.getByRole('dialog')).toBeHidden();
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.getByRole('button', { name: '打开导航菜单' }).click();
+  await expect(page.locator('[data-slot="sheet-content"]')).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('dialog')).toBeHidden();
+});
+
 test('用户列表显示访问 IP 和北京时间，旧记录为空，窄屏详情保留完整 IPv6', async ({
   page,
 }) => {
@@ -230,7 +249,7 @@ test('窄屏导航、模态焦点与表格横向滚动，无页面溢出', async
       () => document.documentElement.scrollWidth <= innerWidth,
     ),
   ).toBe(true);
-  const scroll = page.locator('.table-scroll');
+  const scroll = page.locator('[data-slot="table-container"]');
   expect(
     await scroll.evaluate(
       (element) => element.scrollWidth > element.clientWidth,

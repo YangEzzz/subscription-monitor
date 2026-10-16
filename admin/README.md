@@ -1,6 +1,12 @@
 # 续订清单 Vue 管理后台
 
-独立的 Vue 3 + TypeScript + Vite 项目，参考 [shadcn-vue-admin](https://github.com/Whbbit1999/shadcn-vue-admin)，采用 Tailwind CSS、Reka UI 与 Lucide。源码维护于 `src/`，构建生成标准 `dist/index.html`、`dist/assets/*.js` 和 `dist/assets/*.css`，由 Nginx 或其他静态服务器部署。
+独立的 Vue 3 + TypeScript + Vite 项目，正式使用 [shadcn-vue](https://www.shadcn-vue.com/) 官方 CLI 生成的组件（reka-nova），布局参考 [shadcn-vue-admin](https://github.com/Whbbit1999/shadcn-vue-admin)。源码维护于 `src/`，构建生成标准 `dist/index.html`、`dist/assets/*.js` 和 `dist/assets/*.css`，由 Nginx 或其他静态服务器部署。
+
+## shadcn-vue 组件
+
+`components.json` 为官方初始化配置，CLI 固定为 `shadcn-vue@2.8.2`。官方 `add button badge dialog input table card sheet --yes` 生成的源码位于 `src/components/ui/{button,badge,dialog,input,table,card,sheet}/`；页面直接使用这些组件，旧手写 Button/Badge/Dialog 已删除。`StatusBadge.vue` 仅组合官方 Badge 映射业务状态，`AppDialog.vue` 组合官方 Dialog/Sheet 提供中文关闭按钮及程序打开后的焦点恢复。
+
+官方 CLI 要求较新 Node.js，维护组件推荐 Node 24 LTS。新增组件执行 `pnpm ui:add <组件名>`。shadcn-vue 采用组件源码安装方式，并使用 `shadcn-vue/tailwind.css`、`tw-animate-css`、Reka UI 和 cn；依赖与组件源码均纳入仓库。主题由 `src/style.css` 将官方语义变量映射到项目品牌色，沿用中文系统字体、深浅色和圆角。
 
 ## 本地开发
 
@@ -39,7 +45,7 @@ docker compose --env-file deploy/.env.production up -d --build api admin
 
 数据概览、订阅记录、用户列表、会员权益、会员订单、通知记录、记录详情、服务器分页、搜索、连接状态、深浅色主题与响应式导航。列表每页 20 条，接口错误提供重试，刷新失败保留并标记旧数据。概览不计删除订阅，列表包含删除记录；模拟支付不会实际扣款。
 
-组件按 shadcn-vue 源码组合方式维护在 `src/components/ui`，共享查询逻辑由 `src/lib/useAdmin.ts` 拥有。前端和 Nest 后端分别安装依赖、分别构建、分别部署。后端不再提供旧的 HTML 页面。
+组件由官方 shadcn-vue CLI 生成并维护在 `src/components/ui`，共享查询逻辑由 `src/lib/useAdmin.ts` 拥有。前端和 Nest 后端分别安装依赖、分别构建、分别部署。后端不再提供旧的 HTML 页面。
 
 ## 验证
 

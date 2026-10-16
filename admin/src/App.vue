@@ -37,9 +37,11 @@ import {
   type Row,
   type Overview,
 } from './lib/data';
-import Button from './components/ui/Button.vue';
-import Badge from './components/ui/Badge.vue';
-import AppDialog from './components/ui/AppDialog.vue';
+import { Button } from './components/ui/button';
+import { Input } from './components/ui/input';
+import { Card, CardHeader } from './components/ui/card';
+import Badge from './components/StatusBadge.vue';
+import AppDialog from './components/AppDialog.vue';
 import AsyncState from './components/AsyncState.vue';
 import AdminTable from './components/AdminTable.vue';
 import ServiceStatus from './components/ServiceStatus.vue';
@@ -94,7 +96,7 @@ const collapsed = ref(false);
 const mobileNav = ref(false);
 const dark = ref(document.documentElement.classList.contains('dark'));
 const draft = ref(search.value);
-const input = ref<HTMLInputElement>();
+const input = ref<InstanceType<typeof Input>>();
 const composing = ref(false);
 let timer: ReturnType<typeof setTimeout> | undefined;
 const selected = ref<Row>();
@@ -179,7 +181,7 @@ function clearSearch() {
   clearTimeout(timer);
   draft.value = '';
   commitSearch('');
-  nextTick(() => input.value?.focus());
+  nextTick(() => input.value?.$el.focus());
 }
 function toggleTheme() {
   dark.value = !dark.value;
@@ -374,8 +376,8 @@ onBeforeUnmount(() => clearTimeout(timer));
             ></a>
           </div>
           <div class="overview-grid">
-            <section class="panel overview-table">
-              <div class="panel-heading">
+            <Card class="panel overview-table gap-0 py-0 ring-0">
+              <CardHeader class="panel-heading">
                 <div>
                   <h2>订阅速览</h2>
                   <p>订阅列表前 5 条 · 包含已删除记录</p>
@@ -386,7 +388,7 @@ onBeforeUnmount(() => clearTimeout(timer));
                   @click.prevent="go('subscriptions')"
                   >全部订阅<ArrowUpRight :size="15"
                 /></a>
-              </div>
+              </CardHeader>
               <AdminTable
                 section="subscriptions"
                 :items="records?.items.slice(0, 5)"
@@ -408,16 +410,16 @@ onBeforeUnmount(() => clearTimeout(timer));
                   >扣费日期由各账号的订阅记录提供。</span
                 >
               </div>
-            </section>
+            </Card>
             <div class="overview-aside">
-              <section class="panel">
-                <div class="panel-heading">
+              <Card class="panel gap-0 py-0 ring-0">
+                <CardHeader class="panel-heading">
                   <div>
                     <h2>服务状态</h2>
                     <p>来自后端的实际运行配置</p>
                   </div>
                   <Database :size="18" class="muted" />
-                </div>
+                </CardHeader>
                 <ServiceStatus :overview="overview" />
                 <div class="panel-footnote">
                   <span
@@ -429,7 +431,7 @@ onBeforeUnmount(() => clearTimeout(timer));
                       : '等待首次读取'
                   }}</span>
                 </div>
-              </section>
+              </Card>
               <section class="notification-panel">
                 <div class="notification-icon"><Bell :size="21" /></div>
                 <h2>通知需要关注吗？</h2>
@@ -456,7 +458,7 @@ onBeforeUnmount(() => clearTimeout(timer));
         </template>
 
         <template v-else-if="view !== 'connection'">
-          <section class="panel data-panel">
+          <Card class="panel data-panel gap-0 py-0 ring-0">
             <div class="data-toolbar">
               <div class="table-title">
                 <h2>{{ title }}</h2>
@@ -472,7 +474,7 @@ onBeforeUnmount(() => clearTimeout(timer));
                     for="record-search"
                     class="sr-only"
                     >{{ sections[section].placeholder }}</label
-                  ><input
+                  ><Input
                     id="record-search"
                     ref="input"
                     v-model="draft"
@@ -485,15 +487,17 @@ onBeforeUnmount(() => clearTimeout(timer));
                       composing = false;
                       scheduleSearch();
                     "
-                  /><button
+                  /><Button
                     v-if="draft"
                     type="button"
+                    variant="ghost"
+                    size="icon-xs"
                     class="search-clear"
                     aria-label="清除搜索"
                     @click="clearSearch"
                   >
                     <X :size="15" />
-                  </button>
+                  </Button>
                 </div>
                 <Button
                   type="submit"
@@ -556,7 +560,7 @@ onBeforeUnmount(() => clearTimeout(timer));
                 /></Button>
               </div>
             </div>
-          </section>
+          </Card>
           <div class="read-only-note">
             <CircleHelp :size="17" />
             <p>
@@ -573,14 +577,14 @@ onBeforeUnmount(() => clearTimeout(timer));
 
         <template v-else>
           <div class="settings-grid">
-            <section class="panel settings-panel">
-              <div class="panel-heading">
+            <Card class="panel settings-panel gap-0 py-0 ring-0">
+              <CardHeader class="panel-heading">
                 <div>
                   <h2>后台连接</h2>
                   <p>通过部署环境配置的管理接口读取数据。</p>
                 </div>
                 <Link2 :size="19" class="muted" />
-              </div>
+              </CardHeader>
               <div class="connection-form">
                 <h3>管理接口地址</h3>
                 <code class="address-box">{{ address }}</code>
@@ -606,14 +610,14 @@ onBeforeUnmount(() => clearTimeout(timer));
                         : '尚未连接成功。')
                 }}</span>
               </div>
-            </section>
-            <section class="panel">
-              <div class="panel-heading">
+            </Card>
+            <Card class="panel gap-0 py-0 ring-0">
+              <CardHeader class="panel-heading">
                 <div>
                   <h2>服务状态</h2>
                   <p>检查连接后重新读取</p>
                 </div>
-              </div>
+              </CardHeader>
               <ServiceStatus :overview="overview" />
               <div class="settings-note">
                 <h3>数据读取说明</h3>
@@ -625,7 +629,7 @@ onBeforeUnmount(() => clearTimeout(timer));
                   OpenID、登录令牌和授权凭证。当前版本仅提供查询。
                 </p>
               </div>
-            </section>
+            </Card>
           </div>
         </template>
 

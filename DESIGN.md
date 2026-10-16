@@ -77,13 +77,15 @@ H5 容器最大 480px，宽屏居中呈现同一完整移动应用；底部导�
 
 ## Components
 
+2026-10-16 管理后台正式接入 shadcn-vue 2.8.2 官方 CLI（components.json，reka-nova）；Button、Badge、Dialog、Sheet、Input、Table、Card 源码由官方注册表生成并由页面直接使用。`src/style.css` 将 shadcn 的 card/popover/secondary/accent/ring/destructive 前景及背景映射到既有主题，保留中文系统字体，不加载远程字体。业务状态由 StatusBadge 组合官方 Badge；AppDialog 组合官方 Dialog/Sheet 并提供中文关闭与焦点恢复；不再维护同名手写基础控件。
+
 共享布局和控件样式由 subscription/styles/subscription.scss 拥有。
 SubscriptionRow 负责首页续费行；SubscriptionTabBar 负责导航；EmptyStateView 负责空态。
 StatSummaryCard 将周期筛选独立为整行，避免金额与筛选竞争空间。
 uni-app picker、switch、showModal 使用平台交互；详见 UX-CONTRACT.md。
 按钮具备焦点、按下、禁用态；减少动态效果偏好下停用动画。
 
-管理后台是独立 Vue 3 桌面表面，替代旧原生 HTML 实现：`admin/src/components/ui` 拥有 shadcn 风格 Button/Badge 与 Reka Dialog；AdminTable、AsyncState、ServiceStatus 和 `lib/useAdmin.ts` 拥有跨页面查询与反馈。标准 Vite 构建输出 `admin/dist/index.html` 与 `assets` 中独立 JS/CSS，前端 Nginx 镜像与后端 API 分别构建部署；不手工修改生成文件。浅色面板维持无阴影，遮罩对话框可使用阴影；圆角仍为面板 12px、控件 8px。主题只持久化偏好，不持久化业务记录和接口地址。
+管理后台是独立 Vue 3 桌面表面，替代旧原生 HTML 实现：`admin/src/components/ui` 保存官方 shadcn-vue 生成的基础组件，AppDialog/StatusBadge 提供业务组合；AdminTable、AsyncState、ServiceStatus 和 `lib/useAdmin.ts` 拥有跨页面查询与反馈。标准 Vite 构建输出 `admin/dist/index.html` 与 `assets` 中独立 JS/CSS，前端 Nginx 镜像与后端 API 分别构建部署；不手工修改构建产物。浅色面板维持无阴影，遮罩对话框可使用阴影；圆角仍为面板 12px、控件 8px。主题只持久化偏好，不持久化业务记录和接口地址。
 
 ## Do's and Don'ts
 

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Inbox, SearchX, CircleAlert, LoaderCircle } from '@lucide/vue';
-import Button from './ui/Button.vue';
+import { Button } from './ui/button';
 defineProps<{ loading?: boolean; error?: string; search?: string }>();
 defineEmits<{ retry: []; clear: [] }>();
 </script>

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Database, BellRing, Clock3 } from '@lucide/vue';
 import type { Overview } from '../lib/data';
-import Badge from './ui/Badge.vue';
+import Badge from './StatusBadge.vue';
 defineProps<{ overview?: Overview }>();
 </script>
 <template>

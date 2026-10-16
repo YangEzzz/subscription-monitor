@@ -8,6 +8,8 @@
 
 ## Vue 桌面管理后台
 
+基础控件由 `admin/components.json` 配置的 shadcn-vue 官方 registry 源码拥有：`ui/button`、`ui/badge`、`ui/dialog`、`ui/sheet`、`ui/input`、`ui/table`、`ui/card`。用户列表、概览、设置页直接组合这些组件；业务状态适配保留在 `components/StatusBadge.vue`，弹窗/导航抽屉的中文文案与焦点恢复保留在 `components/AppDialog.vue`。搜索改用官方 Input 后，清除操作通过组件根 input 恢复焦点，中文合成及查询防抖保持原契约。表格的横向滚动与键盘焦点由官方 Table 的 container 承担，不嵌套第二个滚动容器。
+
 用户列表及详情增加最近访问 IP、最近访问时间，复用 AdminTable 和 data.ts 格式化；IPv6 完整值在详情可见，历史空值显示“—”，时间为 Asia/Shanghai。只记录成功登录或通过 Bearer 认证的请求，同一 IP 最多每分钟更新一次，IP 变化立即更新；仅覆盖最近一条，不新增浏览历史，不从旧日志回填。此项由用户明确要求，数据仍只通过管理查询返回，不放入会话、小程序业务响应、URL 或客户端持久化。代理 IP 只信任显式 TRUSTED_PROXY_CIDRS 对应的直连来源，并读取 Nginx 覆盖后的 X-Real-IP。
 
 用户明确要求独立、可部署的 Vue 项目，后台源码位于仓库根 `admin/`。Vue + Vite 构建输出标准 `dist`（index.html、assets/JS、assets/CSS），使用独立 Nginx Docker 镜像部署；后端 3002 端口只提供 /overview 和 /data，不再提供 HTML 页面。前端默认相对资源路径和 `./api/` 接口，支持根目录与 /admin/ 子目录部署；开发/preview 使用 Vite 代理，生产通过可信的前端 Nginx 内网代理。部署开关和接口只读范围沿用既有约定；Docker 宿主发布端口默认 127.0.0.1:8080，公网入口的 Nginx 认证配置见 deploy/vue-admin.md。未新增应用层管理员登录或用户数据写入能力。
@@ -29,7 +31,7 @@
 | Scrollbar | admin/src/style.css | DESIGN.md | 文档纵向、表格横向 | 窄屏 E2E |
 | Toast | App.vue status live region + AsyncState | useAdmin.ts | 成功状态、持久错误 | 错误恢复 E2E |
 | CRUD | useAdmin.ts + 原有 /data /overview | admin-read.ts | 只读分页/搜索/刷新 | 后端与浏览器测试 |
-| Dialog | components/ui/AppDialog.vue | Reka UI | 记录详情、导航抽屉 | Escape、焦点 E2E |
+| Dialog | components/AppDialog.vue + ui/dialog + ui/sheet | shadcn-vue / Reka UI | 记录详情、导航抽屉 | Escape、焦点 E2E |
 | Async state | components/AsyncState.vue | useAdmin.ts | 首次、刷新、无记录/无匹配 | 失败/竞争 E2E |
 | Select/Listbox | 移动端 uni-app picker | SubscriptionFormView.vue | 平台选择器，桌面无此能力 | 既有 H5 打开与取消 |
 | Date | 移动端 uni-app picker | SubscriptionFormView.vue | 日期/时间，桌面仅格式化显示 | 既有小程序编译 |

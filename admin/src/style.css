@@ -1,4 +1,14 @@
 @import 'tailwindcss';
+@import 'tw-animate-css';
+@import 'shadcn-vue/tailwind.css';
+
+@custom-variant dark (&:is(.dark *));
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+}
 
 :root {
   color-scheme: light;
@@ -27,6 +37,15 @@
   --control-radius: 8px;
   --font-sans: 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
   --font-numeric: 'Bahnschrift', 'DIN Alternate', Arial, sans-serif;
+  --font-heading: var(--font-sans);
+  --card-foreground: var(--foreground);
+  --popover: var(--card);
+  --popover-foreground: var(--foreground);
+  --secondary: var(--muted);
+  --secondary-foreground: var(--foreground);
+  --accent-foreground: var(--foreground);
+  --destructive: var(--danger);
+  --ring: var(--primary);
 }
 .dark {
   color-scheme: dark;
@@ -64,7 +83,18 @@
   --color-primary-hover: var(--primary-hover);
   --color-primary-foreground: var(--primary-foreground);
   --color-accent: var(--accent);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-ring: var(--ring);
+  --radius-sm: calc(var(--control-radius) - 2px);
   --radius-md: var(--control-radius);
+  --radius-lg: var(--control-radius);
+  --radius-xl: var(--radius);
 }
 * {
   box-sizing: border-box;
@@ -505,7 +535,7 @@ h1:focus {
   text-decoration: underline;
   text-underline-offset: 4px;
 }
-.table-scroll {
+[data-admin-table] {
   overflow-x: auto;
   border-top: 1px solid var(--border);
 }
@@ -890,7 +920,8 @@ input[type='search']::-webkit-search-cancel-button {
   color: var(--muted-foreground);
   margin-top: 9px;
 }
-.dialog-overlay {
+[data-slot='dialog-overlay'],
+[data-slot='sheet-overlay'] {
   position: fixed;
   inset: 0;
   background: var(--overlay);
@@ -901,11 +932,11 @@ input[type='search']::-webkit-search-cancel-button {
   z-index: 50;
   left: 50%;
   top: 50%;
-  transform: translate(-50%, -50%);
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   width: min(620px, calc(100vw - 32px));
+  max-width: calc(100vw - 32px);
   max-height: calc(100dvh - 48px);
   overflow-y: auto;
   padding: 24px;
@@ -913,6 +944,7 @@ input[type='search']::-webkit-search-cancel-button {
 }
 .dialog-heading {
   display: flex;
+  flex-direction: row;
   gap: 20px;
   justify-content: space-between;
   align-items: flex-start;
@@ -949,17 +981,14 @@ input[type='search']::-webkit-search-cancel-button {
   justify-content: flex-end;
   padding-top: 20px;
 }
-.nav-drawer {
-  top: 0;
-  left: 0;
-  transform: none;
+.app-sheet {
   width: min(320px, 90vw);
   max-height: 100dvh;
   height: 100dvh;
   border-radius: 0;
   padding: 24px 16px;
 }
-.nav-drawer .nav-list {
+.app-sheet .nav-list {
   margin-top: 24px;
 }
 .sidebar-collapsed {

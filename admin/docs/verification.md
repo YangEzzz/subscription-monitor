@@ -39,3 +39,11 @@
 验证：后端 build/lint、12套71项单元测试；后台 typecheck/build/format、5项单元和10项 Playwright 浏览器测试；小程序41项单元和4项HTTP集成全部通过。新增HTTP测试覆盖成功登录、后续认证请求更新、匿名/无效令牌/非法IP不污染记录、普通响应不暴露IP。浏览器在390px核对完整IPv6详情、北京时间、空值与Escape关闭；截图 `admin/test-results/user-access-mobile.png`（测试产物不提交）。
 
 官方 designmd lint 为0错误、7项既有未引用token警告。后台独立 Premium strict audit 为0 findings；根审计仍报告移动端53项 `@tap` 按钮识别问题，无 admin 项、无 unresolved，本次未改这些移动端按钮，不将根审计记为通过。原有移动端事件测试通过。Prisma validate和更新脚本语法检查通过；数据库迁移与脚本未在生产执行，线上记录需要服务器更新后验收。
+
+## 2026-10-16 正式接入 shadcn-vue
+
+使用官方 `shadcn-vue@2.8.2` CLI 初始化 components.json，并通过 `add button badge dialog input table card sheet --yes` 安装45个源码文件（reka-nova）。依赖已固定到 pnpm 锁文件。系统 Node22.14 不满足CLI当前undici依赖，生成时使用本机已有Node24.19；维护CLI推荐Node24LTS。旧手写 ui/Button.vue、ui/Badge.vue、ui/AppDialog.vue 删除，页面直接使用官方 Button/Input/Table/Card，业务 StatusBadge 与 AppDialog 组合官方 Badge/Dialog/Sheet。
+
+类型检查、生产构建、格式检查、5项单元测试和11项浏览器测试通过。新增浏览器验证确认页面实际挂载官方 data-slot（Card、Input、Table、Badge、Dialog、Sheet），并验证关闭按钮、Escape和导航抽屉。搜索输入根节点焦点恢复、中文合成、分页、主题、长IP及空态、错误恢复、窄屏无页面横向溢出均通过；横向滚动由官方 Table container 独占。
+
+静态审计报告5处 actionless-button，均为官方 DialogClose/SheetClose 的 as-child Button（含官方未启用的默认关闭控件）。这些按钮由父级注入关闭行为，浏览器实际关闭、Escape与焦点恢复通过；保留官方组合方式，不加无意义回调来消除扫描结果，未将该静态审计记为通过。视觉主题仍按 DESIGN.md 映射，无远程字体或新数据写操作。
