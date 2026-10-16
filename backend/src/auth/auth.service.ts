@@ -3,10 +3,12 @@ import {
   Inject,
   ServiceUnavailableException,
   UnauthorizedException,
+  Logger,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createHash, createHmac, timingSafeEqual } from 'node:crypto';
 import { encryptWechatSession } from './wechat-session';
+import { AccessRequest, ClientIpResolver } from './client-ip';
 import {
   SUBSCRIPTIONS_REPOSITORY,
   SubscriptionsRepository,
@@ -16,11 +18,28 @@ type SessionPayload = { sub: string; appid: string; exp: number };
 
 @Injectable()
 export class AuthService {
+  private readonly ipResolver: ClientIpResolver;
+  private readonly logger = new Logger(AuthService.name);
   constructor(
     private readonly config: ConfigService,
     @Inject(SUBSCRIPTIONS_REPOSITORY)
     private readonly repository: SubscriptionsRepository,
-  ) {}
+  ) {
+    this.ipResolver = new ClientIpResolver(
+      this.config.get<string[]>('app.trustedProxyCidrs') || [],
+    );
+  }
+
+  async recordAccess(userId: string, request: AccessRequest) {
+    const ip = this.ipResolver.resolve(request);
+    if (!ip) return;
+    try {
+      await this.repository.recordUserAccess(userId, ip, new Date());
+    } catch {
+      // Access metadata must not prevent a valid login or business request.
+      this.logger.warn('User access metadata update failed');
+    }
+  }
 
   private signingSecret(): string {
     const secret = this.config.get<string>('app.authTokenSecret') || '';
@@ -33,7 +52,7 @@ export class AuthService {
     return secret;
   }
 
-  async login(code: string) {
+  async login(code: string, request?: AccessRequest) {
     const appid = this.config.get<string>('app.wechatAppId');
     const secret = this.config.get<string>('app.wechatAppSecret');
     const signingSecret = this.signingSecret();
@@ -104,6 +123,7 @@ export class AuthService {
           : null,
       sessionUpdatedAt: result.session_key ? new Date().toISOString() : null,
     });
+    if (request) await this.recordAccess(id, request);
     const body = Buffer.from(JSON.stringify({ sub: id, appid, exp })).toString(
       'base64url',
     );

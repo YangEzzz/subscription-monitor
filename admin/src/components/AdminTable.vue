@@ -116,6 +116,8 @@ const columns = computed(() =>
                   'billingDate',
                   'attempts',
                   'subscriptions',
+                  'lastAccessIp',
+                  'lastAccessAt',
                 ].includes(column.key),
                 muted: column.key.endsWith('At'),
               }"

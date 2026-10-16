@@ -6,12 +6,12 @@
 
 用户要求独立、可部署的 Vue 项目。源码位于 `admin/`；前端和 `backend/` 分别安装、构建。标准 Vite 产物包含 index.html、独立 JS 与 CSS，旧 backend/public/admin.html 已删除，后端 HTML 路由已退役。新增 admin Dockerfile、Nginx 模板和根 compose admin 服务；默认宿主只绑定 127.0.0.1:8080，生产部署与可选公网认证入口见 deploy/vue-admin.md。
 
-| DESIGN.md 规则 | 实现证据 | 结果 |
-| --- | --- | --- |
-| 品牌绿、12px/8px 圆角、系统中文与数字字体 | src/style.css 与共享组件 | 保留 |
-| 桌面 shadcn-vue-admin 参考 | 侧栏、指标卡、表格、深浅色主题 | 桌面扩展已记录 |
-| 无装饰增长数据、真实接口 | /overview、/data 与 data.ts | 保留 |
-| 面板无阴影，日期/金额优先 | 桌面与390px截图 | 保留 |
+| DESIGN.md 规则                            | 实现证据                       | 结果           |
+| ----------------------------------------- | ------------------------------ | -------------- |
+| 品牌绿、12px/8px 圆角、系统中文与数字字体 | src/style.css 与共享组件       | 保留           |
+| 桌面 shadcn-vue-admin 参考                | 侧栏、指标卡、表格、深浅色主题 | 桌面扩展已记录 |
+| 无装饰增长数据、真实接口                  | /overview、/data 与 data.ts    | 保留           |
+| 面板无阴影，日期/金额优先                 | 桌面与390px截图                | 保留           |
 
 ## 验证结果
 
@@ -31,3 +31,11 @@
 ## 执行边界
 
 未访问或修改生产数据库，未发送微信消息，未部署线上。此电脑没有 docker 命令，因此未实际构建/运行 Docker 镜像或执行容器 Nginx；已验证标准 Vue dist 在 HTTP/CSP 下的运行、子目录部署和构建配置。默认使用现有无应用层管理员登录的只读 API，Docker服务仅本机发布；公网部署文档提供独立 Nginx认证入口。
+
+## 2026-10-16 用户最近访问记录
+
+用户列表与记录详情新增最近访问 IP/时间；复用 AdminTable、data.ts 与原有 Dialog，不增加颜色、控件或新交互。IPv4/IPv6 显示原值、时间按 Asia/Shanghai、旧字段缺失/空值为“—”。用户列表的现有分页、搜索与错误恢复沿用原行为。
+
+验证：后端 build/lint、12套71项单元测试；后台 typecheck/build/format、5项单元和10项 Playwright 浏览器测试；小程序41项单元和4项HTTP集成全部通过。新增HTTP测试覆盖成功登录、后续认证请求更新、匿名/无效令牌/非法IP不污染记录、普通响应不暴露IP。浏览器在390px核对完整IPv6详情、北京时间、空值与Escape关闭；截图 `admin/test-results/user-access-mobile.png`（测试产物不提交）。
+
+官方 designmd lint 为0错误、7项既有未引用token警告。后台独立 Premium strict audit 为0 findings；根审计仍报告移动端53项 `@tap` 按钮识别问题，无 admin 项、无 unresolved，本次未改这些移动端按钮，不将根审计记为通过。原有移动端事件测试通过。Prisma validate和更新脚本语法检查通过；数据库迁移与脚本未在生产执行，线上记录需要服务器更新后验收。

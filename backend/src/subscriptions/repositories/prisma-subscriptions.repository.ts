@@ -105,6 +105,26 @@ export class PrismaSubscriptionsRepository
     return new PrismaSubscriptionsRepository(client, client);
   }
 
+  async recordUserAccess(userId: string, ip: string, at: Date): Promise<void> {
+    await this.executor.appUser.updateMany({
+      where: {
+        id: userId,
+        AND: [
+          { OR: [{ lastAccessAt: null }, { lastAccessAt: { lte: at } }] },
+          {
+            OR: [
+              { lastAccessAt: null },
+              { lastAccessIp: null },
+              { lastAccessIp: { not: ip } },
+              { lastAccessAt: { lte: new Date(at.getTime() - 60000) } },
+            ],
+          },
+        ],
+      },
+      data: { lastAccessIp: ip, lastAccessAt: at },
+    });
+  }
+
   async adminOverview(): Promise<AdminOverview> {
     const [users, subscriptions, notifications, failedNotifications] =
       await Promise.all([
@@ -189,6 +209,8 @@ export class PrismaSubscriptionsRepository
           select: {
             id: true,
             createdAt: true,
+            lastAccessIp: true,
+            lastAccessAt: true,
             settings: { select: { notificationEnabled: true } },
             membership: { select: { plan: true } },
             _count: {
@@ -204,6 +226,8 @@ export class PrismaSubscriptionsRepository
         items: rows.map((row) => ({
           id: row.id,
           createdAt: row.createdAt,
+          lastAccessIp: row.lastAccessIp,
+          lastAccessAt: row.lastAccessAt,
           subscriptions: row._count.subscriptions,
           notificationEnabled: row.settings?.notificationEnabled ?? false,
           plan: row.membership?.plan ?? 'free',

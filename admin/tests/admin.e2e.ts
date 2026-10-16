@@ -39,6 +39,11 @@ async function mockApi(page: Page) {
               plan: 'free',
               notificationEnabled: true,
               createdAt: null,
+              lastAccessIp:
+                row.id === 'sub-0'
+                  ? '2001:db8:1234:5678:abcd:ef01:2345:6789'
+                  : null,
+              lastAccessAt: row.id === 'sub-0' ? '2026-10-16T02:30:00Z' : null,
             }))
           : section === 'membershipOrders'
             ? [
@@ -70,6 +75,30 @@ async function mockApi(page: Page) {
 }
 test.beforeEach(async ({ page }) => {
   await mockApi(page);
+});
+
+test('用户列表显示访问 IP 和北京时间，旧记录为空，窄屏详情保留完整 IPv6', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/?view=users');
+  await expect(
+    page.getByRole('columnheader', { name: '最近访问 IP' }),
+  ).toBeVisible();
+  const first = page.locator('tbody tr').first();
+  await expect(first).toContainText('2001:db8:1234:5678:abcd:ef01:2345:6789');
+  await expect(first).toContainText('10:30');
+  await expect(page.locator('tbody tr').nth(1)).toContainText('—');
+  await first.getByRole('button', { name: /查看.*详情/ }).click();
+  const dialog = page.getByRole('dialog');
+  await expect(dialog).toContainText('最近访问 IP');
+  await expect(dialog).toContainText('2001:db8:1234:5678:abcd:ef01:2345:6789');
+  await page.screenshot({
+    path: 'test-results/user-access-mobile.png',
+    fullPage: true,
+  });
+  await page.keyboard.press('Escape');
+  await expect(dialog).toBeHidden();
 });
 
 test('打包页面在后台 CSP 下工作，真实口径与主题保持一致', async ({ page }) => {

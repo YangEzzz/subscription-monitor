@@ -16,3 +16,4 @@ deploy/.env.production
 deploy/secrets/
 admin/.runtime/
 *.log
+/backups/

@@ -10,6 +10,7 @@ import { MembershipOrder } from '../domain/membership-order';
 export const SUBSCRIPTIONS_REPOSITORY = Symbol('SUBSCRIPTIONS_REPOSITORY');
 
 export interface SubscriptionsRepository extends NotificationRepository {
+  recordUserAccess(userId: string, ip: string, at: Date): Promise<void>;
   adminOverview(): Promise<AdminOverview>;
   adminRead(query: AdminQuery): Promise<AdminPage>;
   listSubscriptions(userId: string): Promise<SubscriptionRecord[]>;

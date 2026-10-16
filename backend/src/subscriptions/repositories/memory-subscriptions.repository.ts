@@ -28,6 +28,27 @@ export class MemorySubscriptionsRepository implements SubscriptionsRepository {
   private settings = new Map<string, UserSettings>();
   private memberships = new Map<string, Membership>();
   private identities = new Map<string, WechatIdentity>();
+  private access = new Map<
+    string,
+    { lastAccessIp: string; lastAccessAt: string }
+  >();
+
+  recordUserAccess(userId: string, ip: string, at: Date): Promise<void> {
+    if (!this.identities.has(userId)) return Promise.resolve();
+    const previous = this.access.get(userId);
+    const elapsed = previous
+      ? at.getTime() - Date.parse(previous.lastAccessAt)
+      : Infinity;
+    if (
+      elapsed >= 0 &&
+      (!previous || previous.lastAccessIp !== ip || elapsed >= 60000)
+    )
+      this.access.set(userId, {
+        lastAccessIp: ip,
+        lastAccessAt: at.toISOString(),
+      });
+    return Promise.resolve();
+  }
   private grants = new Map<
     string,
     { id: string; userId: string; templateId: string; status: string }
@@ -63,6 +84,8 @@ export class MemorySubscriptionsRepository implements SubscriptionsRepository {
       rows = this.adminUsers().map((id) => ({
         id,
         createdAt: null,
+        lastAccessIp: this.access.get(id)?.lastAccessIp ?? null,
+        lastAccessAt: this.access.get(id)?.lastAccessAt ?? null,
         subscriptions: this.records.filter(
           (row) => row.userId === id && !row.deletedAt && !row.isDemo,
         ).length,

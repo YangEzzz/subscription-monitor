@@ -45,13 +45,16 @@ export const sections: Record<
   },
   users: {
     label: '用户列表',
-    description: '查看已注册账号、订阅数量与通知开关。',
+    description:
+      '查看已注册账号、订阅数量、最近访问 IP 与时间；未记录的历史数据显示为“—”。',
     placeholder: '搜索用户 ID',
     columns: [
       { key: 'id', label: '用户 ID' },
       { key: 'subscriptions', label: '未删除订阅' },
       { key: 'plan', label: '账号方案' },
       { key: 'notificationEnabled', label: '通知开关' },
+      { key: 'lastAccessIp', label: '最近访问 IP' },
+      { key: 'lastAccessAt', label: '最近访问时间' },
       { key: 'createdAt', label: '注册时间' },
     ],
   },
@@ -150,7 +153,14 @@ export function format(
   }
   if (key === 'notificationEnabled') return value ? '已开启' : '已关闭';
   if (
-    ['createdAt', 'paidAt', 'startedAt', 'updatedAt', 'deletedAt'].includes(key)
+    [
+      'createdAt',
+      'paidAt',
+      'startedAt',
+      'updatedAt',
+      'deletedAt',
+      'lastAccessAt',
+    ].includes(key)
   ) {
     const date = new Date(String(value));
     return Number.isNaN(date.getTime())

@@ -15,7 +15,7 @@ export class AuthGuard implements CanActivate {
     private readonly auth: AuthService,
   ) {}
 
-  canActivate(context: ExecutionContext): boolean {
+  async canActivate(context: ExecutionContext): Promise<boolean> {
     if (
       this.reflector.getAllAndOverride<boolean>(PUBLIC_ROUTE, [
         context.getHandler(),
@@ -32,6 +32,7 @@ export class AuthGuard implements CanActivate {
       throw new UnauthorizedException('请先登录');
     }
     request.user = this.auth.verify(authorization.slice(7));
+    await this.auth.recordAccess(request.user.id, request);
     return true;
   }
 }

@@ -123,6 +123,10 @@ export default registerAs<AppConfig>('app', () => {
     wechatAppId: process.env.WECHAT_APP_ID,
     wechatAppSecret: process.env.WECHAT_APP_SECRET,
     authTokenSecret: process.env.AUTH_TOKEN_SECRET,
+    trustedProxyCidrs: (process.env.TRUSTED_PROXY_CIDRS || '')
+      .split(',')
+      .map((value) => value.trim())
+      .filter(Boolean),
     authTokenTtlSeconds,
     wechatReminderTemplateId: process.env.WECHAT_REMINDER_TEMPLATE_ID,
     wechatSubscriptionType:

@@ -8,6 +8,8 @@
 
 ## Vue 桌面管理后台
 
+用户列表及详情增加最近访问 IP、最近访问时间，复用 AdminTable 和 data.ts 格式化；IPv6 完整值在详情可见，历史空值显示“—”，时间为 Asia/Shanghai。只记录成功登录或通过 Bearer 认证的请求，同一 IP 最多每分钟更新一次，IP 变化立即更新；仅覆盖最近一条，不新增浏览历史，不从旧日志回填。此项由用户明确要求，数据仍只通过管理查询返回，不放入会话、小程序业务响应、URL 或客户端持久化。代理 IP 只信任显式 TRUSTED_PROXY_CIDRS 对应的直连来源，并读取 Nginx 覆盖后的 X-Real-IP。
+
 用户明确要求独立、可部署的 Vue 项目，后台源码位于仓库根 `admin/`。Vue + Vite 构建输出标准 `dist`（index.html、assets/JS、assets/CSS），使用独立 Nginx Docker 镜像部署；后端 3002 端口只提供 /overview 和 /data，不再提供 HTML 页面。前端默认相对资源路径和 `./api/` 接口，支持根目录与 /admin/ 子目录部署；开发/preview 使用 Vite 代理，生产通过可信的前端 Nginx 内网代理。部署开关和接口只读范围沿用既有约定；Docker 宿主发布端口默认 127.0.0.1:8080，公网入口的 Nginx 认证配置见 deploy/vue-admin.md。未新增应用层管理员登录或用户数据写入能力。
 
 视觉依据 DESIGN.md 桌面适配，参考 shadcn-vue-admin 的侧栏、概览卡片和表格。接口地址通过部署配置指定，连接状态页只展示地址与「检查连接」，没有本地文件访问或运行时远程地址输入。主题偏好可存 localStorage，不持久化业务记录。

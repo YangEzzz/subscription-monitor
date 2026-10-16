@@ -1,4 +1,5 @@
-import { Body, Controller, HttpCode, Post } from '@nestjs/common';
+import { Body, Controller, HttpCode, Post, Req } from '@nestjs/common';
+import { Request } from 'express';
 import { ApiOperation, ApiProperty, ApiTags } from '@nestjs/swagger';
 import { IsNotEmpty, IsString, Matches, MaxLength } from 'class-validator';
 import { AuthService } from './auth.service';
@@ -26,7 +27,7 @@ export class AuthController {
   @ApiOperation({
     summary: 'Exchange a WeChat login code for an application session',
   })
-  login(@Body() body: WechatLoginDto) {
-    return this.auth.login(body.code);
+  login(@Body() body: WechatLoginDto, @Req() request: Request) {
+    return this.auth.login(body.code, request);
   }
 }

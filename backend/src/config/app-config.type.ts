@@ -14,6 +14,7 @@ export type AppConfig = {
   wechatAppSecret?: string;
   authTokenSecret?: string;
   authTokenTtlSeconds?: number;
+  trustedProxyCidrs?: string[];
   wechatReminderTemplateId?: string;
   wechatSubscriptionType?: 'once' | 'long_term';
   wechatMessageState?: 'formal' | 'developer' | 'trial';

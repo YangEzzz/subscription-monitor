@@ -30,7 +30,7 @@
     {
       "category": "violation",
       "file": "subscription/components/subscription/MembershipView.vue",
-      "line": 62,
+      "line": 69,
       "message": "Enabled literal button has no detectable action or submit behavior.",
       "remediation": "Connect the button to a real action, make it a submit button, or disable/remove it.",
       "ruleId": "affordance.actionless-button",
@@ -39,7 +39,7 @@
     {
       "category": "violation",
       "file": "subscription/components/subscription/MembershipView.vue",
-      "line": 117,
+      "line": 141,
       "message": "Enabled literal button has no detectable action or submit behavior.",
       "remediation": "Connect the button to a real action, make it a submit button, or disable/remove it.",
       "ruleId": "affordance.actionless-button",
@@ -48,7 +48,7 @@
     {
       "category": "violation",
       "file": "subscription/components/subscription/MembershipView.vue",
-      "line": 124,
+      "line": 150,
       "message": "Enabled literal button has no detectable action or submit behavior.",
       "remediation": "Connect the button to a real action, make it a submit button, or disable/remove it.",
       "ruleId": "affordance.actionless-button",
@@ -57,7 +57,7 @@
     {
       "category": "violation",
       "file": "subscription/components/subscription/MembershipView.vue",
-      "line": 131,
+      "line": 159,
       "message": "Enabled literal button has no detectable action or submit behavior.",
       "remediation": "Connect the button to a real action, make it a submit button, or disable/remove it.",
       "ruleId": "affordance.actionless-button",
@@ -66,7 +66,7 @@
     {
       "category": "violation",
       "file": "subscription/components/subscription/MembershipView.vue",
-      "line": 144,
+      "line": 169,
       "message": "Enabled literal button has no detectable action or submit behavior.",
       "remediation": "Connect the button to a real action, make it a submit button, or disable/remove it.",
       "ruleId": "affordance.actionless-button",
@@ -75,7 +75,7 @@
     {
       "category": "violation",
       "file": "subscription/components/subscription/MembershipView.vue",
-      "line": 156,
+      "line": 197,
       "message": "Enabled literal button has no detectable action or submit behavior.",
       "remediation": "Connect the button to a real action, make it a submit button, or disable/remove it.",
       "ruleId": "affordance.actionless-button",
@@ -84,7 +84,7 @@
     {
       "category": "violation",
       "file": "subscription/components/subscription/MembershipView.vue",
-      "line": 166,
+      "line": 209,
       "message": "Enabled literal button has no detectable action or submit behavior.",
       "remediation": "Connect the button to a real action, make it a submit button, or disable/remove it.",
       "ruleId": "affordance.actionless-button",
@@ -93,7 +93,7 @@
     {
       "category": "violation",
       "file": "subscription/components/subscription/MembershipView.vue",
-      "line": 177,
+      "line": 221,
       "message": "Enabled literal button has no detectable action or submit behavior.",
       "remediation": "Connect the button to a real action, make it a submit button, or disable/remove it.",
       "ruleId": "affordance.actionless-button",
@@ -102,7 +102,16 @@
     {
       "category": "violation",
       "file": "subscription/components/subscription/MembershipView.vue",
-      "line": 190,
+      "line": 232,
+      "message": "Enabled literal button has no detectable action or submit behavior.",
+      "remediation": "Connect the button to a real action, make it a submit button, or disable/remove it.",
+      "ruleId": "affordance.actionless-button",
+      "severity": "error"
+    },
+    {
+      "category": "violation",
+      "file": "subscription/components/subscription/MembershipView.vue",
+      "line": 245,
       "message": "Enabled literal button has no detectable action or submit behavior.",
       "remediation": "Connect the button to a real action, make it a submit button, or disable/remove it.",
       "ruleId": "affordance.actionless-button",
@@ -473,10 +482,10 @@
   "projectRoot": "D:\\project\\subscription-monitor",
   "schemaVersion": 1,
   "summary": {
-    "errors": 52,
-    "total": 52,
+    "errors": 53,
+    "total": 53,
     "unresolved": 0,
-    "violations": 52,
+    "violations": 53,
     "warnings": 0
   }
 }

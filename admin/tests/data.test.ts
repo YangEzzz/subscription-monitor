@@ -18,6 +18,9 @@ describe('后台数据口径', () => {
   });
   it('时间使用北京时间，日期字符串保持原始账期', () => {
     expect(format('createdAt', '2026-10-01T00:00:00Z')).toContain('08:00');
+    expect(format('lastAccessAt', '2026-10-01T00:00:00Z')).toContain('08:00');
+    expect(format('lastAccessIp', '2001:db8::abcd')).toBe('2001:db8::abcd');
+    expect(format('lastAccessIp', null)).toBe('—');
     expect(format('billingDate', '2026-10-01')).toBe('2026-10-01');
   });
   it('同源 API 地址支持域名根目录和部署子目录', () => {
