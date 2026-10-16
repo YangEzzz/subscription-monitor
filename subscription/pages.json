@@ -5,7 +5,7 @@
 			"style": {
 				"navigationStyle": "custom",
 				"navigationBarTitleText": "续订清单",
-				"backgroundColor": "#f4f7f5",
+				"backgroundColor": "#f4f6fb",
 				"enablePullDownRefresh": false
 			}
 		}
@@ -15,9 +15,9 @@
 		"navigationBarTitleText": "续订清单",
 		"navigationBarTextStyle": "black",
 		"navigationBarBackgroundColor": "#ffffff",
-		"backgroundColor": "#f4f7f5",
+		"backgroundColor": "#f4f6fb",
 		"backgroundColorTop": "#ffffff",
-		"backgroundColorBottom": "#f4f7f5"
+		"backgroundColorBottom": "#f4f6fb"
 	},
 	"condition" : { //模式配置，仅开发期间生效
 		"current": 0, //当前激活的模式(list 的索引项)

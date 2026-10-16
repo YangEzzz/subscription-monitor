@@ -5,6 +5,7 @@
       :style="{ height: navigationBarHeight + 'px' }"
       ><text class="page-title">支出统计</text></view
     >
+    <text class="page-lead">分清每一种币种，看清持续支出的构成</text>
     <stat-summary-card
       :currencies="currencies"
       :stats-currency="statsCurrency"
@@ -26,67 +27,73 @@
       action-class="primary-button empty-add"
       @action="$emit('open-form')"
     />
-    <view v-if="statsSubscriptionCount > 0" class="chart-card category-chart-card"
-      ><view class="card-heading"
-        ><text class="section-title">分类构成</text
-        ><text>{{
-          statsPeriod === "year"
-            ? "年度"
-            : statsPeriod === "next"
-              ? "未来 30 天"
-              : "月均"
-        }}</text></view
-      ><view class="category-chart-body"
-        ><view class="donut" :style="{ background: donutBackground }"
-          ><view class="donut-hole"
-            ><text class="donut-value">{{
-              statsPeriod === "year" ? "年度" : "月均"
-            }}</text
-            ><text class="donut-label">分类占比</text></view
-          ></view
-        ><view class="legend"
-          ><view
-            v-for="item in categoryStats"
-            :key="item.name"
-            class="legend-row"
-            ><view
-              class="legend-color"
-              :style="{ backgroundColor: item.color }"
+    <view class="stats-visuals" v-if="statsSubscriptionCount > 0">
+      <view class="chart-card category-chart-card"
+        ><view class="card-heading"
+          ><text class="section-title">分类构成</text
+          ><text>{{
+            statsPeriod === "year"
+              ? "年度"
+              : statsPeriod === "next"
+                ? "未来 30 天"
+                : "月均"
+          }}</text></view
+        ><view class="category-chart-body"
+          ><view class="donut" :style="{ background: donutBackground }"
+            ><view class="donut-hole"
+              ><text class="donut-value">{{
+                statsPeriod === "year"
+                  ? "年度"
+                  : statsPeriod === "next"
+                    ? "未来30天"
+                    : "月均"
+              }}</text
+              ><text class="donut-label">分类占比</text></view
             ></view
-            ><text class="legend-name">{{ item.name }}</text
-            ><text class="legend-value">{{
-              formatMoney(item.value, statsCurrency)
-            }}</text
-            ><text class="legend-percent">{{ item.percent }}%</text></view
+          ><view class="legend"
+            ><view
+              v-for="item in categoryStats"
+              :key="item.name"
+              class="legend-row"
+              ><view
+                class="legend-color"
+                :style="{ backgroundColor: item.color }"
+              ></view
+              ><text class="legend-name">{{ item.name }}</text
+              ><text class="legend-value">{{
+                formatMoney(item.value, statsCurrency)
+              }}</text
+              ><text class="legend-percent">{{ item.percent }}%</text></view
+            ></view
           ></view
         ></view
-      ></view
-    >
-    <view v-if="statsSubscriptionCount > 0" class="trend-card"
-      ><view class="trend-head"
-        ><view
-          ><text class="section-title">支出趋势</text
-          ><text class="trend-sub">按当前月均估算（6个月）</text></view
-        ><text class="unit-label">币种：{{ statsCurrency }}</text></view
-      ><view class="bar-chart"
-        ><view v-for="bar in trendData" :key="bar.month" class="bar-column"
-          ><text class="bar-value">{{ compactAmount(bar.value) }}</text
-          ><view class="bar-track"
-            ><view
-              class="bar-fill"
-              :style="{ height: bar.height + '%' }"
-            ></view></view
-          ><text>{{ bar.month }}</text></view
+      >
+      <view v-if="statsSubscriptionCount > 0" class="trend-card"
+        ><view class="trend-head"
+          ><view
+            ><text class="section-title">未来支出估算</text
+            ><text class="trend-sub">按当前月均估算（6个月）</text></view
+          ><text class="unit-label">币种：{{ statsCurrency }}</text></view
+        ><view class="bar-chart"
+          ><view v-for="bar in trendData" :key="bar.month" class="bar-column"
+            ><text class="bar-value">{{ compactAmount(bar.value) }}</text
+            ><view class="bar-track"
+              ><view
+                class="bar-fill"
+                :style="{ height: bar.height + '%' }"
+              ></view></view
+            ><text>{{ bar.month }}</text></view
+          ></view
         ></view
-      ></view
-    >
+      >
+    </view>
     <view v-if="statsSubscriptionCount > 0" class="insight-card"
       ><view class="insight-icon"
-        ><uni-icons type="info-filled" size="20" color="#177e4b" /></view
+        ><uni-icons type="info-filled" size="20" color="#315acb" /></view
       ><view
-        ><text class="insight-title">年度订阅可重点检查</text
+        ><text class="insight-title">先确认金额，再看估算</text
         ><text class="insight-desc"
-          >年度订阅单次扣费更高，建议至少提前 14 天确认是否继续使用。</text
+          >金额按记录币种分别统计，未填写金额的订阅不计入估算，可在详情中补充。</text
         ></view
       ></view
     >

@@ -1,7 +1,7 @@
 <template>
   <view class="empty-state">
     <view class="empty-icon"
-      ><uni-icons :type="icon" size="30" color="#4a9a6c"
+      ><uni-icons :type="icon" size="30" color="#315acb"
     /></view>
     <text class="empty-title">{{ title }}</text>
     <text class="empty-desc">{{ description }}</text>

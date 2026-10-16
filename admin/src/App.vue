@@ -69,16 +69,21 @@ const navItems = [
     view: 'overview' as View,
     label: '数据概览',
     icon: LayoutDashboard,
-    group: '工作台',
+    group: '运行总览',
   },
   {
     view: 'subscriptions' as View,
     label: '订阅记录',
     icon: ListFilter,
-    group: '数据管理',
+    group: '订阅与账号',
   },
   { view: 'users' as View, label: '用户列表', icon: Users },
-  { view: 'memberships' as View, label: '会员权益', icon: Crown },
+  {
+    view: 'memberships' as View,
+    label: '会员权益',
+    icon: Crown,
+    group: '会员与消息',
+  },
   { view: 'membershipOrders' as View, label: '会员订单', icon: ReceiptText },
   { view: 'notifications' as View, label: '通知记录', icon: Bell },
   {
@@ -313,7 +318,16 @@ onBeforeUnmount(() => clearTimeout(timer));
       <main id="main" class="main-content">
         <div class="page-heading">
           <div>
-            <p class="eyebrow">SUBSCRIPTION MONITOR</p>
+            <p class="eyebrow">
+              续订清单 /
+              {{
+                view === 'overview'
+                  ? '运行总览'
+                  : view === 'connection'
+                    ? '服务连接'
+                    : '数据档案'
+              }}
+            </p>
             <h1 ref="heading" tabindex="-1">{{ title }}</h1>
             <p class="page-description">
               {{
@@ -351,6 +365,71 @@ onBeforeUnmount(() => clearTimeout(timer));
         </div>
 
         <template v-if="view === 'overview'">
+          <section class="operations-brief" aria-label="通知运行摘要">
+            <div class="brief-copy">
+              <span class="brief-label"
+                ><span
+                  class="status-dot"
+                  :class="{
+                    'dot-warning':
+                      !overview ||
+                      !!overviewError ||
+                      !!overview.failedNotifications,
+                  }"
+                />{{
+                  overviewError
+                    ? '数据需要重新读取'
+                    : !overview
+                      ? '正在读取运行状态'
+                      : overview.failedNotifications
+                        ? '有通知需要排查'
+                        : '通知发送状态正常'
+                }}</span
+              >
+              <h2>服务运行检查</h2>
+              <p>存储、微信通知与定时任务的当前配置。</p>
+              <ServiceStatus :overview="overview" />
+              <a
+                :href="routeHref('subscriptions')"
+                class="brief-action"
+                @click.prevent="go('subscriptions')"
+                >浏览订阅记录<ArrowUpRight :size="17"
+              /></a>
+            </div>
+            <div class="brief-notification">
+              <div class="brief-notification-heading">
+                <Bell :size="19" /><span>通知排查</span
+                ><Badge
+                  :tone="overview?.failedNotifications ? 'warning' : 'neutral'"
+                  >{{
+                    overviewError && overview ? '上次读取' : '失败 / 待核实'
+                  }}</Badge
+                >
+              </div>
+              <strong class="brief-number numeric"
+                >{{
+                  overview
+                    ? overview.failedNotifications.toLocaleString('zh-CN')
+                    : '—'
+                }}<small>条</small></strong
+              >
+              <p>
+                {{
+                  !overview
+                    ? '连接后可查看通知状态。'
+                    : overview.failedNotifications
+                      ? '打开通知记录，查看发送结果与错误原因。'
+                      : '当前没有失败或待核实的通知记录。'
+                }}
+              </p>
+              <a
+                :href="routeHref('notifications')"
+                class="text-link"
+                @click.prevent="go('notifications')"
+                >查看通知记录<ArrowUpRight :size="16"
+              /></a>
+            </div>
+          </section>
           <div class="metrics-grid" :aria-busy="busy">
             <a
               v-for="metric in metrics"
@@ -411,45 +490,6 @@ onBeforeUnmount(() => clearTimeout(timer));
                 >
               </div>
             </Card>
-            <div class="overview-aside">
-              <Card class="panel gap-0 py-0 ring-0">
-                <CardHeader class="panel-heading">
-                  <div>
-                    <h2>服务状态</h2>
-                    <p>来自后端的实际运行配置</p>
-                  </div>
-                  <Database :size="18" class="muted" />
-                </CardHeader>
-                <ServiceStatus :overview="overview" />
-                <div class="panel-footnote">
-                  <span
-                    class="status-dot"
-                    :class="{ 'dot-warning': !!overviewError || !overview }"
-                  /><span>{{
-                    overviewUpdated
-                      ? `更新于 ${format('createdAt', overviewUpdated)}`
-                      : '等待首次读取'
-                  }}</span>
-                </div>
-              </Card>
-              <section class="notification-panel">
-                <div class="notification-icon"><Bell :size="21" /></div>
-                <h2>通知需要关注吗？</h2>
-                <p v-if="!overview">连接后台后，可查看需要排查的通知数量。</p>
-                <p v-else-if="overview.failedNotifications">
-                  有
-                  <strong>{{ overview.failedNotifications }}</strong>
-                  条通知发送失败或结果待核实，可查看错误码进一步排查。
-                </p>
-                <p v-else>当前没有失败或待核实的通知记录。</p>
-                <a
-                  :href="routeHref('notifications')"
-                  class="text-link"
-                  @click.prevent="go('notifications')"
-                  >查看通知记录<ArrowUpRight :size="15"
-                /></a>
-              </section>
-            </div>
           </div>
           <div class="read-only-note">
             <ShieldCheck :size="18" />

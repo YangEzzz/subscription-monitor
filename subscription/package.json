@@ -5,6 +5,7 @@
   "version": "3.4.9",
   "description": "基于 uni-app 的订阅续费管理小程序",
   "scripts": {
+    "test:ui": "node tests/ui.e2e.cjs",
     "test": "node --test tests/api.test.mjs tests/auth.test.mjs tests/notifications.test.mjs tests/membership.test.mjs tests/component-events.test.mjs",
     "test:integration": "node --test --test-concurrency=1 tests/api-integration.test.mjs tests/membership-integration.test.mjs tests/virtual-payment-integration.test.mjs tests/user-access-integration.test.mjs"
   },

@@ -9,7 +9,7 @@
       <uni-icons
         :type="tone === 'error' ? 'info-filled' : 'spinner-cycle'"
         size="20"
-        :color="tone === 'error' ? '#b43d47' : '#146747'"
+        :color="tone === 'error' ? '#b43d47' : '#315acb'"
       />
     </view>
     <view class="state-copy">
@@ -55,7 +55,7 @@ export default {
   align-items: center;
   gap: 22rpx;
   border: 1rpx solid #ead8d9;
-  border-radius: 20rpx;
+  border-radius: 24rpx;
   background: #fffafa;
 }
 .async-state.compact {
@@ -123,4 +123,39 @@ export default {
 .state-action[disabled] {
   opacity: 0.55;
 }
+.tone-loading {
+  border-color: #d4e2fa;
+  background: #f4f8ff;
+}
+.tone-loading .state-mark {
+  background: #e4eeff;
+}
+.tone-loading .state-mark-line {
+  background: $green;
+}
+.tone-loading .state-title {
+  color: $text;
+}
+.tone-loading .state-description {
+  color: $muted;
+}
+/* #ifdef H5 */
+.state-description {
+  font-size: max(12px, 24rpx);
+}
+.state-action {
+  min-height: 44px;
+}
+@media (max-width: 480px) {
+  .async-state {
+    display: grid;
+    grid-template-columns: 32px minmax(0, 1fr);
+    gap: 12px;
+  }
+  .state-action {
+    grid-column: 2;
+    justify-self: start;
+  }
+}
+/* #endif */
 </style>

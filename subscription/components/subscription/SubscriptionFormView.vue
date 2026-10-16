@@ -12,6 +12,12 @@
       ><text class="page-title">{{ editingId ? "编辑订阅" : "新增订阅" }}</text
       ><view class="icon-spacer"></view
     ></view>
+    <view class="form-intro soft-summary"
+      ><text class="form-intro-title">{{
+        editingId ? "更新这项订阅" : "记录一项持续支出"
+      }}</text
+      ><text>先确认服务与扣费日期，金额和备注可稍后补充。</text></view
+    >
     <view v-if="!editingId" class="template-section"
       ><view class="form-section-head"
         ><text>常用模板</text><text>快速填充</text></view
@@ -40,6 +46,7 @@
           ><input
             v-model.trim="form.name"
             aria-label="服务名称，必填"
+            :aria-invalid="Boolean(formError && !form.name.trim())"
             aria-describedby="subscription-form-error"
             maxlength="30"
             class="form-input"
@@ -154,7 +161,7 @@
             }}</text></view
           ><switch
             :checked="form.autoRenew"
-            color="#16834d"
+            color="#315acb"
             @change="$emit('auto-renew-change', $event.detail.value)" /></view
         ><view class="form-row auto-renew-row"
           ><view
@@ -164,7 +171,7 @@
             }}</text></view
           ><switch
             :checked="form.trial"
-            color="#16834d"
+            color="#315acb"
             @change="$emit('set-trial', $event.detail.value)" /></view
         ><picker
           v-if="form.trial"
@@ -202,11 +209,11 @@
             v-if="form.reminders.includes(option.value)"
             type="checkmarkempty"
             size="12"
-            color="#177e4b"
+            color="#315acb"
           />{{ option.label }}
         </button></view
       ><view class="form-preview"
-        ><uni-icons type="notification" size="14" color="#3c9a68" /><text
+        ><uni-icons type="notification" size="14" color="#315acb" /><text
           >预计最近提醒：{{ formReminderPreview }}</text
         ></view
       ></view
@@ -260,8 +267,25 @@
 </template>
 
 <script>
+import { syncNativeFieldLabels } from "./platform-inputs.js";
 export default {
   name: "SubscriptionFormView",
+  mounted() {
+    syncNativeFieldLabels(this.$el);
+  },
+  updated() {
+    syncNativeFieldLabels(this.$el);
+  },
+  watch: {
+    formError(value) {
+      // #ifdef H5
+      if (value && !this.form.name.trim())
+        this.$nextTick(() =>
+          this.$el.querySelector(".form-input input")?.focus(),
+        );
+      // #endif
+    },
+  },
   emits: [
     "back",
     "apply-template",

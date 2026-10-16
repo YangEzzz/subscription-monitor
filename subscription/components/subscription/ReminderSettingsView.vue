@@ -1,5 +1,5 @@
 <template>
-  <view class="page form-page">
+  <view class="page form-page reminder-settings-page">
     <view class="detail-titlebar"
       ><button
         role="button"
@@ -12,8 +12,8 @@
       ><text class="page-title">默认提醒规则</text
       ><view class="icon-spacer"></view
     ></view>
-    <view class="settings-intro"
-      ><uni-icons type="notification-filled" size="24" color="#177e4b" /><view
+    <view class="settings-intro soft-summary"
+      ><uni-icons type="notification-filled" size="24" color="#315acb" /><view
         ><text>新订阅将自动使用这些节点</text
         ><text>单条订阅仍可在编辑时单独调整</text></view
       ></view
@@ -25,6 +25,7 @@
         v-for="option in reminderOptions"
         :key="option.value"
         class="reminder-check-row"
+        :aria-pressed="settings.defaultReminders.includes(option.value)"
         @tap="$emit('toggle-reminder', option.value)"
       >
         <view

@@ -5,25 +5,48 @@
       :style="{ height: navigationBarHeight + 'px' }"
       ><text class="page-title">全部订阅</text></view
     >
-    <view class="search-box"
-      ><uni-icons type="search" size="19" color="#8c938e" /><input
-        v-model="searchDraft"
-        aria-label="搜索服务或套餐"
-        :focus="searchFocused"
-        @input="handleSearchInput"
-        confirm-type="search"
-        placeholder="搜索服务或套餐"
-        placeholder-class="placeholder" /><button
+    <view class="collection-heading">
+      <text class="page-lead">集中管理每一项持续支出</text>
+    </view>
+    <view class="collection-toolbar">
+      <view class="search-box">
+        <uni-icons type="search" size="21" color="#7b8ba6" />
+        <input
+          v-model="searchDraft"
+          aria-label="搜索服务或套餐"
+          :focus="searchFocused"
+          @input="handleSearchInput"
+          confirm-type="search"
+          placeholder="搜索订阅"
+          placeholder-class="placeholder"
+        />
+        <button
+          v-if="searchDraft"
+          role="button"
+          tabindex="0"
+          class="clear-search"
+          aria-label="清空搜索"
+          @tap="clearSearch"
+        >
+          <uni-icons type="clear" size="18" color="#9ca19d" />
+        </button>
+      </view>
+      <button
+        class="collection-add"
         role="button"
         tabindex="0"
-        v-if="searchDraft"
-        class="clear-search"
-        aria-label="清空搜索"
-        @tap="clearSearch"
+        aria-label="新增订阅"
+        @tap="$emit('open-form')"
       >
-        <uni-icons type="clear" size="18" color="#9ca19d" /></button
-    ></view>
-    <scroll-view class="filter-scroll" scroll-x :show-scrollbar="false"
+        <uni-icons type="plus" size="15" color="#315acb" />
+        <text>新增订阅</text>
+      </button>
+    </view>
+    <scroll-view
+      class="filter-scroll"
+      scroll-x
+      :show-scrollbar="true"
+      aria-label="按服务分类筛选，可左右滑动"
       ><view class="filter-row"
         ><button
           role="button"
@@ -32,6 +55,7 @@
           :key="filter.name"
           class="filter-pill"
           :class="{ active: activeCategory === filter.name }"
+          :aria-pressed="activeCategory === filter.name"
           @tap="$emit('category', filter.name)"
         >
           <text class="filter-label">{{ filter.name }}</text
@@ -39,7 +63,11 @@
         </button></view
       ></scroll-view
     >
-    <scroll-view class="status-scroll" scroll-x :show-scrollbar="false"
+    <scroll-view
+      class="status-scroll"
+      scroll-x
+      :show-scrollbar="true"
+      aria-label="按订阅状态筛选，可左右滑动"
       ><view class="status-row"
         ><button
           role="button"
@@ -48,6 +76,7 @@
           :key="status.value"
           class="status-pill"
           :class="{ active: activeStatus === status.value }"
+          :aria-pressed="activeStatus === status.value"
           @tap="$emit('status', status.value)"
         >
           {{ status.label }}
@@ -65,7 +94,10 @@
         ><text>{{ sortLabel }}</text
         ><text class="sort-divider">·</text
         ><text>{{ activeStatusLabel }}</text></view
-      ><uni-icons type="right" size="15" color="#89938c" />
+      ><view class="sort-result"
+        ><text>{{ visibleSubscriptions.length }} 项</text
+        ><uni-icons type="right" size="15" color="#68758c"
+      /></view>
     </button>
     <view v-if="visibleSubscriptions.length" class="subscription-list"
       ><button
@@ -74,6 +106,7 @@
         v-for="item in visibleSubscriptions.slice(0, displayLimit)"
         :key="item.id"
         class="list-item"
+        :aria-label="`${item.name}，${statusText(item)}，${formatDate(item.nextBillingDate)}，${item.amount === null ? '金额待补充' : formatMoney(item.amount, item.currency)}`"
         @tap="$emit('open-detail', item)"
       >
         <brand-logo :item="item" /><view class="list-main"
@@ -83,17 +116,21 @@
               statusText(item)
             }}</text></view
           ><text class="list-detail"
-            >{{ cycleText(item) }} ·
-            {{
+            >{{ cycleText(item) }} · {{ item.payment }}</text
+          ><text class="list-date">{{
+            formatDate(item.nextBillingDate)
+          }}</text></view
+        ><view class="list-finance" :class="{ missing: item.amount === null }"
+          ><text
+            class="list-price"
+            :class="{ 'amount-missing': item.amount === null }"
+            >{{
               item.amount === null
                 ? "金额待补充"
                 : formatMoney(item.amount, item.currency)
-            }}
-            · {{ item.payment }}</text
-          ><text class="list-date"
-            >{{ formatDate(item.nextBillingDate) }} · {{ daysText(item) }}</text
-          ></view
-        ><uni-icons type="right" size="17" color="#b0b5b1" /></button
+            }}</text
+          ><text class="list-countdown">{{ daysText(item) }}</text></view
+        ><uni-icons type="right" size="17" color="#68758c" /></button
     ></view>
     <button
       role="button"
@@ -122,24 +159,19 @@
       action-class="primary-button empty-add"
       @action="$emit('open-form')"
     />
-    <button
-      role="button"
-      tabindex="0"
-      class="float-add"
-      aria-label="新增订阅"
-      @tap="$emit('open-form')"
-    >
-      <uni-icons type="plus" size="27" color="#ffffff" />
-    </button>
   </view>
 </template>
 
 <script>
+import { syncNativeFieldLabels } from "./platform-inputs.js";
 import BrandLogo from "./brand-logo.vue";
 import EmptyStateView from "./EmptyStateView.vue";
 
 export default {
   name: "SubscriptionListView",
+  mounted() {
+    syncNativeFieldLabels(this.$el);
+  },
   components: { BrandLogo, EmptyStateView },
   emits: [
     "search",

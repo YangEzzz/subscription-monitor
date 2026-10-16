@@ -1,5 +1,12 @@
 <template>
-  <view class="setting-row" :aria-disabled="disabled" @tap="!disabled && $emit('activate')">
+  <view
+    class="setting-row"
+    :role="action ? 'button' : undefined"
+    :tabindex="action && !disabled ? 0 : undefined"
+    :aria-label="action ? `${title}，${description}` : undefined"
+    :aria-disabled="disabled"
+    @tap="!disabled && $emit('activate')"
+  >
     <view class="setting-icon" :class="iconClass"
       ><uni-icons :type="icon" size="18" :color="iconColor"
     /></view>
@@ -12,7 +19,7 @@
       :key="switchRevision"
       :checked="checked"
       :disabled="disabled"
-      color="#16834d"
+      color="#315acb"
       @change="changeSwitch"
     />
     <uni-icons v-else-if="action" type="right" size="17" color="#aab0ac" />
@@ -40,7 +47,7 @@ export default {
     disabled: { type: Boolean, default: false },
     icon: { type: String, required: true },
     iconClass: { type: String, default: "" },
-    iconColor: { type: String, default: "#177e4b" },
+    iconColor: { type: String, default: "#315acb" },
     title: { type: String, required: true },
     description: { type: String, default: "" },
     switchable: { type: Boolean, default: false },

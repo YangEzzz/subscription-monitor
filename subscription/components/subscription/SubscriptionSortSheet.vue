@@ -37,7 +37,7 @@
               :type="option.icon"
               size="20"
               :color="
-                sortMode === option.value ? '#177e4b' : '#6f7972'
+                sortMode === option.value ? '#315acb' : '#6f7972'
               " /></view
           ><view class="sort-option-copy"
             ><text>{{ option.label }}</text

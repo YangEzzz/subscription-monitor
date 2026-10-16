@@ -2,21 +2,24 @@
   <view class="page membership-page">
     <view class="detail-titlebar">
       <button
+        role="button"
+        tabindex="0"
         class="icon-button plain"
         aria-label="返回"
         :disabled="busy"
+        :aria-disabled="busy"
         @tap="$emit('back')"
       >
-        <uni-icons type="left" size="24" color="#172a22" />
+        <uni-icons type="left" size="24" color="#202c45" />
       </button>
       <text class="page-title">会员中心</text><view class="icon-spacer"></view>
     </view>
-    <view class="membership-summary">
+    <view class="membership-summary soft-summary">
       <text class="membership-label">{{
         isMember ? "永久会员" : "免费版"
       }}</text>
       <text class="membership-headline">{{
-        isMember ? "所有订阅，一处管理" : "给每一笔续费留个位置"
+        isMember ? "永久会员已开通" : "订阅额度与会员"
       }}</text>
       <text class="membership-summary-copy">{{
         isMember
@@ -67,8 +70,17 @@
         安卓技术服务费1%，结算T+3；iOS佣金12%，结算45–60天。目前未开放iOS购买。
       </text>
       <button
+        role="button"
+        tabindex="0"
         class="membership-primary"
         :disabled="
+          isMember ||
+          busy ||
+          loading ||
+          !!error ||
+          !membership.product?.available
+        "
+        :aria-disabled="
           isMember ||
           busy ||
           loading ||
@@ -139,8 +151,13 @@
         class="membership-cashier-actions"
       >
         <button
+          role="button"
+          tabindex="0"
           class="membership-primary"
           :disabled="
+            busy || loading || !!error || !membership.product?.available
+          "
+          :aria-disabled="
             busy || loading || !!error || !membership.product?.available
           "
           @tap="$emit('simulate', 'success')"
@@ -148,8 +165,13 @@
           {{ busy ? "正在处理…" : "模拟支付成功" }}
         </button>
         <button
+          role="button"
+          tabindex="0"
           class="membership-secondary"
           :disabled="
+            busy || loading || !!error || !membership.product?.available
+          "
+          :aria-disabled="
             busy || loading || !!error || !membership.product?.available
           "
           @tap="$emit('simulate', 'cancel')"
@@ -157,8 +179,13 @@
           模拟取消
         </button>
         <button
+          role="button"
+          tabindex="0"
           class="membership-secondary"
           :disabled="
+            busy || loading || !!error || !membership.product?.available
+          "
+          :aria-disabled="
             busy || loading || !!error || !membership.product?.available
           "
           @tap="$emit('simulate', 'failure')"
@@ -167,9 +194,18 @@
         </button>
       </view>
       <button
+        role="button"
+        tabindex="0"
         v-if="order.status === 'pending' && order.channel === 'virtual'"
         class="membership-primary"
         :disabled="
+          busy ||
+          loading ||
+          !!error ||
+          !membership.product?.available ||
+          membership.product?.channel !== 'virtual'
+        "
+        :aria-disabled="
           busy ||
           loading ||
           !!error ||
@@ -195,9 +231,14 @@
         >可撤销本订单的测试权益以重测购买流程；已有订阅保留，不会发生实际退款。</text
       >
       <button
+        role="button"
+        tabindex="0"
         v-if="!refundConfirm"
         class="membership-secondary"
         :disabled="busy || loading || !!error || !membership.product?.available"
+        :aria-disabled="
+          busy || loading || !!error || !membership.product?.available
+        "
         @tap="refundConfirm = true"
       >
         撤销模拟开通
@@ -207,8 +248,13 @@
           >确认撤销此订单的测试权益？撤销后按账号剩余权益重新计算额度。</text
         >
         <button
+          role="button"
+          tabindex="0"
           class="membership-secondary"
           :disabled="
+            busy || loading || !!error || !membership.product?.available
+          "
+          :aria-disabled="
             busy || loading || !!error || !membership.product?.available
           "
           @tap="
@@ -219,8 +265,11 @@
           确认撤销测试权益
         </button>
         <button
+          role="button"
+          tabindex="0"
           class="membership-secondary"
           :disabled="busy"
+          :aria-disabled="busy"
           @tap="refundConfirm = false"
         >
           保留会员
@@ -230,23 +279,29 @@
     <view class="membership-orders-heading"
       ><text class="settings-title">最近订单</text
       ><button
+        role="button"
+        tabindex="0"
         class="membership-refresh"
         :disabled="busy || loading"
+        :aria-disabled="busy || loading"
         @tap="$emit('refresh')"
       >
         {{ loading ? "读取中…" : "刷新订单与权益" }}
       </button></view
     >
-    <view v-if="!orders.length && !loading" class="membership-empty"
+    <view v-if="!orders.length && !loading" class="membership-empty soft-panel"
       ><text>暂无订单</text
-      ><text>创建模拟订单后，可在这里查询处理结果。</text></view
+      ><text>订单生成后，可在这里查询处理结果。</text></view
     >
     <view v-else class="membership-orders">
       <button
+        role="button"
+        tabindex="0"
         v-for="item in orders"
         :key="item.id"
         class="membership-order"
         :disabled="busy || loading"
+        :aria-disabled="busy || loading"
         @tap="$emit('select-order', item)"
       >
         <view class="membership-order-top"
@@ -364,9 +419,10 @@ export default {
 @import "../../styles/tokens";
 .membership-summary {
   padding: 32rpx;
-  background: $deep;
-  color: $surface;
-  border-radius: 24rpx;
+  background: linear-gradient(130deg, #ffffff, #e8f1ff);
+  color: $text;
+  border: 1rpx solid #d4e2fa;
+  border-radius: 28rpx;
 }
 .membership-label {
   display: block;

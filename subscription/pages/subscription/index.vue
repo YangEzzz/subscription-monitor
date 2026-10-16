@@ -1,5 +1,5 @@
 <template>
-  <view class="app-shell" @keydown="handleKeyboardAction">
+  <view class="app-shell" :class="{ 'subpage-shell': !showTabBar }" @keydown="handleKeyboardAction">
     <view
       class="safe-top"
       :class="{ 'form-safe-top': activeView === 'form' }"

@@ -252,7 +252,7 @@ button[disabled] {
   flex-shrink: 0;
   padding: 10rpx 0;
   border: 1rpx solid $line;
-  border-top: 5rpx solid $green;
+  border-top: 1rpx solid $line;
   border-radius: 12rpx;
   text-align: center;
   background: $bg;
@@ -447,7 +447,7 @@ button[disabled] {
   min-width: 88rpx;
   line-height: 86rpx;
   border-radius: 16rpx;
-  background: $tint;
+  background: #eaf0ff;
 }
 .week-grid {
   color: $muted;
@@ -465,7 +465,7 @@ button[disabled] {
   font-family: $number-font;
 }
 .date-cell.selected {
-  background: $tint;
+  background: #eaf0ff;
 }
 .date-cell.selected .day-number {
   background: $green;
@@ -762,7 +762,7 @@ button[disabled] {
   font-size: 26rpx;
 }
 .settings-intro {
-  background: $tint;
+  background: #eaf0ff;
 }
 .settings-intro text:last-child {
   font-size: 24rpx;
@@ -773,7 +773,7 @@ button[disabled] {
   padding: 28rpx;
 }
 .membership-entry.active {
-  background: $tint;
+  background: #eaf0ff;
 }
 .membership-icon,
 .membership-entry.active .membership-icon {
@@ -942,7 +942,7 @@ button[disabled] {
 /* #ifdef H5 */
 * {
   scrollbar-width: thin;
-  scrollbar-color: #65766d #f3f5f4;
+  scrollbar-color: $muted $bg;
 }
 ::-webkit-scrollbar {
   width: 6px;
@@ -954,5 +954,1078 @@ button[disabled] {
 }
 ::-webkit-scrollbar-track {
   background: $bg;
+}
+/* #endif */
+/* Timebook: shared composition, not page-specific decoration. */
+.home-intro {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+  margin: 0 0 20rpx;
+}
+.home-kicker {
+  display: block;
+  font-size: 36rpx;
+  font-weight: 700;
+  color: $text;
+}
+.home-intro .home-lead {
+  margin: 8rpx 0 0;
+  font-size: 24rpx;
+}
+.home-overview {
+  display: block;
+  padding: 28rpx;
+  border: 1rpx solid #d4e2fa;
+  border-radius: 28rpx;
+  background: linear-gradient(
+    130deg,
+    rgba(255, 255, 255, 0.98),
+    rgba(232, 241, 255, 0.9)
+  );
+  box-shadow: 0 12rpx 40rpx rgba(49, 90, 170, 0.07);
+}
+.home-overview .summary-card {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: $text;
+  overflow: visible;
+}
+.home-overview .summary-amount {
+  font-size: 64rpx;
+  font-weight: 600;
+  margin: 12rpx 0 10rpx;
+  min-height: 0;
+  color: #142442;
+}
+.home-overview .summary-top {
+  color: #586e93;
+  font-size: 24rpx;
+  justify-content: flex-start;
+  gap: 4rpx;
+  flex-wrap: wrap;
+}
+.home-overview .summary-meta {
+  display: flex;
+  align-items: center;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 16rpx;
+  padding-top: 0;
+  border: 0;
+  color: $muted;
+  font-size: 24rpx;
+}
+.home-overview .summary-meta .divider {
+  display: none;
+}
+.home-overview .overview-metrics {
+  display: flex;
+  flex-direction: row;
+  margin: 24rpx 0 0;
+  padding: 22rpx 0 0;
+  gap: 24rpx;
+  border: 0;
+  border-top: 1rpx solid #d6e3f8;
+  border-radius: 0;
+  background: transparent;
+}
+.home-overview .overview-metric {
+  flex: 1;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+.home-overview .overview-metric-label {
+  font-size: 22rpx;
+}
+.home-overview .overview-metric-value {
+  display: flex;
+  flex-direction: row;
+  align-items: baseline;
+  gap: 8rpx;
+  font-size: 40rpx;
+  margin-top: 12rpx;
+}
+.home-overview .overview-metric-value text {
+  margin: 0;
+  font-size: 20rpx;
+}
+.section-kicker {
+  display: block;
+  color: $muted;
+  font-size: 20rpx;
+  margin-bottom: 6rpx;
+  letter-spacing: 2rpx;
+}
+.renewal-agenda {
+  margin-top: 32rpx;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+.renewal-agenda .section-title {
+  display: block;
+  font-size: 34rpx;
+}
+.renewal-agenda .section-head {
+  align-items: center;
+}
+.renewal-agenda .group-title {
+  border: 0;
+  margin: 16rpx 0 0;
+  padding: 18rpx 22rpx;
+  background: #edf2fc;
+  border-radius: 18rpx 18rpx 0 0;
+  color: #526a91;
+}
+.date-stamp {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  width: 64rpx;
+  padding: 12rpx 0;
+}
+.date-stamp-month {
+  color: $green;
+}
+.date-stamp-day {
+  color: $deep;
+  font-size: 38rpx;
+}
+.reminder-card {
+  margin-top: 32rpx;
+  padding: 24rpx;
+  border: 1rpx solid $line;
+  border-radius: 20rpx;
+  background: $surface;
+}
+.notice-banner {
+  border: 1rpx solid $line;
+  border-radius: 16rpx;
+  background: $surface;
+  padding: 20rpx;
+  margin-top: 28rpx;
+  align-items: flex-start;
+}
+.notice-title {
+  color: $text;
+  font-weight: 600;
+  font-size: 25rpx;
+}
+.notice-desc {
+  margin-top: 6rpx;
+  font-size: 22rpx;
+}
+.notice-icon {
+  background: $tint;
+  margin-top: 4rpx;
+}
+.notice-action {
+  flex-shrink: 0;
+}
+.collection-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12rpx;
+  margin-bottom: 20rpx;
+}
+.collection-heading .page-lead {
+  font-size: 23rpx;
+  margin: 0;
+}
+.collection-heading .text-button {
+  flex-shrink: 0;
+  gap: 4rpx;
+}
+.search-box {
+  background: $surface;
+  border: 1rpx solid $line;
+}
+.filter-pill {
+  background: transparent;
+  border-radius: 8rpx;
+}
+.filter-pill.active {
+  background: $green;
+  color: $surface;
+}
+.filter-pill.active .filter-count {
+  color: $surface;
+}
+.status-pill {
+  background: transparent;
+  border-radius: 0;
+  border: 0;
+  border-bottom: 3rpx solid transparent;
+}
+.status-pill.active {
+  color: $green;
+  background: transparent;
+  border-bottom-color: $green;
+}
+.subscription-list {
+  border-radius: 20rpx;
+  overflow: hidden;
+}
+.list-item {
+  gap: 12rpx;
+  padding: 28rpx 22rpx;
+}
+.list-item .list-main {
+  margin-left: 4rpx;
+}
+.list-finance {
+  flex-shrink: 0;
+  max-width: 32%;
+  text-align: right;
+}
+.list-price {
+  display: block;
+  font: 600 30rpx/1.4 $number-font;
+  overflow-wrap: anywhere;
+}
+.list-countdown {
+  display: block;
+  color: $muted;
+  font-size: 21rpx;
+  margin-top: 10rpx;
+}
+.list-date {
+  font-size: 21rpx;
+}
+.list-item .name-line {
+  flex-wrap: wrap;
+  gap: 8rpx;
+}
+.list-item .list-name {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.list-item .brand-logo {
+  width: 72rpx;
+  height: 72rpx;
+}
+.tab-bar {
+  padding: 12rpx 16rpx 0;
+}
+.tab-item {
+  margin: 0 4rpx;
+  background: transparent;
+  border-radius: 12rpx;
+}
+.tab-item.active {
+  background: $tint;
+  box-shadow: none;
+}
+.detail-page .detail-amount-card {
+  background: $deep;
+  padding: 36rpx;
+}
+.detail-grid {
+  border-radius: 0 0 20rpx 20rpx;
+}
+.detail-hero {
+  margin: 20rpx 0 28rpx;
+}
+.form-section-title {
+  display: block;
+  padding-left: 0;
+}
+.form-card {
+  padding: 4rpx 28rpx;
+  border-radius: 16rpx;
+}
+.form-card .form-row {
+  padding: 24rpx 0;
+}
+.form-input {
+  text-align: left;
+  background: $bg;
+  padding: 16rpx;
+  border-radius: 10rpx;
+}
+.stats-summary {
+  border-top: 5rpx solid $green;
+  border-radius: 20rpx;
+}
+.stats-total {
+  color: $deep;
+}
+.profile-head {
+  margin-top: 20rpx;
+  border-top: 5rpx solid $green;
+}
+.calendar-card {
+  padding: 20rpx 12rpx;
+}
+.calendar-detail {
+  border-top: 1rpx solid $line;
+}
+/* #ifdef H5 */
+@media screen and (min-width: 760px) {
+  .app-shell {
+    max-width: 1080px;
+    border: 0;
+    padding-left: 176px;
+    box-sizing: border-box;
+  }
+  .page {
+    padding: 0 44px 48px;
+  }
+  .primary-titlebar {
+    min-height: 78px;
+    padding-right: 0;
+    border-bottom: 1px solid $line;
+    margin-bottom: 28px;
+  }
+  .page-title {
+    font-size: 24px;
+  }
+  .home-intro {
+    margin: 0 0 22px;
+  }
+  .home-kicker {
+    font-size: 24px;
+  }
+  .home-intro .home-lead {
+    font-size: 14px;
+  }
+  .home-overview {
+    display: block;
+    padding: 28px 32px;
+  }
+  .home-overview .summary-card {
+    padding: 0;
+  }
+  .home-overview .summary-amount {
+    font-size: 44px;
+  }
+  .home-overview .overview-metrics {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    margin: 24px 0 0;
+    padding: 20px 0 0;
+    gap: 24px;
+    align-items: center;
+  }
+  .home-overview .overview-metric {
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .home-overview .overview-metric-value {
+    font-size: 40px;
+    margin-top: 20px;
+  }
+  .home-body {
+    display: grid;
+    grid-template-columns: minmax(0, 1.65fr) minmax(0, 1fr);
+    gap: 24px;
+    align-items: start;
+  }
+  .home-secondary {
+    min-width: 0;
+    padding-top: 0;
+  }
+  .renewal-agenda {
+    margin-top: 32rpx;
+  }
+  .tab-bar {
+    width: 176px;
+    max-width: none;
+    height: 100vh;
+    box-sizing: border-box;
+    top: 0;
+    bottom: auto;
+    left: max(0px, calc((100vw - 1080px) / 2));
+    right: auto;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: stretch;
+    padding: 100px 16px 24px;
+    border-top: 0;
+    border-right: 1px solid $line;
+  }
+  .tab-bar::before {
+    content: "续订清单";
+    position: absolute;
+    top: 36px;
+    left: 24px;
+    font-size: 21px;
+    font-weight: 700;
+    color: $deep;
+  }
+  .tab-item {
+    flex: none;
+    width: 100%;
+    height: 52px;
+    min-height: 52px;
+    margin: 0 0 10px;
+    flex-direction: row;
+    justify-content: flex-start;
+    padding: 0 16px;
+    gap: 14px;
+    font-size: 14px;
+  }
+  .tab-item.active {
+    box-shadow: none;
+  }
+  .float-add {
+    right: max(28px, calc((100vw - 1080px) / 2 + 36px));
+    bottom: 32px;
+  }
+  .sort-sheet {
+    max-width: 620px;
+  }
+  .detail-page,
+  .form-page,
+  .membership-page {
+    max-width: 760px;
+    margin: 0 auto;
+  }
+}
+@media screen and (max-width: 360px) {
+  .home-overview {
+    display: block;
+  }
+  .home-kicker {
+    font-size: 38rpx;
+  }
+  .list-finance {
+    max-width: 29%;
+  }
+  .list-price {
+    font-size: 27rpx;
+  }
+  .list-item {
+    padding: 24rpx 16rpx;
+    gap: 8rpx;
+  }
+}
+/* #endif */
+/* Readable amounts, quiet metadata, and the same ink in every workflow. */
+.list-item .list-name {
+  max-width: 100%;
+}
+.list-item .list-date {
+  white-space: normal;
+}
+.empty-icon {
+  background: $tint;
+  border-radius: 16rpx;
+}
+.empty-title {
+  color: $text;
+  font-size: 32rpx;
+}
+.empty-desc {
+  color: $muted;
+  font-size: 26rpx;
+  line-height: 1.7;
+}
+.status-badge.active {
+  background: $tint;
+  color: $deep;
+}
+.reminder-options button.selected {
+  color: $deep;
+  background: $tint;
+  border-color: $green;
+}
+.process-button.success,
+.undo-button {
+  color: $deep;
+  background: #eaf0ff;
+}
+/* #ifdef H5 */
+@media screen and (min-width: 760px) {
+  .tab-item text {
+    margin-top: 0;
+  }
+}
+/* #endif */
+/* #ifdef H5 */
+/* rpx scales with the viewport; keep small-phone reading sizes usable. */
+.list-name,
+.renewal-name,
+.setting-copy text:first-child {
+  font-size: max(14px, 28rpx);
+}
+.form-label,
+.form-value,
+.form-input,
+.form-input input {
+  font-size: max(13px, 26rpx);
+}
+.list-detail,
+.list-date,
+.renewal-date,
+.days,
+.section-caption,
+.home-lead,
+.overview-metric-label,
+.summary-top,
+.summary-meta,
+.filter-pill,
+.status-pill,
+.form-hint,
+.stats-compare,
+.setting-copy text:last-child {
+  font-size: max(12px, 24rpx);
+}
+.state-description,
+.list-countdown,
+.tab-item {
+  font-size: max(12px, 22rpx);
+}
+.list-price {
+  font-size: max(16px, 30rpx);
+}
+.collection-heading .page-lead {
+  font-size: 12px;
+}
+/* #endif */
+/* #ifdef H5 */
+@media screen and (min-width: 760px) {
+  .app-shell.subpage-shell {
+    padding-left: 0;
+    max-width: 900px;
+  }
+}
+/* #endif */
+/* Reference refinement: one airy overview, distinct time buckets, no accent rails. */
+.home-page {
+  background: linear-gradient(160deg, #eaf2ff 0, #f4f7ff 440rpx, $bg 900rpx);
+}
+.home-head {
+  margin-bottom: 22rpx;
+}
+.summary-body {
+  position: relative;
+  min-width: 0;
+}
+.summary-body .summary-card {
+  position: relative;
+  z-index: 1;
+}
+.summary-body .summary-meta {
+  padding-right: 120rpx;
+}
+.home-overview .summary-amount {
+  padding-right: 116rpx;
+  overflow-wrap: anywhere;
+}
+.home-overview .summary-eye {
+  min-width: 72rpx;
+  width: 72rpx;
+  min-height: 72rpx;
+  height: 72rpx;
+  margin: -12rpx 0;
+}
+.home-overview .overview-metric + .overview-metric {
+  border-left: 1rpx solid #d6e3f8;
+  padding-left: 28rpx;
+}
+/* Add stays discoverable without competing with the renewal summary. */
+.home-overview .quick-add,
+.list-page .collection-add {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  gap: 5px;
+  width: auto;
+  min-width: 0;
+  height: 44px;
+  min-height: 44px;
+  margin: 0;
+  padding: 0 6px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: $green;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+  box-shadow: none;
+}
+.home-overview .quick-add.button-hover,
+.list-page .collection-add.button-hover {
+  background: #eaf0ff;
+}
+.home-overview .home-intro {
+  margin-bottom: 4px;
+}
+.home-overview > .home-lead {
+  display: block;
+  margin: 0 0 20rpx;
+}
+.renewal-illustration {
+  position: absolute;
+  right: 6rpx;
+  bottom: 8rpx;
+  width: 132rpx;
+  height: 150rpx;
+  pointer-events: none;
+}
+.illustration-orbit {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: rgba(198, 218, 255, 0.28);
+  transform: scale(1.2);
+}
+.receipt-back {
+  position: absolute;
+  width: 88rpx;
+  height: 116rpx;
+  top: 2rpx;
+  left: 34rpx;
+  border-radius: 15rpx;
+  background: linear-gradient(150deg, #92b8ff, #d0e2ff);
+  transform: rotate(18deg);
+}
+.receipt-paper {
+  position: absolute;
+  width: 90rpx;
+  height: 120rpx;
+  top: 18rpx;
+  left: 6rpx;
+  padding: 30rpx 14rpx;
+  box-sizing: border-box;
+  border: 2rpx solid rgba(255, 255, 255, 0.92);
+  border-radius: 15rpx;
+  background: linear-gradient(135deg, #ffffff, #dbe9ff);
+  box-shadow: 0 8rpx 20rpx rgba(90, 137, 213, 0.11);
+  transform: rotate(-13deg);
+}
+.receipt-line {
+  height: 8rpx;
+  width: 46rpx;
+  border-radius: 6rpx;
+  background: #a8c7fa;
+  margin-bottom: 10rpx;
+}
+.receipt-line.long {
+  width: 56rpx;
+}
+.receipt-line.short {
+  width: 30rpx;
+}
+.receipt-clock {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 54rpx;
+  height: 54rpx;
+  border: 2rpx solid #abc9fb;
+  border-radius: 50%;
+  background: #89aff2;
+  transform: rotate(10deg);
+}
+.clock-hand {
+  position: absolute;
+  left: 24rpx;
+  top: 12rpx;
+  width: 5rpx;
+  height: 16rpx;
+  border-radius: 5rpx;
+  background: white;
+  transform-origin: 50% 100%;
+}
+.clock-hand.minute {
+  height: 13rpx;
+  transform: rotate(110deg);
+  top: 15rpx;
+}
+.renewal-group {
+  padding: 0 20rpx;
+  background: $surface;
+  border: 1rpx solid #e0e8f5;
+  border-top: 0;
+  border-radius: 0 0 20rpx 20rpx;
+  box-shadow: 0 6rpx 18rpx rgba(49, 90, 170, 0.025);
+}
+.renewal-group .renewal-row {
+  min-height: 138rpx;
+  padding: 22rpx 0;
+}
+.renewal-group .renewal-main {
+  margin: 0 14rpx;
+}
+.renewal-group .renewal-side {
+  max-width: 37%;
+}
+.renewal-brand {
+  margin-left: 12rpx;
+}
+.renewal-group .brand-logo {
+  width: 60rpx;
+  height: 60rpx;
+  border-radius: 14rpx;
+}
+.renewal-group .brand-logo text {
+  font-size: 23rpx;
+}
+.renewal-group .date-stamp {
+  width: 54rpx;
+}
+.renewal-group .date-stamp-month {
+  font-size: 21rpx;
+}
+.renewal-group .date-stamp-day {
+  font-size: 36rpx;
+}
+.renewal-group .renewal-name {
+  font-size: 27rpx;
+}
+.renewal-group .renewal-date {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.amount-missing {
+  color: $amber;
+  font: 600 25rpx/1.5 $body-font;
+}
+/* #ifdef H5 */
+@media (min-width: 760px) {
+  .home-intro .home-kicker {
+    font-size: 25px;
+  }
+  .home-overview .summary-amount {
+    padding-right: 180px;
+  }
+  .summary-body .summary-meta {
+    padding-right: 180px;
+  }
+  .renewal-illustration {
+    right: 30px;
+    bottom: 12px;
+    width: 132rpx;
+    height: 150rpx;
+    transform: scale(1.5);
+    transform-origin: bottom right;
+  }
+  .home-overview .overview-metric-value {
+    margin-top: 8px;
+    font-size: 32px;
+  }
+  .home-page .primary-titlebar {
+    margin-bottom: 24px;
+  }
+}
+@media (max-width: 360px) {
+  .renewal-group {
+    padding: 0 14rpx;
+  }
+  .renewal-brand {
+    margin-left: 6rpx;
+  }
+  .renewal-group .brand-logo {
+    width: 50rpx;
+    height: 50rpx;
+  }
+  .renewal-group .renewal-main {
+    margin: 0 10rpx;
+  }
+  .renewal-group .renewal-name {
+    font-size: 13px;
+  }
+  .renewal-group .renewal-price {
+    font-size: 14px;
+  }
+  .home-overview .summary-amount {
+    font-size: 58rpx;
+  }
+}
+/* #endif */
+/* Subscription collection: the same airy surface, with denser reading rows. */
+.list-page {
+  background: linear-gradient(160deg, #eaf2ff 0, #f4f7ff 480rpx, $bg 980rpx);
+}
+.list-page .primary-titlebar {
+  margin-bottom: 12rpx;
+}
+.list-page .collection-heading {
+  margin: 0 0 24rpx;
+  align-items: center;
+  gap: 12rpx;
+}
+.list-page .collection-heading .page-lead {
+  color: #627694;
+  font-size: 25rpx;
+  line-height: 1.5;
+  flex: 1;
+  min-width: 0;
+}
+.collection-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+.collection-toolbar .search-box {
+  flex: 1;
+  min-width: 0;
+}
+.collection-toolbar .search-box input {
+  width: 0;
+  min-width: 0;
+  flex: 1;
+}
+.list-page .search-box {
+  box-sizing: border-box;
+  height: 104rpx;
+  margin: 0;
+  padding: 0 22rpx;
+  border: 1rpx solid #dce5f5;
+  border-radius: 24rpx;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 6rpx 20rpx rgba(49, 90, 170, 0.035);
+}
+.list-page .search-box input {
+  height: 104rpx;
+  font-size: 28rpx;
+}
+.list-page .filter-scroll,
+.list-page .status-scroll {
+  width: 100%;
+  margin-left: 0;
+  margin-right: 0;
+}
+.list-page .filter-scroll {
+  margin-top: 24rpx;
+}
+.list-page .filter-row {
+  padding: 0 0 8rpx;
+  gap: 14rpx;
+}
+.list-page .filter-pill {
+  min-height: 88rpx;
+  min-width: 120rpx;
+  margin: 0;
+  padding: 0 22rpx;
+  border: 1rpx solid #dfe7f5;
+  border-radius: 20rpx;
+  background: rgba(255, 255, 255, 0.8);
+  color: #526583;
+}
+.list-page .filter-pill.active {
+  background: $green;
+  border-color: $green;
+  color: $surface;
+  box-shadow: 0 6rpx 16rpx rgba(49, 90, 203, 0.12);
+}
+.list-page .filter-count {
+  color: inherit;
+  font: 500 24rpx $number-font;
+}
+.list-page .status-scroll {
+  margin-top: 16rpx;
+  border-bottom: 1rpx solid #dce5f5;
+}
+.list-page .status-row {
+  padding: 0;
+  gap: 18rpx;
+}
+.list-page .status-pill {
+  position: relative;
+  min-height: 88rpx;
+  padding: 0 4rpx;
+  border: 0;
+  color: #63738e;
+  background: transparent;
+  font-size: 25rpx;
+}
+.list-page .status-pill.active {
+  color: $green;
+  background: transparent;
+  font-weight: 700;
+}
+.list-page .status-pill.active::before {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 4rpx;
+  right: 4rpx;
+  height: 5rpx;
+  background: $green;
+  border-radius: 5rpx 5rpx 0 0;
+}
+.list-page .sort-summary {
+  min-height: 84rpx;
+  margin: 20rpx 0;
+  padding: 0 22rpx;
+  border: 0;
+  border-radius: 18rpx;
+  background: #edf2fc;
+  color: #5d7090;
+  font-size: 24rpx;
+}
+.list-page .sort-result {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+  flex-shrink: 0;
+  padding-left: 12rpx;
+}
+.list-page .subscription-list {
+  border: 1rpx solid #e0e8f5;
+  border-radius: 26rpx;
+  background: $surface;
+  box-shadow: 0 6rpx 22rpx rgba(49, 90, 170, 0.035);
+}
+.list-page .list-item {
+  gap: 16rpx;
+  min-height: 188rpx;
+  padding: 26rpx 24rpx;
+  border-bottom: 1rpx solid #e8edf6;
+  background: transparent;
+}
+.list-page .list-item:last-child {
+  border-bottom: 0;
+}
+.list-page .list-item .brand-logo {
+  width: 78rpx;
+  height: 78rpx;
+  border-radius: 19rpx;
+}
+.list-page .list-item .list-main {
+  margin: 0;
+}
+.list-page .name-line {
+  gap: 8rpx;
+  align-items: center;
+}
+.list-page .list-name {
+  font-size: 29rpx;
+  line-height: 1.45;
+  font-weight: 650;
+  overflow-wrap: anywhere;
+}
+.list-page .status-badge {
+  flex-shrink: 0;
+  padding: 3rpx 9rpx;
+  font-size: 20rpx;
+  line-height: 1.5;
+  border-radius: 8rpx;
+}
+.list-page .list-detail,
+.list-page .list-date {
+  display: block;
+  margin-top: 8rpx;
+  font-size: 24rpx;
+  color: #73829a;
+  line-height: 1.5;
+}
+.list-page .list-detail {
+  white-space: normal;
+}
+.list-page .list-finance {
+  max-width: 33%;
+  min-width: 90rpx;
+}
+.list-page .list-price {
+  font: 600 32rpx/1.4 $number-font;
+  color: $text;
+}
+.list-page .list-price.amount-missing {
+  font: 600 25rpx/1.45 $body-font;
+  color: $amber;
+}
+.list-page .list-countdown {
+  margin-top: 12rpx;
+  color: #73829a;
+  font-size: 24rpx;
+  line-height: 1.5;
+}
+.list-page .list-finance.missing .list-countdown {
+  color: $amber;
+}
+.list-page .empty-state {
+  margin-top: 24rpx;
+  border: 1rpx solid #e0e8f5;
+  border-radius: 24rpx;
+  background: rgba(255, 255, 255, 0.94);
+}
+/* #ifdef H5 */
+.list-page .collection-heading .page-lead,
+.list-page .list-detail,
+.list-page .list-date,
+.list-page .list-countdown {
+  font-size: max(12px, 24rpx);
+}
+.list-page .filter-pill,
+.list-page .status-pill {
+  font-size: max(13px, 25rpx);
+}
+.list-page .list-name {
+  font-size: max(14px, 29rpx);
+}
+@media (min-width: 760px) {
+  .list-page .primary-titlebar {
+    margin-bottom: 20px;
+  }
+  .list-page .collection-heading {
+    margin-bottom: 20px;
+  }
+  .list-page .filter-scroll {
+    margin-top: 18px;
+  }
+  .list-page .status-row {
+    gap: 22px;
+  }
+  .list-page .list-item {
+    padding: 24px;
+  }
+  .list-page .list-item .brand-logo {
+    width: 44px;
+    height: 44px;
+  }
+  .list-page .list-finance {
+    min-width: 145px;
+  }
+}
+@media (max-width: 360px) {
+  .list-page .collection-heading .page-lead {
+    font-size: 12px;
+  }
+  .list-page .list-item {
+    padding: 24rpx 18rpx;
+    gap: 12rpx;
+  }
+  .list-page .list-item .brand-logo {
+    width: 62rpx;
+    height: 62rpx;
+  }
+  .list-page .list-finance {
+    max-width: 31%;
+    min-width: 80rpx;
+  }
+  .list-page .list-name {
+    font-size: 13px;
+  }
+  .list-page .list-price {
+    font-size: 16px;
+  }
+  .list-page .list-price.amount-missing {
+    font-size: 12px;
+  }
+  .list-page .list-item > .uni-icons {
+    font-size: 14px !important;
+  }
 }
 /* #endif */

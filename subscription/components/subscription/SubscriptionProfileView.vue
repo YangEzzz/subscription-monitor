@@ -5,7 +5,8 @@
       :style="{ height: navigationBarHeight + 'px' }"
       ><text class="page-title">我的</text></view
     >
-    <view class="profile-head"
+    <text class="page-lead">管理提醒、账号额度与数据偏好</text>
+    <view class="profile-head soft-summary"
       ><view class="profile-user-row"
         ><view class="avatar">续</view
         ><view class="profile-copy"
@@ -17,7 +18,10 @@
       ><view class="profile-metrics"
         ><view
           ><text>月均支出</text><text>{{ monthlyAverageText }}</text></view
-        ><view><text>提醒状态</text><text>{{ notificationReady ? '微信通知' : '待开启' }}</text></view></view
+        ><view
+          ><text>提醒状态</text
+          ><text>{{ notificationReady ? "微信通知" : "待开启" }}</text></view
+        ></view
       ></view
     >
     <view
@@ -44,16 +48,14 @@
             isMember ? "会员已开启" : "免费版"
           }}</text
           ><text class="membership-desc">{{
-            isMember
-              ? "无限新增订阅"
-              : "查看订阅额度与可用功能"
+            isMember ? "无限新增订阅" : "查看订阅额度与可用功能"
           }}</text></view
         >
         <uni-icons
           class="membership-arrow"
           type="right"
           size="18"
-          :color="isMember ? '#3c7c5a' : '#9b6a28'"
+          color="#315acb"
         />
       </view>
       <view v-if="!isMember" class="membership-quota"
@@ -79,93 +81,101 @@
       >
     </view>
 
-    <view class="settings-section">
-      <text class="settings-title">提醒设置</text>
-      <view class="settings-card">
-        <settings-row
-          icon="notification"
-          icon-class="green-bg"
-          icon-color="#177e4b"
-          title="续费通知"
-          :description="notificationDescription"
-          :disabled="notificationBusy"
-          action
-          @activate="$emit('notification-change', true)"
-        />
-        <settings-row
-          v-if="settings.notificationEnabled"
-          icon="notification" title="暂停微信通知"
-          description="暂停发送，保留已有授权" action
-          :disabled="notificationBusy"
-          @activate="$emit('notification-change', false)"
-        />
-        <settings-row icon="list" title="通知发送记录" description="查看最近的发送结果" action @activate="$emit('notification-history')" />
-        <settings-row
-          icon="calendar"
-          icon-class="orange-bg"
-          icon-color="#bb6b18"
-          title="默认提醒规则"
-          :description="`提前 ${settings.defaultReminders.join('、')} 天 · ${settings.reminderTime}`"
-          action
-          @activate="$emit('open-reminder-settings')"
-        />
-      </view>
-    </view>
-
-    <view class="settings-section">
-      <text class="settings-title">数据与偏好</text>
-      <view class="settings-card">
-        <picker
-          :range="currencies"
-          @change="changeDefaultCurrency"
-          ><settings-row
-            icon="wallet"
-            icon-class="violet-bg"
-            icon-color="#6458c9"
-            title="默认币种"
-            :description="settings.defaultCurrency"
+    <view class="profile-settings-grid">
+      <view class="settings-section">
+        <text class="settings-title">提醒设置</text>
+        <view class="settings-card">
+          <settings-row
+            icon="notification"
+            icon-class="green-bg"
+            icon-color="#315acb"
+            title="续费通知"
+            :description="notificationDescription"
+            :disabled="notificationBusy"
             action
-        /></picker>
-        <settings-row
-          icon="download"
-          icon-class="green-bg"
-          icon-color="#177e4b"
-          title="导出订阅数据"
-          description="生成 CSV 或复制表格数据"
-          action
-          @activate="$emit('export')"
-        />
-        <settings-row
-          icon="trash"
-          icon-class="orange-bg"
-          icon-color="#bb6b18"
-          title="回收站"
-          :description="
-            deletedSubscriptions.length
-              ? `${deletedSubscriptions.length} 条可恢复订阅`
-              : '暂无已删除订阅'
-          "
-          action
-          @activate="$emit('trash')"
-        />
-        <settings-row
-          icon="locked"
-          icon-class="blue-bg"
-          icon-color="#3c7fc1"
-          title="隐私与数据说明"
-          description="了解账号登录与数据保存"
-          action
-          @activate="$emit('privacy')"
-        />
-        <settings-row
-          icon="refresh"
-          icon-class="red-bg"
-          icon-color="#cc4b52"
-          title="重新加载数据"
-          description="从服务端刷新订阅与设置"
-          action
-          @activate="$emit('refresh')"
-        />
+            @activate="$emit('notification-change', true)"
+          />
+          <settings-row
+            v-if="settings.notificationEnabled"
+            icon="notification"
+            title="暂停微信通知"
+            description="暂停发送，保留已有授权"
+            action
+            :disabled="notificationBusy"
+            @activate="$emit('notification-change', false)"
+          />
+          <settings-row
+            icon="list"
+            title="通知发送记录"
+            description="查看最近的发送结果"
+            action
+            @activate="$emit('notification-history')"
+          />
+          <settings-row
+            icon="calendar"
+            icon-class="orange-bg"
+            icon-color="#bb6b18"
+            title="默认提醒规则"
+            :description="`提前 ${settings.defaultReminders.join('、')} 天 · ${settings.reminderTime}`"
+            action
+            @activate="$emit('open-reminder-settings')"
+          />
+        </view>
+      </view>
+
+      <view class="settings-section">
+        <text class="settings-title">数据与偏好</text>
+        <view class="settings-card">
+          <picker :range="currencies" @change="changeDefaultCurrency"
+            ><settings-row
+              icon="wallet"
+              icon-class="violet-bg"
+              icon-color="#6458c9"
+              title="默认币种"
+              :description="settings.defaultCurrency"
+              action
+          /></picker>
+          <settings-row
+            icon="download"
+            icon-class="green-bg"
+            icon-color="#315acb"
+            title="导出订阅数据"
+            description="生成 CSV 或复制表格数据"
+            action
+            @activate="$emit('export')"
+          />
+          <settings-row
+            icon="trash"
+            icon-class="orange-bg"
+            icon-color="#bb6b18"
+            title="回收站"
+            :description="
+              deletedSubscriptions.length
+                ? `${deletedSubscriptions.length} 条可恢复订阅`
+                : '暂无已删除订阅'
+            "
+            action
+            @activate="$emit('trash')"
+          />
+          <settings-row
+            icon="locked"
+            icon-class="blue-bg"
+            icon-color="#3c7fc1"
+            title="隐私与数据说明"
+            description="了解账号登录与数据保存"
+            action
+            @activate="$emit('privacy')"
+          />
+          <settings-row
+            icon="refresh"
+            icon-class="red-bg"
+            icon-color="#cc4b52"
+            title="重新加载数据"
+            description="从服务端刷新订阅与设置"
+            action
+            @activate="$emit('refresh')"
+          />
+        </view>
       </view>
     </view>
     <text class="version-text">续订清单</text>
@@ -192,7 +202,7 @@ export default {
   props: {
     membershipEntryEnabled: { type: Boolean, default: false },
     notificationReady: { type: Boolean, default: false },
-    notificationDescription: { type: String, default: '' },
+    notificationDescription: { type: String, default: "" },
     notificationBusy: { type: Boolean, default: false },
     navigationBarHeight: { type: Number, default: 0 },
     liveSubscriptions: { type: Array, default: () => [] },

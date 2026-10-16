@@ -1,5 +1,11 @@
 <template>
-  <button role="button" tabindex="0" class="renewal-row" @tap="$emit('activate')">
+  <button
+    role="button"
+    tabindex="0"
+    class="renewal-row"
+    :aria-label="`${item.name}，${item.shortDate}，${item.amount === null ? '金额待补充' : item.amountText}，${item.displayStatus || '待续费'}`"
+    @tap="$emit('activate')"
+  >
     <view class="date-stamp" aria-hidden="true"
       ><text class="date-stamp-month"
         >{{ Number(item.nextBillingDate.slice(5, 7)) }}月</text
@@ -7,10 +13,12 @@
         item.nextBillingDate.slice(8, 10)
       }}</text></view
     >
+    <brand-logo class="renewal-brand" :item="item" />
     <view class="renewal-main"
       ><text class="renewal-name">{{ item.name }}</text
       ><text class="renewal-date"
-        >{{ item.shortDate }} · {{ item.displayStatus || "待续费" }}</text
+        >{{ item.plan || item.category }} ·
+        {{ item.displayStatus || "待续费" }}</text
       ></view
     >
     <view class="renewal-side"
@@ -26,8 +34,10 @@
   </button>
 </template>
 <script>
+import BrandLogo from "./brand-logo.vue";
 export default {
   name: "SubscriptionRow",
+  components: { BrandLogo },
   emits: ["activate"],
   props: { item: { type: Object, required: true } },
 };

@@ -1,5 +1,5 @@
 <template>
-  <view class="stats-summary">
+  <view class="stats-summary soft-summary">
     <view class="stats-summary-head">
       <text class="stats-label">{{ statsLabel }}</text>
       <picker
@@ -8,7 +8,7 @@
         @change="changeCurrency"
         ><view class="currency-filter"
           >{{ statsCurrency }}
-          <uni-icons type="down" size="12" color="#177e4b" /></view
+          <uni-icons type="down" size="12" color="#315acb" /></view
       ></picker>
     </view>
     <text class="stats-total">{{

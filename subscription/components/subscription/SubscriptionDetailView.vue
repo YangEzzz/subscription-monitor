@@ -11,34 +11,39 @@
         <uni-icons type="left" size="24" color="#202622" /></button
       ><text class="page-title">订阅详情</text><view class="icon-spacer"></view
     ></view>
-    <view class="detail-hero"
-      ><brand-logo :item="subscription" /><view class="detail-hero-copy"
-        ><text class="detail-name">{{ subscription.name }}</text
-        ><text class="detail-plan">{{
-          subscription.plan || subscription.category
+    <view class="detail-summary soft-summary">
+      <view class="detail-hero"
+        ><brand-logo :item="subscription" /><view class="detail-hero-copy"
+          ><text class="detail-name">{{ subscription.name }}</text
+          ><text class="detail-plan">{{
+            subscription.plan || subscription.category
+          }}</text></view
+        ><text class="status-badge large" :class="getStatus(subscription)">{{
+          statusText(subscription)
         }}</text></view
-      ><text class="status-badge large" :class="getStatus(subscription)">{{
-        statusText(subscription)
-      }}</text></view
-    >
-    <view class="detail-amount-card"
-      ><text class="detail-amount-label">{{
-        subscription.cycle === "一次性"
-          ? "预计付款"
-          : subscription.autoRenew
-            ? "下次预计扣费"
-            : "下次到期"
-      }}</text
-      ><text class="detail-amount">{{
-        subscription.amount === null
-          ? "金额待补充"
-          : formatMoney(subscription.amount, subscription.currency)
-      }}</text
-      ><text class="detail-countdown"
-        >{{ formatDate(subscription.nextBillingDate) }} ·
-        {{ daysText(subscription) }}</text
-      ></view
-    >
+      >
+      <view class="detail-amount-card"
+        ><text class="detail-amount-label">{{
+          subscription.cycle === "一次性"
+            ? "预计付款"
+            : subscription.autoRenew
+              ? "下次预计扣费"
+              : "下次到期"
+        }}</text
+        ><text
+          class="detail-amount"
+          :class="{ 'amount-missing': subscription.amount === null }"
+          >{{
+            subscription.amount === null
+              ? "金额待补充"
+              : formatMoney(subscription.amount, subscription.currency)
+          }}</text
+        ><text class="detail-countdown"
+          >{{ formatDate(subscription.nextBillingDate) }} ·
+          {{ daysText(subscription) }}</text
+        ></view
+      >
+    </view>
     <view class="detail-grid"
       ><view
         ><text>计费周期</text><text>{{ cycleText(subscription) }}</text></view
@@ -117,7 +122,7 @@
       :class="{ completed: renewalLocked }"
       ><view v-if="renewalLocked" class="renewal-result"
         ><view class="result-icon"
-          ><uni-icons type="checkbox-filled" size="24" color="#177e4b" /></view
+          ><uni-icons type="checkbox-filled" size="24" color="#315acb" /></view
         ><view class="result-copy"
           ><text class="section-title">本期续费已确认</text
           ><text class="process-note">{{
@@ -164,7 +169,7 @@
             class="process-button success"
             @tap="$emit('confirm-renewal')"
           >
-            <uni-icons type="checkbox-filled" size="20" color="#177e4b" /><text
+            <uni-icons type="checkbox-filled" size="20" color="#315acb" /><text
               >确认已续费</text
             ></button
           ><button
@@ -199,7 +204,7 @@
         <uni-icons
           type="more-filled"
           size="19"
-          color="#177e4b"
+          color="#315acb"
         />管理订阅</button
       ><button
         role="button"

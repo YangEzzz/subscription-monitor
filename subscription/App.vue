@@ -22,7 +22,7 @@
 	/* #ifdef H5 */
 	body {
 		margin: 0;
-		background: #eef2ef;
+		background: $bg;
 	}
 
 	uni-page-body {
