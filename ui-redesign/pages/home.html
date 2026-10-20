@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>续订清单</title>
+<link rel="stylesheet" href="../assets/tokens.css">
+<link rel="stylesheet" href="../assets/components.css">
+<style>
+  .live{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 0 3px rgba(31,163,91,.16)}
+  .page-sub{display:flex;align-items:center;gap:6px}
+  .hero{margin-top:14px;padding:16px 18px 0}
+  .hero-top{display:flex;justify-content:space-between;align-items:center}
+  .eyebrow{font-size:12.5px;color:var(--ink-2);font-weight:500}
+  .hero-actions{display:flex;gap:6px;align-items:center}
+  .hero-actions .icon-btn{width:30px;height:30px;border-radius:10px;color:var(--ink-3);background:#fff}
+  .to-stats{height:30px;padding:0 8px 0 10px;border-radius:10px;display:inline-flex;align-items:center;gap:2px;
+    font-size:12.5px;font-weight:600;color:var(--blue);background:var(--blue-soft);border:1px solid var(--blue-line)}
+  .big{margin-top:6px;display:flex;align-items:baseline;gap:2px}
+  .big .c{font-family:var(--font-num);font-weight:700;font-size:24px;color:var(--ink-2)}
+  .big .i{font-family:var(--font-num);font-weight:700;font-size:48px;line-height:1;letter-spacing:-.02em}
+  .big .d{font-family:var(--font-num);font-weight:700;font-size:24px;color:var(--ink-3)}
+  .meta-line{margin-top:8px;font-size:12.5px;color:var(--ink-3)}
+  .meta-line b{color:var(--ink-2);font-weight:600}
+
+  .timeline{margin-top:12px;position:relative;height:54px}
+  .track{position:absolute;left:0;right:0;top:20px;height:4px;border-radius:2px;background:rgba(21,22,28,.06)}
+  .track i{position:absolute;left:14px;top:0;bottom:0;width:calc(23.3% - 14px);border-radius:2px;background:linear-gradient(90deg,var(--orange),#FFB066)}
+  .wk{position:absolute;left:23.3%;top:12px;width:1px;height:20px;background:repeating-linear-gradient(180deg,var(--ink-4) 0 2px,transparent 2px 4px)}
+  .pin{position:absolute;top:10px;transform:translateX(-50%);width:24px;height:24px;border-radius:8px;display:grid;place-items:center;
+    color:#fff;font-size:11px;font-weight:700;border:2px solid #fff;box-shadow:0 3px 8px -2px rgba(21,22,28,.3)}
+  .pin.qq{left:14px;background:var(--green)}
+  .pin.nf{left:33.3%;background:#E5252A}
+  .pin.ic{left:60%;background:#3B8EF0}
+  .pin.qq::after{content:'';position:absolute;inset:-6px;border-radius:12px;border:1.5px solid rgba(232,105,12,.5)}
+  .tl{position:absolute;left:0;right:0;bottom:-2px;height:14px;font-size:10.5px;color:var(--ink-4);font-weight:500}
+  .tl span{position:absolute}
+
+  .kpis{margin:10px -18px 0;display:flex;border-top:1px solid var(--hair)}
+  .kpi{flex:1;padding:11px 18px 13px;display:flex;align-items:center;gap:11px}
+  .kpi+.kpi{border-left:1px solid var(--hair)}
+  .kpi .k{font-size:11.5px;color:var(--ink-3)}
+  .kpi .v{margin-top:2px;font-family:var(--font-num);font-size:21px;font-weight:700;line-height:1.1}
+  .kpi .v small{font-family:var(--font);font-size:11.5px;font-weight:500;color:var(--ink-3);margin-left:3px}
+  .kpi .v.o{color:var(--orange)}
+
+  .grp{display:flex;align-items:center;gap:6px;padding:11px 16px 3px;font-size:11.5px;font-weight:600;color:var(--ink-3)}
+  .grp .n{min-width:17px;height:17px;padding:0 5px;border-radius:6px;background:var(--surface-sunken);border:1px solid var(--hair);
+    display:grid;place-items:center;font-family:var(--font-num);font-size:11px;color:var(--ink-2)}
+  .grp.hot{color:var(--orange)}
+  .grp.hot .n{background:var(--orange-soft);border-color:var(--orange-line);color:var(--orange)}
+  .list .srow{padding-top:9px;padding-bottom:11px}
+  .peek{height:80px}
+</style>
+</head>
+<body class="canvas" data-tab="0">
+<div class="device">
+  <div class="page">
+    <div class="page-head">
+      <div>
+        <div class="page-title">续订清单</div>
+        <div class="page-sub"><span class="live"></span>近期扣费与待处理事项</div>
+      </div>
+      <div class="capsule"></div>
+    </div>
+
+    <section class="card hero">
+      <div class="hero-top">
+        <div class="eyebrow">未来 30 天预计扣费</div>
+        <div class="hero-actions">
+          <span class="to-stats">统计<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>
+          <div class="icon-btn" aria-label="隐藏金额"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></div>
+        </div>
+      </div>
+      <div class="big"><span class="c">¥</span><span class="i">129</span><span class="d">.00</span></div>
+      <div class="meta-line">共 <b>3</b> 项 · 月均约 <b>¥129.00</b></div>
+      <div class="timeline">
+        <div class="track"><i></i></div><div class="wk"></div>
+        <div class="pin qq">Q</div><div class="pin nf">N</div>
+        <div class="pin ic"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M19.4 10.6a6.5 6.5 0 0 0-12.7-1.3A5 5 0 0 0 7.5 19h11.4a4.2 4.2 0 0 0 .5-8.4z"/></svg></div>
+        <div class="tl"><span style="left:14px;transform:translateX(-50%)">今天</span><span style="left:23.3%;transform:translateX(-50%)">7 天</span><span style="right:0">30 天</span></div>
+      </div>
+      <div class="kpis">
+        <div class="kpi">
+          <div class="icon-tile blue" style="width:34px;height:34px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 2l4 4-4 4"/><path d="M3 11V9a3 3 0 0 1 3-3h15"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v2a3 3 0 0 1-3 3H3"/></svg></div>
+          <div><div class="k">正在订阅</div><div class="v">3<small>项服务</small></div></div>
+        </div>
+        <div class="kpi">
+          <div class="icon-tile orange" style="width:34px;height:34px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/></svg></div>
+          <div><div class="k">7 天内续费</div><div class="v o">1<small>项提醒</small></div></div>
+        </div>
+      </div>
+    </section>
+
+    <div class="sec-head" style="padding-top:18px">
+      <div class="sec-title">即将续费</div>
+      <span class="link-pill">全部 3 <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M3.5 2 6.5 5 3.5 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    </div>
+    <section class="card list">
+      <div class="grp hot">未来 7 天 <span class="n">1</span></div>
+      <div class="srow urgent">
+        <div class="logo qq">Q</div>
+        <div class="info"><div class="name">QQ音乐</div><div class="meta">10月21日<span class="sep">·</span>音乐<span class="sep">·</span><span style="color:var(--orange);font-weight:500">即将到期</span></div></div>
+        <div class="right"><div class="amount todo">待补充</div><div class="due hot">1 天后</div></div>
+      </div>
+      <div class="hair"></div>
+      <div class="grp">8–30 天内 <span class="n">2</span></div>
+      <div class="srow">
+        <div class="logo nf">N</div>
+        <div class="info"><div class="name">Netflix Premium</div><div class="meta">10月30日<span class="sep">·</span>Premium<span class="sep">·</span><span style="color:var(--green);font-weight:500">正常</span></div></div>
+        <div class="right"><div class="amount"><span class="c">¥</span>108.00</div><div class="due mid">10 天后</div></div>
+      </div>
+      <div class="srow">
+        <div class="logo ic"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.4 10.6a6.5 6.5 0 0 0-12.7-1.3A5 5 0 0 0 7.5 19h11.4a4.2 4.2 0 0 0 .5-8.4z"/></svg></div>
+        <div class="info"><div class="name">iCloud+</div><div class="meta">11月7日<span class="sep">·</span>200GB<span class="sep">·</span><span style="color:var(--green);font-weight:500">正常</span></div></div>
+        <div class="right"><div class="amount"><span class="c">¥</span>21.00</div><div class="due far">18 天后</div></div>
+      </div>
+    </section>
+
+    <div class="sec-head" style="padding-top:18px">
+      <div class="sec-title">待处理事项</div>
+      <span class="pill orange round">1 项</span>
+    </div>
+    <section class="card peek"></section>
+  </div>
+</div>
+<script src="../assets/shell.js"></script>
+</body>
+</html>

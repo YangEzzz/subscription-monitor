@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>订阅详情</title>
+<link rel="stylesheet" href="../assets/tokens.css">
+<link rel="stylesheet" href="../assets/components.css">
+<style>
+  .page{height:844px;overflow-y:auto;padding-bottom:0;scrollbar-width:none}
+  .page::-webkit-scrollbar{display:none}
+  .full .page{height:auto;overflow:visible}
+  .tail{height:108px}
+  .topbar{position:sticky;top:0;z-index:3;transition:background var(--dur-2),box-shadow var(--dur-2)}
+  .topbar.scrolled{background:linear-gradient(180deg,rgba(236,238,250,.98),rgba(244,245,249,.97));box-shadow:0 1px 0 var(--hair),0 8px 16px -12px rgba(21,22,28,.18)}
+  .full .topbar{position:relative}
+  .card+.card{margin-top:12px}
+
+  /* 头部主卡 */
+  .hero{margin-top:10px;padding:16px 16px 0;overflow:hidden}
+  .svc{display:flex;align-items:center;gap:13px}
+  .svc .logo{width:54px;height:54px;border-radius:16px;font-size:21px}
+  .svc .n{font-size:21px;font-weight:700;letter-spacing:-.01em}
+  .svc .c{margin-top:3px;font-size:12.5px;color:var(--ink-3)}
+  .svc .pill{margin-left:auto;align-self:flex-start;margin-top:4px}
+  .charge{margin:16px -16px 0;padding:14px 16px 16px;border-top:1px solid var(--hair);
+    background:linear-gradient(180deg,rgba(255,241,230,.55),rgba(255,241,230,0) 85%)}
+  .charge .k{font-size:12px;color:var(--ink-3)}
+  .charge .row{display:flex;align-items:flex-end;justify-content:space-between;margin-top:6px}
+  .charge .todo{font-size:22px;font-weight:700;color:var(--orange);letter-spacing:-.01em}
+  .charge .when{text-align:right}
+  .charge .date{font-size:13px;color:var(--ink-2);font-weight:500}
+  .charge .date .num{font-size:15px;color:var(--ink)}
+  .charge .due{display:inline-block;margin-top:5px}
+  .cycle{margin-top:14px}
+  .cycle .bar{position:relative;height:6px;border-radius:3px;background:rgba(21,22,28,.06)}
+  .cycle .bar i{position:absolute;left:0;top:0;bottom:0;border-radius:3px;background:linear-gradient(90deg,#FFC58F,var(--orange))}
+  .cycle .bar b{position:absolute;top:50%;width:14px;height:14px;margin:-7px 0 0 -7px;border-radius:50%;background:#fff;border:3px solid var(--orange);
+    box-shadow:0 0 0 4px rgba(232,105,12,.14)}
+  .cycle .lbl{display:flex;justify-content:space-between;margin-top:8px;font-size:11px;color:var(--ink-3)}
+  .cycle .lbl .num{font-size:12px;color:var(--ink-2)}
+
+  /* 信息格 */
+  .facts{display:grid;grid-template-columns:1fr 1fr;overflow:hidden}
+  .fact{display:flex;align-items:center;gap:11px;padding:14px 16px}
+  .fact:nth-child(even){border-left:1px solid var(--hair)}
+  .fact:nth-child(n+3){border-top:1px solid var(--hair)}
+  .fact .icon-tile{width:34px;height:34px;border-radius:11px}
+  .fact .icon-tile svg{width:17px;height:17px}
+  .fact .k{font-size:11.5px;color:var(--ink-3)}
+  .fact .v{margin-top:3px;font-size:15px;font-weight:600;display:flex;align-items:center;gap:6px}
+
+  /* 提醒计划 */
+  .plan{padding:0 0 0;overflow:hidden}
+  .plan .card-head{padding:14px 16px 0}
+  .steps{display:flex;align-items:center;padding:16px 16px 0}
+  .step{flex-shrink:0;height:34px;padding:0 11px;border-radius:11px;display:inline-flex;align-items:center;gap:4px;
+    font-size:13px;font-weight:600;color:var(--blue);background:var(--blue-soft);border:1px solid var(--blue-line)}
+  .step .num{font-size:14.5px}
+  .link{flex:1;min-width:8px;height:2px;margin:0 4px;background:repeating-linear-gradient(90deg,var(--blue-line) 0 4px,transparent 4px 8px)}
+  .goal{flex-shrink:0;width:34px;height:34px;border-radius:11px;display:grid;place-items:center;color:var(--orange);
+    background:var(--orange-soft);border:1px solid var(--orange-line)}
+  .goal svg{width:16px;height:16px}
+  .steps-lbl{display:flex;justify-content:flex-end;padding:6px 16px 0;font-size:11px;color:var(--ink-3)}
+  .notice{display:flex;align-items:center;gap:10px;margin-top:14px;padding:12px 16px 13px;border-top:1px solid var(--hair);
+    background:linear-gradient(90deg,rgba(255,241,230,.85),rgba(255,241,230,0));font-size:12.5px;color:var(--ink-2)}
+  .notice .icon-tile{width:28px;height:28px;border-radius:9px}
+  .notice .icon-tile svg{width:14px;height:14px}
+  .notice b{font-weight:600;color:var(--orange)}
+
+  /* 本期处理 */
+  .settle{padding:16px}
+  .settle .h{display:flex;align-items:center;gap:8px}
+  .settle .h .t{font-size:17px;font-weight:700}
+  .settle .h .t .num{font-size:19px;color:var(--orange)}
+  .settle .d{margin-top:6px;font-size:12.5px;line-height:1.6;color:var(--ink-3)}
+  .acts{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+  .acts .btn{height:46px;border-radius:14px;font-size:14.5px}
+  .acts .wide{grid-column:1/-1}
+  .btn-warn{color:var(--orange);background:var(--orange-soft);border-color:var(--orange-line)}
+  .btn-danger{color:var(--red);background:var(--red-soft);border-color:var(--red-line)}
+  .btn-ok svg{width:18px;height:18px}
+
+  /* 底部操作栏 */
+  .actionbar{position:absolute;left:0;right:0;bottom:0;z-index:5;padding:24px 16px 30px;display:grid;grid-template-columns:1fr 1.7fr;gap:10px;
+    background:linear-gradient(180deg,rgba(244,245,249,0),rgba(244,245,249,.94) 34%)}
+  .actionbar .btn{height:50px;border-radius:16px;font-size:15px}
+  .actionbar .btn-ghost{background:#fff}
+</style>
+</head>
+<body class="canvas no-dock">
+<div class="device">
+  <div class="page" id="page">
+    <div class="topbar" id="topbar">
+      <div class="navbar">
+        <div class="icon-btn" aria-label="返回"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg></div>
+        <div class="title">订阅详情</div>
+        <div class="capsule"></div>
+      </div>
+    </div>
+
+    <section class="card hero">
+      <div class="svc">
+        <div class="logo qq">Q</div>
+        <div><div class="n">QQ音乐</div><div class="c">音乐</div></div>
+        <span class="pill orange">即将到期</span>
+      </div>
+      <div class="charge">
+        <div class="k">下次预计扣费</div>
+        <div class="row">
+          <div class="todo">金额待补充</div>
+          <div class="when">
+            <div class="date"><span class="num">2026</span>年<span class="num">10</span>月<span class="num">21</span>日</div>
+            <span class="due hot">1 天后</span>
+          </div>
+        </div>
+        <div class="cycle">
+          <div class="bar"><i style="width:96.7%"></i><b style="left:96.7%"></b></div>
+          <div class="lbl"><span>本期 <span class="num">9</span>月<span class="num">21</span>日</span><span><span class="num">10</span>月<span class="num">21</span>日 扣费</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card facts">
+      <div class="fact">
+        <div class="icon-tile blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 2l4 4-4 4"/><path d="M3 11V9a3 3 0 0 1 3-3h15"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v2a3 3 0 0 1-3 3H3"/></svg></div>
+        <div><div class="k">计费周期</div><div class="v">每月</div></div>
+      </div>
+      <div class="fact">
+        <div class="icon-tile green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M4 7.5A2.5 2.5 0 0 1 6.5 5H18a1.5 1.5 0 0 1 1.5 1.5V8"/><rect x="3.5" y="7.5" width="17" height="12.5" rx="3"/><path d="M20.5 11.5h-4a2 2 0 0 0 0 4h4"/></svg></div>
+        <div><div class="k">付款渠道</div><div class="v">微信支付</div></div>
+      </div>
+      <div class="fact">
+        <div class="icon-tile violet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 12.2V5a1.5 1.5 0 0 1 1.5-1.5h7.2a2 2 0 0 1 1.4.6l6.8 6.8a2 2 0 0 1 0 2.8l-6.4 6.4a2 2 0 0 1-2.8 0l-6.8-6.8a2 2 0 0 1-.9-1.1z"/><circle cx="8.5" cy="8.5" r="1.4" fill="currentColor"/></svg></div>
+        <div><div class="k">分类</div><div class="v">音乐</div></div>
+      </div>
+      <div class="fact">
+        <div class="icon-tile orange"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.3-5.7"/><path d="M20 4v4.5h-4.5"/></svg></div>
+        <div><div class="k">自动续费</div><div class="v"><span class="dot" style="background:var(--green);box-shadow:0 0 0 3px rgba(31,163,91,.15)"></span>已开启</div></div>
+      </div>
+    </section>
+
+    <section class="card plan">
+      <div class="card-head"><div class="card-title">提醒计划</div><span class="pill blue round"><span class="dot" style="background:var(--blue)"></span>通知可用</span></div>
+      <div class="steps">
+        <span class="step">提前 <span class="num">7</span> 天</span><span class="link"></span>
+        <span class="step">提前 <span class="num">3</span> 天</span><span class="link"></span>
+        <span class="step">提前 <span class="num">1</span> 天</span><span class="link"></span>
+        <span class="goal" title="扣费日"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4.5" width="17" height="16" rx="3.5"/><path d="M8 2.5v4M16 2.5v4M3.5 9.5h17M9 14.5l2 2 4-4"/></svg></span>
+      </div>
+      <div class="steps-lbl">扣费日</div>
+      <div class="notice">
+        <div class="icon-tile orange"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/></svg></div>
+        <div>最近提醒：<b>请填写金额后接收微信通知</b></div>
+      </div>
+    </section>
+
+    <section class="card settle">
+      <div class="h"><span class="t"><span class="num">1</span> 天后扣费</span></div>
+      <div class="d">请按实际处理结果更新本期记录，本工具不会代替你向服务商取消。</div>
+      <div class="acts">
+        <button class="btn btn-soft btn-ok wide"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="currentColor"/><path d="M7.5 12.3l3 3 6-6.3" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>确认已续费</button>
+        <button class="btn btn-warn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2"/></svg>稍后处理</button>
+        <button class="btn btn-danger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>已取消</button>
+      </div>
+    </section>
+    <div class="tail"></div>
+  </div>
+
+  <div class="actionbar">
+    <button class="btn btn-ghost"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg>管理订阅</button>
+    <button class="btn btn-primary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h8"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>编辑订阅</button>
+  </div>
+</div>
+<script src="../assets/shell.js"></script>
+<script>
+  const page = document.getElementById('page'), topbar = document.getElementById('topbar');
+  topbar.prepend(page.querySelector('.statusbar'));
+  page.addEventListener('scroll', () => topbar.classList.toggle('scrolled', page.scrollTop > 8));
+  const q = new URLSearchParams(location.search);
+  if (q.has('scroll')) { page.scrollTop = q.get('scroll') === 'end' ? page.scrollHeight : +q.get('scroll'); topbar.classList.toggle('scrolled', page.scrollTop > 8); }
+</script>
+</body>
+</html>

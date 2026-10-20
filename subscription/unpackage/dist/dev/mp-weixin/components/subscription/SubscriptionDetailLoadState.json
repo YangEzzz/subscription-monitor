@@ -1,0 +1,8 @@
+{
+  "component": true,
+  "usingComponents": {
+    "page-header": "./PageHeader",
+    "ui-skeleton": "./UiSkeleton",
+    "async-state-view": "./AsyncStateView"
+  }
+}

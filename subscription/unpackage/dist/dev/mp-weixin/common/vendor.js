@@ -7259,9 +7259,9 @@ function isConsoleWritable() {
 }
 const UNI_CONSOLE_RUNTIME_PROMISE = "__uni_console_runtime_promise__";
 function initRuntimeSocketService() {
-  const hosts = "192.168.3.2,192.168.106.1,192.168.154.1,127.0.0.1";
-  const port = "8092";
-  const id = "mp-weixin_4XWx4u";
+  const hosts = "192.168.201.93,127.0.0.1";
+  const port = "8090";
+  const id = "mp-weixin_97KuuD";
   const runtimeGlobal = getRuntimeGlobal();
   const existingPromise = runtimeGlobal === null || runtimeGlobal === void 0 ? void 0 : runtimeGlobal[UNI_CONSOLE_RUNTIME_PROMISE];
   if (existingPromise) {

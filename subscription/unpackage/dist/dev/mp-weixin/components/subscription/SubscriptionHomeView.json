@@ -1,6 +1,10 @@
 {
   "component": true,
   "usingComponents": {
+    "page-header": "./PageHeader",
+    "display-amount": "./DisplayAmount",
+    "empty-state-view": "./EmptyStateView",
+    "settings-row": "./SettingsRow",
     "subscription-row": "./subscription-row",
     "uni-icons": "../../uni_modules/uni-icons/components/uni-icons/uni-icons"
   }

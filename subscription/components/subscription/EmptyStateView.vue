@@ -1,7 +1,7 @@
 <template>
   <view class="empty-state">
     <view class="empty-icon"
-      ><uni-icons :type="icon" size="30" color="#315acb"
+      ><uni-icons :type="icon" size="24" color="var(--ink-3)"
     /></view>
     <text class="empty-title">{{ title }}</text>
     <text class="empty-desc">{{ description }}</text>
@@ -9,7 +9,8 @@
       role="button"
       tabindex="0"
       v-if="actionLabel"
-      class="empty-action"
+      class="empty-action btn-soft pressable"
+      hover-class="is-pressed"
       :class="actionClass"
       @tap="$emit('action')"
     >
@@ -27,7 +28,7 @@ export default {
     title: { type: String, default: "暂无内容" },
     description: { type: String, default: "" },
     actionLabel: { type: String, default: "" },
-    actionClass: { type: String, default: "primary-button empty-add" },
+    actionClass: { type: String, default: "" },
   },
 };
 </script>

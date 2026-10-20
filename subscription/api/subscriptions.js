@@ -48,7 +48,7 @@ export const subscriptionApi = {
 			if (!result.meta.hasMore) return records
 		}
 	},
-	async detail(id) { return fromSubscription(await request(pathFor(id))) },
+	async detail(id, options) { return fromSubscription(await request(pathFor(id), options)) },
 	async create(form) { return fromSubscription(await request('/subscriptions', { method: 'POST', data: toSubscription(form) })) },
 	async update(id, data) { return fromSubscription(await request(pathFor(id), { method: 'PATCH', data })) },
 	async remove(id) { return fromSubscription(await request(pathFor(id), { method: 'DELETE' })) },

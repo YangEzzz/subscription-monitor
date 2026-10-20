@@ -58,6 +58,7 @@ export const remoteComputed = {
 export const remoteMethods = {
   ...membershipMethods,
 	clearAccountData() {
+    this.cancelDetailLoad()
     this.membershipRequestId++
     this.membershipOrders = []
     this.membershipOrder = null
@@ -139,7 +140,7 @@ export const remoteMethods = {
 			this.serverReminders = reminders.data
 			if (!this.dataReady) this.statsCurrency = settings.defaultCurrency
 			this.dataReady = true
-			if (this.selectedId && !this.selectedSubscription) { this.selectedId = null; this.switchTab('all') }
+			if (this.selectedId && !this.selectedSubscription && !this.detailLoading && !this.detailError) { this.selectedId = null; this.switchTab('all') }
 			// Secondary panels must not delay the subscription list or detail navigation.
 			void this.refreshNotifications(notificationRead)
 			void this.refreshStats()
@@ -252,16 +253,34 @@ export const remoteMethods = {
 		return true
 	},
 	async openDetail(item) {
-		if (this.loading || this.mutating) return
-		this.loading = true
+		if (!item?.id || this.mutating) return
+		this.cancelDetailLoad()
+		const id = String(item.id)
+		const sequence = ++this.detailRequestId
+		const userId = this.currentUserId
+		this.selectedId = id
+		this.detailLoading = true
+		this.detailError = ''
+		let cancelled = false, task
+		this.detailRequestCancel = () => { cancelled = true; task?.abort?.() }
+		this.navigateToView('detail')
+		const isActive = () => sequence === this.detailRequestId && this.activeView === 'detail' && this.selectedId === id && this.currentUserId === userId
+		const isCurrent = () => isActive() && (!userId || getSession()?.user.id === userId)
 		try {
-			const detail = await api.detail(item.id)
+			const detail = await api.detail(id, {
+				isCancelled: () => cancelled,
+				onTask: value => { task = value; if (cancelled) task?.abort?.() }
+			})
+			if (!isCurrent()) {
+				if (isActive()) this.detailError = '账号已切换，请重新加载'
+				return
+			}
 			this.upsertSubscription(detail)
-			this.selectedId = detail.id
-			this.navigateToView('detail')
-		} catch (error) { toast(error.message) }
-		finally { this.loading = false }
+		} catch (error) {
+			if (isActive()) this.detailError = error.message || '订阅详情加载失败，请重试'
+		} finally { if (sequence === this.detailRequestId) { this.detailLoading = false; this.detailRequestCancel = null } }
 	},
+	cancelDetailLoad() { this.detailRequestId++; this.detailRequestCancel?.(); this.detailRequestCancel = null; this.detailLoading = false; this.detailError = '' },
 	async saveSubscription(force = false) {
 		if (this.loading || this.mutating || !this.dataReady) return
 		if (!this.editingId && !this.canCreateSubscription) return this.showMembershipLimit()

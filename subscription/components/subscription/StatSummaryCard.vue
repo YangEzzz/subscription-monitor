@@ -1,42 +1,37 @@
 <template>
-  <view class="stats-summary soft-summary">
-    <view class="stats-summary-head">
-      <text class="stats-label">{{ statsLabel }}</text>
-      <picker
+  <view class="card hero rd-stats-hero"
+    ><view class="rd-hero-top"
+      ><text class="rd-eyebrow">{{ statsLabel }}</text
+      ><picker
         :range="currencies"
         :value="currencies.indexOf(statsCurrency)"
         @change="changeCurrency"
-        ><view class="currency-filter"
-          >{{ statsCurrency }}
-          <uni-icons type="down" size="12" color="#315acb" /></view
-      ></picker>
-    </view>
-    <text class="stats-total">{{
-      formatMoney(statsTotal, statsCurrency)
-    }}</text>
-    <text class="stats-compare"
-      >基于 {{ statsSubscriptionCount }} 项 {{ statsCurrency }} 有效订阅 ·
-      不自动换汇</text
-    >
-    <view class="stats-period-switch"
-      ><button
-        role="button"
-        tabindex="0"
-        v-for="period in statPeriods"
-        :key="period.value"
-        :aria-pressed="statsPeriod === period.value"
-        :class="{ active: statsPeriod === period.value }"
-        @tap="$emit('period-change', period.value)"
-      >
-        {{ period.label }}
-      </button></view
-    >
-  </view>
+        ><view
+          class="rd-currency pressable"
+          role="button"
+          aria-label="选择统计币种"
+          >{{ statsCurrency }} ▾</view
+        ></picker
+      ></view
+    ><display-amount :value="formatMoney(statsTotal, statsCurrency)" /><text
+      class="rd-stats-compare"
+      >基于 <text class="num">{{ statsSubscriptionCount }}</text> 项
+      {{ statsCurrency }} 有效订阅 · 不自动换汇</text
+    ><ui-selection
+      :options="statPeriods"
+      :model-value="statsPeriod"
+      variant="segmented"
+      label="统计口径"
+      @select="$emit('period-change', $event)"
+  /></view>
 </template>
 
 <script>
+import DisplayAmount from "./DisplayAmount.vue";
+import UiSelection from "./UiSelection.vue";
 export default {
   name: "StatSummaryCard",
+  components: { DisplayAmount, UiSelection },
   emits: ["currency-change", "period-change"],
   props: {
     currencies: { type: Array, default: () => [] },

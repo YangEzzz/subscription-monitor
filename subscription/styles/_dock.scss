@@ -1,0 +1,320 @@
+page {
+  --dock-selected-fill: linear-gradient(180deg, #eef3ff, #e3ebff);
+  --dock-add-fill: radial-gradient(
+    120% 120% at 30% 15%,
+    #7a9bff 0%,
+    #3f68f2 45%,
+    #2546d6 100%
+  );
+  --dock-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20366%2064%22%20preserveAspectRatio%3D%22none%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x2%3D%220%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22white%22%20stop-opacity%3D%22.95%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22white%22%20stop-opacity%3D%22.75%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Cpath%20d%3D%22M24%2C0%20H131%20C146%2C0%20149%2C2%20151%2C8%20C156%2C24%20168%2C33%20183%2C33%20C198%2C33%20210%2C24%20215%2C8%20C217%2C2%20220%2C0%20235%2C0%20H342%20A24%2C24%200%200%201%20366%2C24%20V40%20A24%2C24%200%200%201%20342%2C64%20H24%20A24%2C24%200%200%201%200%2C40%20V24%20A24%2C24%200%200%201%2024%2C0%20Z%22%20fill%3D%22url(%23g)%22%20stroke%3D%22rgb(21%2C22%2C28)%22%20stroke-opacity%3D%22.09%22%20stroke-width%3D%221%22%2F%3E%3C%2Fsvg%3E");
+}
+.dock-wrap {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 0;
+  z-index: 30;
+  pointer-events: none;
+}
+.dock-fade {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: calc(#{ui(110)} + env(safe-area-inset-bottom));
+  background: linear-gradient(180deg, transparent, var(--bg) 90%);
+  pointer-events: none;
+}
+.renewal-dock {
+  position: absolute;
+  left: ui(12);
+  right: ui(12);
+  bottom: calc(#{ui(22)} + env(safe-area-inset-bottom));
+  height: ui(64);
+  padding: 0 ui(6);
+  display: flex;
+  align-items: stretch;
+  box-sizing: border-box;
+  pointer-events: auto;
+}
+.renewal-dock::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: var(--dock-image);
+  background-size: 100% 100%;
+  filter: drop-shadow(0 #{ui(10)} #{ui(16)} rgba(21, 22, 28, 0.13));
+  pointer-events: none;
+}
+.dock-tab {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: ui(4);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: ui(17);
+  background: transparent;
+  color: var(--ink-3);
+  font-size: ui(10.5);
+  line-height: 1;
+  font-weight: 500;
+}
+.dock-tab::after,
+.dock-add::after {
+  border: 0;
+}
+.dock-tab-active {
+  color: var(--blue);
+  font-weight: 600;
+}
+.dock-icon {
+  position: relative;
+  width: ui(24);
+  height: ui(24);
+}
+.dock-icon-outline,
+.dock-icon-filled {
+  position: absolute;
+  inset: 0;
+  transition:
+    opacity var(--dur-2),
+    transform 360ms var(--ease-spring);
+}
+.dock-icon-filled {
+  opacity: 0;
+  transform: scale(0.7);
+}
+.dock-tab-active .dock-icon-outline {
+  opacity: 0;
+  transform: scale(0.7);
+}
+.dock-tab-active .dock-icon-filled {
+  opacity: 1;
+  transform: scale(1);
+}
+.dock-tab-active .dock-icon {
+  animation: dock-icon-pop 460ms var(--ease-out);
+}
+.dock-indicator {
+  position: absolute;
+  left: 0;
+  top: ui(7);
+  width: ui(58);
+  height: ui(50);
+  transition: transform var(--dur-3) var(--ease-out);
+  pointer-events: none;
+}
+.dock-indicator-fill {
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  border: 1px solid var(--blue-line);
+  border-radius: ui(17);
+  background: var(--dock-selected-fill);
+  box-shadow: inset 0 1px 0 var(--hero-line);
+}
+.dock-moving .dock-indicator-fill {
+  animation: dock-stretch 480ms var(--ease-out);
+}
+.dock-moving.dock-crossing .dock-indicator-fill {
+  animation: dock-cross 480ms var(--ease-out);
+}
+.dock-no-transition {
+  transition: none;
+}
+.dock-add-slot {
+  position: relative;
+  flex: 0 0 #{ui(78)};
+}
+.dock-add {
+  position: absolute;
+  left: 50%;
+  // Keep one third of the 58px circle above the dock's top edge.
+  top: ui(-19.3333);
+  width: ui(58);
+  height: ui(58);
+  min-width: 44px;
+  min-height: 44px;
+  margin: 0 0 0 ui(-29);
+  padding: 0;
+  border-radius: 50%;
+  border: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: visible;
+  color: var(--surface);
+  background: var(--dock-add-fill);
+  box-shadow:
+    0 #{ui(12)} #{ui(22)} #{ui(-8)} rgba(37, 70, 214, 0.75),
+    inset 0 1px 0 var(--white-highlight);
+}
+.dock-add-label {
+  position: absolute;
+  bottom: ui(11);
+  left: 0;
+  right: 0;
+  color: var(--blue);
+  text-align: center;
+  font-size: ui(10.5);
+  line-height: ui(13);
+  font-weight: 600;
+}
+.dock-plus {
+  position: relative;
+  width: ui(26);
+  height: ui(26);
+}
+.dock-plus-h,
+.dock-plus-v {
+  position: absolute;
+  background: var(--surface);
+  border-radius: 2px;
+}
+.dock-plus-h {
+  left: ui(4);
+  right: ui(4);
+  top: ui(12);
+  height: ui(2.6);
+}
+.dock-plus-v {
+  top: ui(4);
+  bottom: ui(4);
+  left: ui(12);
+  width: ui(2.6);
+}
+.dock-halo,
+.dock-ripple {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  pointer-events: none;
+}
+.dock-halo {
+  animation: dock-halo 2.8s ease-out infinite;
+}
+.dock-ripple {
+  opacity: 0;
+  background: var(--white-highlight);
+}
+.dock-add-pop {
+  animation: dock-add-pop 520ms var(--ease-spring);
+}
+.dock-add-pop .dock-plus {
+  animation: dock-rotate 420ms var(--ease-spring);
+}
+.dock-add-pop .dock-ripple {
+  animation: dock-ripple 520ms var(--ease-out);
+}
+@keyframes dock-stretch {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  45% {
+    transform: scale(1.45, 0.9);
+  }
+}
+@keyframes dock-cross {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  45% {
+    transform: scale(1.45, 0.72);
+    opacity: 0.25;
+  }
+}
+@keyframes dock-icon-pop {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  25% {
+    transform: scale(0.8);
+  }
+  65% {
+    transform: scale(1.12);
+  }
+}
+@keyframes dock-add-pop {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  28% {
+    transform: scale(0.86);
+  }
+  62% {
+    transform: scale(1.06);
+  }
+}
+@keyframes dock-rotate {
+  from {
+    transform: rotate(0);
+  }
+  to {
+    transform: rotate(90deg);
+  }
+}
+@keyframes dock-ripple {
+  from {
+    transform: scale(0.4);
+    opacity: 0.55;
+  }
+  to {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+}
+@keyframes dock-halo {
+  0% {
+    box-shadow: 0 0 0 0 rgba(47, 91, 234, 0.18);
+  }
+  70%,
+  100% {
+    box-shadow: 0 0 0 #{ui(12)} rgba(47, 91, 234, 0);
+  }
+}
+.reduce-motion .dock-indicator,
+.reduce-motion .dock-indicator-fill,
+.reduce-motion .dock-icon,
+.reduce-motion .dock-icon-filled,
+.reduce-motion .dock-icon-outline,
+.reduce-motion .dock-add,
+.reduce-motion .dock-plus,
+.reduce-motion .dock-halo,
+.reduce-motion .dock-ripple {
+  animation: none !important;
+  transition-property: color, opacity, background-color !important;
+}
+/* #ifdef H5 */
+@media (min-width: 480px) {
+  .dock-wrap {
+    max-width: 480px;
+    margin: 0 auto;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dock-indicator,
+  .dock-indicator-fill,
+  .dock-icon,
+  .dock-icon-filled,
+  .dock-icon-outline,
+  .dock-add,
+  .dock-plus,
+  .dock-halo,
+  .dock-ripple {
+    animation: none !important;
+    transition-property: color, opacity, background-color !important;
+  }
+}
+/* #endif */

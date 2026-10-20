@@ -19,9 +19,10 @@ const _sfc_main = {
     disabled: { type: Boolean, default: false },
     icon: { type: String, required: true },
     iconClass: { type: String, default: "" },
-    iconColor: { type: String, default: "#177e4b" },
+    iconColor: { type: String, default: "var(--blue)" },
     title: { type: String, required: true },
     description: { type: String, default: "" },
+    value: { type: String, default: "" },
     switchable: { type: Boolean, default: false },
     checked: { type: Boolean, default: false },
     action: { type: Boolean, default: false }
@@ -44,23 +45,35 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     }),
     b: common_vendor.n($props.iconClass),
     c: common_vendor.t($props.title),
-    d: common_vendor.t($props.description),
-    e: $props.switchable
+    d: $props.description
+  }, $props.description ? {
+    e: common_vendor.t($props.description)
+  } : {}, {
+    f: $props.value
+  }, $props.value ? {
+    g: common_vendor.t($props.value)
+  } : {}, {
+    h: $props.switchable
   }, $props.switchable ? {
-    f: $data.switchRevision,
-    g: $props.checked,
-    h: $props.disabled,
-    i: common_vendor.o((...args) => $options.changeSwitch && $options.changeSwitch(...args), "45")
+    i: $data.switchRevision,
+    j: $props.checked,
+    k: $props.disabled,
+    l: common_vendor.o((...args) => $options.changeSwitch && $options.changeSwitch(...args), "60")
   } : $props.action ? {
-    k: common_vendor.p({
+    n: common_vendor.p({
       type: "right",
       size: "17",
-      color: "#aab0ac"
+      color: "var(--ink-4)"
     })
   } : {}, {
-    j: $props.action,
-    l: $props.disabled,
-    m: common_vendor.o(($event) => !$props.disabled && _ctx.$emit("activate"), "96")
+    m: $props.action,
+    o: $props.action ? "button" : void 0,
+    p: $props.action && !$props.disabled ? 0 : void 0,
+    q: $props.action ? `${$props.title}，${$props.value || $props.description}` : void 0,
+    r: $props.disabled,
+    s: $props.disabled ? 1 : "",
+    t: $props.action && !$props.disabled ? "row-pressed" : "none",
+    v: common_vendor.o(($event) => !$props.disabled && _ctx.$emit("activate"), "b2")
   });
 }
 const Component = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render]]);

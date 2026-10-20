@@ -14,16 +14,18 @@
           ><text class="sheet-title">订阅排序</text
           ><text class="sheet-subtitle">选择列表的排列方式</text></view
         ><button
+          hover-class="is-pressed"
           role="button"
           tabindex="0"
           class="sheet-close"
           aria-label="关闭排序"
           @tap="$emit('close')"
         >
-          <uni-icons type="closeempty" size="21" color="#5f6862" /></button
+          <uni-icons type="closeempty" size="21" color="var(--ink-2)" /></button
       ></view>
       <view class="sort-options"
         ><button
+          hover-class="is-pressed"
           role="button"
           tabindex="0"
           v-for="option in sortOptions"
@@ -37,7 +39,7 @@
               :type="option.icon"
               size="20"
               :color="
-                sortMode === option.value ? '#315acb' : '#6f7972'
+                sortMode === option.value ? 'var(--blue)' : 'var(--ink-3)'
               " /></view
           ><view class="sort-option-copy"
             ><text>{{ option.label }}</text
@@ -49,7 +51,7 @@
               v-if="sortMode === option.value"
               type="checkmarkempty"
               size="15"
-              color="#ffffff"
+              color="var(--surface)"
           /></view></button
       ></view>
     </view>

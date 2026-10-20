@@ -1,11 +1,22 @@
 "use strict";
 const common_vendor = require("../../common/vendor.js");
-const BrandLogo = () => "./brand-logo.js";
+const PageHeader = () => "./PageHeader.js";
+const SubscriptionRow = () => "./subscription-row.js";
+const EmptyStateView = () => "./EmptyStateView.js";
 const _sfc_main = {
   name: "SubscriptionCalendarView",
-  components: { BrandLogo },
+  components: { PageHeader, SubscriptionRow, EmptyStateView },
   emits: ["change-month", "today", "select-date", "open-detail", "open-form"],
+  methods: {
+    markersFor(key) {
+      return this.renewalSubscriptions.filter(
+        (item) => item.nextBillingDate === key
+      );
+    }
+  },
   props: {
+    renewalSubscriptions: { type: Array, default: () => [] },
+    decorateItem: { type: Function, required: true },
     navigationBarHeight: { type: Number, default: 0 },
     calendarTitle: { type: String, default: "" },
     weekdays: { type: Array, default: () => [] },
@@ -21,77 +32,84 @@ const _sfc_main = {
   }
 };
 if (!Array) {
-  const _easycom_uni_icons2 = common_vendor.resolveComponent("uni-icons");
-  const _component_brand_logo = common_vendor.resolveComponent("brand-logo");
-  (_easycom_uni_icons2 + _component_brand_logo)();
-}
-const _easycom_uni_icons = () => "../../uni_modules/uni-icons/components/uni-icons/uni-icons.js";
-if (!Math) {
-  _easycom_uni_icons();
+  const _component_page_header = common_vendor.resolveComponent("page-header");
+  const _component_subscription_row = common_vendor.resolveComponent("subscription-row");
+  const _component_empty_state_view = common_vendor.resolveComponent("empty-state-view");
+  (_component_page_header + _component_subscription_row + _component_empty_state_view)();
 }
 function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   return common_vendor.e({
-    a: $props.navigationBarHeight + "px",
-    b: common_vendor.p({
-      type: "left",
-      size: "19",
-      color: "#5d655f"
+    a: common_vendor.p({
+      title: "续费日历",
+      subtitle: "按日期安排续费，查看每天的扣费明细"
     }),
-    c: common_vendor.o(($event) => _ctx.$emit("change-month", -1), "dd"),
-    d: common_vendor.t($props.calendarTitle),
-    e: common_vendor.p({
-      type: "right",
-      size: "19",
-      color: "#5d655f"
-    }),
-    f: common_vendor.o(($event) => _ctx.$emit("change-month", 1), "7d"),
-    g: common_vendor.o(($event) => _ctx.$emit("today"), "20"),
-    h: common_vendor.f($props.weekdays, (day, k0, i0) => {
+    b: common_vendor.t($props.calendarTitle),
+    c: common_vendor.o(($event) => _ctx.$emit("change-month", -1), "01"),
+    d: common_vendor.o(($event) => _ctx.$emit("change-month", 1), "1c"),
+    e: common_vendor.o(($event) => _ctx.$emit("today"), "22"),
+    f: common_vendor.f($props.weekdays, (day, index, i0) => {
       return {
         a: common_vendor.t(day),
-        b: day
+        b: day,
+        c: index === 0 || index === 6 ? 1 : ""
       };
     }),
-    i: common_vendor.f($props.calendarDays, (day, k0, i0) => {
+    g: common_vendor.f($props.calendarDays, (day, k0, i0) => {
       return common_vendor.e({
         a: common_vendor.t(day.day),
         b: day.count
-      }, day.count ? {
-        c: common_vendor.t(day.count)
-      } : {}, {
-        d: day.amountText
+      }, day.count ? common_vendor.e({
+        c: common_vendor.f($options.markersFor(day.key).slice(0, 3), (item, k1, i1) => {
+          return {
+            a: item.id,
+            b: item.color || "var(--blue)"
+          };
+        }),
+        d: day.count > 3
+      }, day.count > 3 ? {
+        e: common_vendor.t(day.count - 3)
+      } : {}) : {}, {
+        f: day.amountText
       }, day.amountText ? {
-        e: common_vendor.t(day.amountText)
+        g: common_vendor.t(day.amountText)
       } : {}, {
-        f: day.key,
-        g: !day.currentMonth ? 1 : "",
-        h: day.key === $props.selectedDate ? 1 : "",
-        i: day.key === $props.todayKey ? 1 : "",
-        j: common_vendor.o(($event) => _ctx.$emit("select-date", day.key), day.key)
+        h: day.key,
+        i: !day.currentMonth ? 1 : "",
+        j: day.key === $props.selectedDate ? 1 : "",
+        k: day.key === $props.todayKey ? 1 : "",
+        l: day.key === $props.selectedDate,
+        m: day.key + "，" + (day.count ? day.count + "项续费" : "无续费") + (day.amountText ? "，" + day.amountText : ""),
+        n: common_vendor.o(($event) => _ctx.$emit("select-date", day.key), day.key)
       });
     }),
-    j: common_vendor.t($props.selectedDateTitle),
-    k: common_vendor.t($props.selectedWeekday),
-    l: common_vendor.t($props.selectedDateSubscriptions.length),
-    m: common_vendor.t($props.selectedDateTotalText),
-    n: $props.selectedDateSubscriptions.length
-  }, $props.selectedDateSubscriptions.length ? {
-    o: common_vendor.f($props.selectedDateSubscriptions, (item, k0, i0) => {
+    h: common_vendor.t($props.selectedDateTitle),
+    i: common_vendor.t($props.selectedWeekday),
+    j: common_vendor.t($props.selectedDateSubscriptions.length),
+    k: common_vendor.t($props.selectedDateSubscriptions.length && $props.selectedDateSubscriptions.every((item) => item.amount === null) ? "金额待补充" : $props.selectedDateTotalText),
+    l: common_vendor.f($props.selectedDateSubscriptions, (item, k0, i0) => {
       return {
-        a: "1803f78c-2-" + i0,
-        b: common_vendor.p({
-          item
-        }),
-        c: common_vendor.t(item.name),
-        d: common_vendor.t($props.cycleText(item)),
-        e: common_vendor.t(item.payment),
-        f: common_vendor.t($props.formatMoney(item.amount, item.currency)),
-        g: item.id,
-        h: common_vendor.o(($event) => _ctx.$emit("open-detail", item), item.id)
+        a: item.id,
+        b: common_vendor.o(($event) => _ctx.$emit("open-detail", item), item.id),
+        c: "64d86837-1-" + i0,
+        d: common_vendor.p({
+          item: {
+            ...$props.decorateItem(item),
+            cycle: $props.cycleText(item),
+            amountText: item.amount === null ? "金额待补充" : $props.formatMoney(item.amount, item.currency)
+          }
+        })
       };
+    }),
+    m: !$props.selectedDateSubscriptions.length
+  }, !$props.selectedDateSubscriptions.length ? {
+    n: common_vendor.o(($event) => _ctx.$emit("open-form", $props.selectedDate), "6b"),
+    o: common_vendor.p({
+      icon: "calendar",
+      title: "当天没有续费项目",
+      ["action-label"]: "添加到这一天"
     })
-  } : {
-    p: common_vendor.o(($event) => _ctx.$emit("open-form", $props.selectedDate), "5d")
+  } : {}, {
+    p: $props.selectedDate
   });
 }
 const Component = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render]]);

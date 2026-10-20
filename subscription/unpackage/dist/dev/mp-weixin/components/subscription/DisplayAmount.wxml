@@ -1,0 +1,1 @@
+<view class="{{['display-amount', 'num', g && 'display-amount-compact']}}" aria-label="{{h}}"><view key="{{f}}" class="display-amount-value motion"><block wx:if="{{a}}"><text class="display-currency">{{b}}</text><text class="display-integer">{{c}}</text><text class="display-decimal">{{d}}</text></block><text wx:else>{{e}}</text></view></view>

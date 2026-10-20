@@ -1,78 +1,131 @@
 <template>
-  <view class="page membership-page">
-    <view class="detail-titlebar">
-      <button
-        role="button"
-        tabindex="0"
-        class="icon-button plain"
-        aria-label="返回"
-        :disabled="busy"
-        :aria-disabled="busy"
-        @tap="$emit('back')"
-      >
-        <uni-icons type="left" size="24" color="#202c45" />
-      </button>
-      <text class="page-title">会员中心</text><view class="icon-spacer"></view>
-    </view>
-    <view class="membership-summary soft-summary">
-      <text class="membership-label">{{
-        isMember ? "永久会员" : "免费版"
-      }}</text>
-      <text class="membership-headline">{{
-        isMember ? "永久会员已开通" : "订阅额度与会员"
-      }}</text>
-      <text class="membership-summary-copy">{{
-        isMember
-          ? "订阅数量不限，权益跟随你的微信账号。"
-          : "当前已使用 " + freeQuotaValue + " 条订阅额度。"
-      }}</text>
-      <text
-        v-if="isMember && membership.source === 'simulation'"
-        class="membership-test-label"
-        >当前为模拟支付开通的测试权益</text
-      >
-    </view>
-    <view class="settings-section">
-      <text class="settings-title">永久会员权益</text>
-      <view class="settings-card">
-        <settings-row
-          icon="list"
-          title="不限数量的订阅"
-          description="一次开通，无到期日，也不会自动续费"
-        />
-        <settings-row
-          icon="cloud-upload"
-          title="跟随微信账号"
-          description="换手机或重新登录，仍可读取会员权益"
-        />
-        <settings-row
-          icon="notification"
-          title="保留所有基础功能"
-          description="免费版同样支持已授权提醒、统计和导出"
-        />
+  <view class="page membership-page redesign-page">
+    <page-header
+      title="会员中心"
+      secondary
+      :disabled="busy"
+      @back="$emit('back')"
+    />
+    <view
+      class="club-pass"
+      :class="{ 'club-pass-active': isMember, 'club-pass-free': !isMember }"
+    >
+      <view class="club-pass-top">
+        <text class="club-brand">续订清单 · 会员俱乐部</text>
+        <text class="club-status">{{
+          loading
+            ? "读取中"
+            : error
+              ? "状态待确认"
+              : isMember
+                ? "权益已生效"
+                : "未开通"
+        }}</text>
+      </view>
+      <view class="club-pass-body">
+        <view class="club-pass-copy">
+          <text class="club-eyebrow">{{
+            isMember ? "很高兴，有你同行" : "给每一份订阅，留个位置"
+          }}</text>
+          <text class="club-title">{{ "永久会员" }}</text>
+          <text class="club-description">{{
+            isMember
+              ? "不限订阅数量，陪你从容管理每一次续费。"
+              : "解锁无限订阅，让喜欢的服务都有迹可循。"
+          }}</text>
+        </view>
+        <view class="club-emblem" aria-hidden="true">
+          <view class="club-emblem-ring"></view>
+          <view class="club-emblem-face"
+            ><uni-icons type="vip-filled" size="52" color="var(--member-gold)"
+          /></view>
+          <text class="club-spark club-spark-one">✦</text
+          ><text class="club-spark club-spark-two">✦</text>
+        </view>
+      </view>
+      <view class="club-pass-bottom">
+        <text>{{
+          loading
+            ? "正在读取会员权益…"
+            : error
+              ? "请刷新以确认最新权益"
+              : isMember
+                ? "有效期：永久"
+                : "订阅用量：" + (freeQuotaValue || "待确认") + " 条"
+        }}</text>
+        <text>{{ isMember ? "无需续费" : "升级后数量不限" }}</text>
       </view>
     </view>
-    <view class="membership-purchase">
+    <text
+      v-if="isMember && membership.source === 'simulation'"
+      class="club-test-note"
+      >测试权益 · 模拟支付开通，未发生实际扣款</text
+    >
+    <view class="club-section-heading"
+      ><text class="club-section-title">把喜欢的，都安排好</text
+      ><text class="club-section-caption">永久会员权益</text></view
+    >
+    <view class="club-benefits">
+      <view class="club-benefit-main">
+        <view class="club-benefit-icon"
+          ><uni-icons type="list" size="26" color="var(--violet)"
+        /></view>
+        <view class="club-benefit-copy"
+          ><text class="club-benefit-title">订阅数量，不设上限</text
+          ><text class="club-benefit-description"
+            >从日常影音到效率工具，想记多少就记多少</text
+          ></view
+        >
+        <text class="club-infinity" aria-hidden="true">∞</text>
+      </view>
+      <view class="club-benefit-pair">
+        <view class="club-benefit-small"
+          ><uni-icons type="medal" size="25" color="var(--gold)" /><text
+            class="club-benefit-title"
+            >一次开通，永久拥有</text
+          ><text class="club-benefit-description"
+            >无到期日，不会自动续费</text
+          ></view
+        >
+        <view class="club-benefit-small"
+          ><uni-icons type="cloud-upload" size="25" color="var(--blue)" /><text
+            class="club-benefit-title"
+            >换台设备，权益还在</text
+          ><text class="club-benefit-description"
+            >会员权益跟随微信账号</text
+          ></view
+        >
+      </view>
+    </view>
+    <view class="club-basic-note"
+      ><uni-icons type="checkmarkempty" size="17" color="var(--blue)" /><text
+        >提醒、统计与导出，免费版也能用</text
+      ></view
+    >
+    <view class="membership-purchase club-plan">
+      <view class="club-plan-heading"
+        ><text class="club-section-title">{{
+          isMember ? "你的会员方案" : "一份开通，长久陪伴"
+        }}</text
+        ><text class="club-plan-tag">永久有效</text></view
+      >
       <view class="membership-price-line"
-        ><text>永久会员 · 一次开通</text
-        ><text class="membership-price">{{
+        ><view
+          ><text class="club-plan-name">永久会员</text
+          ><text class="club-plan-description"
+            >一次性购买 · 无自动续费</text
+          ></view
+        >
+        <text class="membership-price">{{
           membership.product ? price(membership.product.amount) : "—"
         }}</text></view
       >
-      <text class="membership-notice">{{
-        membership.product?.notice || "会员购买暂未开放。"
-      }}</text>
-      <text
-        v-if="membership.product?.channel === 'virtual'"
-        class="membership-notice"
-      >
-        本小程序全终端每月支付限额为10万元。安卓退款请联系客服；iOS退款由Apple处理。
-        安卓技术服务费1%，结算T+3；iOS佣金12%，结算45–60天。目前未开放iOS购买。
-      </text>
       <button
         role="button"
         tabindex="0"
-        class="membership-primary"
+        class="membership-primary pressable"
+        :class="{ 'membership-owned': isMember }"
+        hover-class="is-pressed"
         :disabled="
           isMember ||
           busy ||
@@ -92,16 +145,37 @@
       >
         {{
           isMember
-            ? "已开通永久会员"
+            ? "已开通 · 好好享受订阅自由"
             : busy
               ? "正在处理订单…"
-              : membership.product?.available
-                ? membership.product.channel === "virtual"
-                  ? `微信支付 ${price(membership.product.amount)} 开通`
-                  : "创建模拟支付订单"
-                : "会员购买暂未开放"
+              : loading
+                ? "正在读取开通信息…"
+                : error
+                  ? "请刷新后开通"
+                  : membership.product?.available
+                    ? membership.product.channel === "virtual"
+                      ? `${price(membership.product.amount)} · 开通永久会员`
+                      : "体验模拟开通（不扣款）"
+                    : "会员购买暂未开放"
         }}
       </button>
+      <text class="membership-notice">{{
+        isMember
+          ? "权益已绑定当前微信账号，无需重复购买。"
+          : !membership.product?.available
+            ? "当前暂未开放购买，免费功能可正常使用。"
+            : membership.product?.notice || "开通结果以订单与会员权益查询为准。"
+      }}</text>
+      <text
+        v-if="
+          !isMember &&
+          membership.product?.available &&
+          membership.product?.channel === 'virtual' &&
+          !membership.product?.iosEnabled
+        "
+        class="club-platform-note"
+        >当前暂不支持 iOS 购买。</text
+      >
     </view>
     <async-state-view
       v-if="error"
@@ -276,66 +350,115 @@
         </button>
       </view>
     </view>
-    <view class="membership-orders-heading"
-      ><text class="settings-title">最近订单</text
-      ><button
-        role="button"
-        tabindex="0"
-        class="membership-refresh"
-        :disabled="busy || loading"
-        :aria-disabled="busy || loading"
-        @tap="$emit('refresh')"
-      >
-        {{ loading ? "读取中…" : "刷新订单与权益" }}
-      </button></view
+    <button
+      class="club-service-row"
+      role="button"
+      tabindex="0"
+      :disabled="busy"
+      :aria-disabled="busy"
+      :aria-expanded="showOrders"
+      @tap="showOrders = !showOrders"
     >
-    <view v-if="!orders.length && !loading" class="membership-empty soft-panel"
-      ><text>暂无订单</text
-      ><text>订单生成后，可在这里查询处理结果。</text></view
-    >
-    <view v-else class="membership-orders">
-      <button
-        role="button"
-        tabindex="0"
-        v-for="item in orders"
-        :key="item.id"
-        class="membership-order"
-        :disabled="busy || loading"
-        :aria-disabled="busy || loading"
-        @tap="$emit('select-order', item)"
+      <view class="club-service-icon"
+        ><uni-icons type="wallet" size="21" color="var(--violet)"
+      /></view>
+      <view class="club-service-copy"
+        ><text class="club-service-title">我的订单</text
+        ><text class="club-service-description"
+          >查看购买记录与支付状态</text
+        ></view
       >
-        <view class="membership-order-top"
-          ><text>{{ item.productName }} · {{ price(item.amount) }}</text
-          ><text>{{ statusText(item.status, item.channel) }}</text></view
+      <uni-icons
+        :type="showOrders ? 'up' : 'right'"
+        size="17"
+        color="var(--ink-3)"
+      />
+    </button>
+    <view v-if="showOrders" class="club-order-history">
+      <view class="membership-orders-heading"
+        ><text class="settings-title">最近订单</text
+        ><button
+          role="button"
+          tabindex="0"
+          class="membership-refresh"
+          :disabled="busy || loading"
+          :aria-disabled="busy || loading"
+          @tap="$emit('refresh')"
         >
-        <text class="membership-order-id">{{ item.id }}</text>
-        <text class="membership-order-time"
-          >{{ dateText(item.createdAt) }} · {{ channelText(item.channel)
-          }}{{
-            item.status === "pending" && item.channel === "virtual"
-              ? " · 点击查看"
-              : ""
-          }}</text
+          {{ loading ? "读取中…" : "刷新订单与权益" }}
+        </button></view
+      >
+      <view
+        v-if="!orders.length && !loading"
+        class="membership-empty soft-panel"
+        ><text>暂无订单</text
+        ><text>订单生成后，可在这里查询处理结果。</text></view
+      >
+      <view v-else class="membership-orders">
+        <button
+          role="button"
+          tabindex="0"
+          v-for="item in orders"
+          :key="item.id"
+          class="membership-order"
+          :disabled="busy || loading"
+          :aria-disabled="busy || loading"
+          @tap="$emit('select-order', item)"
         >
-      </button>
+          <view class="membership-order-top"
+            ><text>{{ item.productName }} · {{ price(item.amount) }}</text
+            ><text>{{ statusText(item.status, item.channel) }}</text></view
+          >
+          <text class="membership-order-id">{{ item.id }}</text>
+          <text class="membership-order-time"
+            >{{ dateText(item.createdAt) }} · {{ channelText(item.channel)
+            }}{{
+              item.status === "pending" && item.channel === "virtual"
+                ? " · 点击查看"
+                : ""
+            }}</text
+          >
+        </button>
+      </view>
+    </view>
+    <view class="club-faq">
+      <text class="club-section-title">开通前，你可能想知道</text>
+      <view
+        v-for="(item, index) in questions"
+        :key="item.title"
+        class="club-faq-item"
+      >
+        <button
+          class="club-question"
+          role="button"
+          tabindex="0"
+          :aria-expanded="openQuestion === index"
+          @tap="openQuestion = openQuestion === index ? -1 : index"
+        >
+          <text>{{ item.title }}</text
+          ><uni-icons
+            :type="openQuestion === index ? 'minus' : 'plus'"
+            size="18"
+            color="var(--ink-3)"
+          />
+        </button>
+        <text v-if="openQuestion === index" class="club-answer">{{
+          item.answer
+        }}</text>
+      </view>
     </view>
     <text class="membership-footnote"
-      >{{
-        membership.product?.channel === "virtual"
-          ? "支付与会员权益以服务器确认结果为准。"
-          : "模拟支付不会产生实际扣款。"
-      }}免费版最多
-      {{ subscriptionLimit ?? 5 }}
-      条，删除释放额度；会员不影响基础提醒、统计和导出。</text
+      >认真记录每一份喜欢，从容迎接每一次续费。</text
     >
   </view>
 </template>
 <script>
-import SettingsRow from "./SettingsRow.vue";
+import UiSkeleton from "./UiSkeleton.vue";
+import PageHeader from "./PageHeader.vue";
 import AsyncStateView from "./AsyncStateView.vue";
 export default {
   name: "MembershipView",
-  components: { SettingsRow, AsyncStateView },
+  components: { AsyncStateView, PageHeader, UiSkeleton },
   emits: [
     "back",
     "purchase",
@@ -346,7 +469,7 @@ export default {
     "refund",
   ],
   data() {
-    return { refundConfirm: false };
+    return { refundConfirm: false, showOrders: false, openQuestion: -1 };
   },
   watch: {
     "order.id"() {
@@ -365,6 +488,31 @@ export default {
     error: { type: String, default: "" },
     message: { type: String, default: "" },
   },
+  computed: {
+    questions() {
+      return [
+        {
+          title: "免费版与永久会员有什么区别？",
+          answer: `免费版最多保存 ${this.subscriptionLimit ?? 5} 条订阅，永久会员不限数量。提醒、支出统计和导出在免费版同样可用，提醒需完成授权。删除订阅可释放免费额度。`,
+        },
+        {
+          title: "会自动续费或再次扣款吗？",
+          answer:
+            "不会。永久会员为一次性购买，没有到期日，也不会自动续费或周期扣款。",
+        },
+        {
+          title: "更换手机后，会员还在吗？",
+          answer:
+            "在。使用同一微信账号重新登录，即可读取会员权益，无需再次购买。",
+        },
+        {
+          title: "支付后权益没有更新怎么办？",
+          answer:
+            "展开「我的订单」，点击「刷新订单与权益」重新查询。请先确认现有订单的结果，再继续操作。",
+        },
+      ];
+    },
+  },
   methods: {
     channelText(channel) {
       return (
@@ -376,6 +524,7 @@ export default {
       );
     },
     price(amount) {
+      if (amount == null || !Number.isFinite(Number(amount))) return "—";
       return "¥" + (Number(amount) / 100).toFixed(2);
     },
     statusText(status, channel) {
@@ -416,158 +565,5 @@ export default {
 };
 </script>
 <style lang="scss" scoped>
-@import "../../styles/tokens";
-.membership-summary {
-  padding: 32rpx;
-  background: linear-gradient(130deg, #ffffff, #e8f1ff);
-  color: $text;
-  border: 1rpx solid #d4e2fa;
-  border-radius: 28rpx;
-}
-.membership-label {
-  display: block;
-  font-size: 24rpx;
-  opacity: 0.85;
-}
-.membership-headline {
-  display: block;
-  font-size: 38rpx;
-  font-weight: 650;
-  margin: 16rpx 0;
-  line-height: 1.4;
-}
-.membership-summary-copy,
-.membership-test-label {
-  display: block;
-  font-size: 24rpx;
-  line-height: 1.7;
-}
-.membership-test-label {
-  margin-top: 16rpx;
-}
-.membership-purchase > .membership-primary {
-  width: 100%;
-}
-.membership-purchase,
-.membership-cashier {
-  padding: 32rpx;
-  margin: 24rpx 0;
-  border: 1rpx solid $line;
-  background: $surface;
-  border-radius: 24rpx;
-}
-.membership-price-line,
-.membership-order-top {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 16rpx;
-  flex-wrap: wrap;
-}
-.membership-price {
-  font-family: $number-font;
-  font-size: 48rpx;
-  font-weight: 650;
-  color: $green;
-}
-.membership-notice,
-.membership-order-line,
-.membership-order-id,
-.membership-order-time {
-  display: block;
-  font-size: 24rpx;
-  line-height: 1.7;
-}
-.membership-notice {
-  margin: 16rpx 0 24rpx;
-  color: $amber;
-}
-.membership-primary,
-.membership-secondary,
-.membership-refresh {
-  min-height: 88rpx;
-  margin: 0;
-  border-radius: 16rpx;
-  font-size: 28rpx;
-  padding: 20rpx 24rpx;
-  line-height: 1.6;
-}
-.membership-primary {
-  background: $green;
-  color: $surface;
-}
-.membership-secondary {
-  background: $bg;
-  color: $text;
-}
-.membership-refresh {
-  background: $surface;
-  color: $green;
-  font-size: 24rpx;
-}
-/* #ifdef H5 */
-button[disabled] {
-  opacity: 0.5;
-}
-button:focus-visible {
-  outline: 3px solid $green;
-  outline-offset: 3px;
-}
-/* #endif */
-.membership-feedback {
-  min-height: 64rpx;
-  font-size: 26rpx;
-  color: $green;
-  line-height: 1.6;
-}
-.membership-cashier-actions {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16rpx;
-  margin-top: 24rpx;
-}
-.membership-cashier-actions .membership-primary {
-  grid-column: 1 / -1;
-}
-.membership-order-id {
-  color: $muted;
-  overflow-wrap: anywhere;
-  text-align: left;
-}
-.membership-orders-heading {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16rpx;
-}
-.membership-orders-heading .settings-title {
-  margin: 0;
-}
-.membership-order {
-  display: block;
-  padding: 24rpx;
-  width: 100%;
-  margin: 0;
-  border-radius: 0;
-  text-align: left;
-  background: $surface;
-  color: $text;
-  border-bottom: 1rpx solid $line;
-}
-.membership-order-top {
-  font-size: 26rpx;
-}
-.membership-order-time {
-  color: $muted;
-}
-.membership-empty {
-  padding: 40rpx 24rpx;
-  color: $muted;
-  text-align: center;
-}
-.membership-empty text {
-  display: block;
-  font-size: 24rpx;
-  line-height: 1.8;
-}
+@import "../../styles/membership";
 </style>

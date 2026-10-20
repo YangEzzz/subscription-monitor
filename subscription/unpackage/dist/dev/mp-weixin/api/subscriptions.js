@@ -58,8 +58,8 @@ const subscriptionApi = {
         return records;
     }
   },
-  async detail(id) {
-    return fromSubscription(await api_request.request(pathFor(id)));
+  async detail(id, options) {
+    return fromSubscription(await api_request.request(pathFor(id), options));
   },
   async create(form) {
     return fromSubscription(await api_request.request("/subscriptions", { method: "POST", data: toSubscription(form) }));

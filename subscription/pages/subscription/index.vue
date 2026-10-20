@@ -1,5 +1,10 @@
 <template>
-  <view class="app-shell" :class="{ 'subpage-shell': !showTabBar }" @keydown="handleKeyboardAction">
+  <view
+    class="app-shell redesign-shell"
+    :class="{ 'subpage-shell': !showTabBar, 'reduce-motion': reducedMotion }"
+    :style="{ '--rd-status-bar-height': statusBarHeight + 'px' }"
+    @keydown="handleKeyboardAction"
+  >
     <view
       class="safe-top"
       :class="{ 'form-safe-top': activeView === 'form' }"
@@ -17,15 +22,25 @@
       scroll-y
       :show-scrollbar="true"
       :scroll-top="scrollTop"
+      @scroll="uiScrollTop = $event.detail.scrollTop"
     >
       <view
         v-if="!dataReady && !loadError"
-        class="initial-loading"
+        class="rd-initial-loading"
         role="status"
-        ><view class="skeleton-title"></view><view class="skeleton-card"></view
-        ><view v-for="row in 3" :key="row" class="skeleton-row"></view
-        ><text class="loading-caption">正在登录并整理你的续订清单…</text></view
+        ><page-header title="续订清单" /><ui-skeleton
+          variant="hero"
+        /><ui-skeleton variant="list" /><text class="rd-loading-caption"
+          >正在登录并整理你的续订清单…</text
+        ></view
       >
+      <page-header
+        v-if="activeView === 'stats' && statsError"
+        title="统计"
+        secondary
+        @back="goBackView('home')"
+      />
+      <page-header v-if="!dataReady && loadError" title="续订清单" />
       <async-state-view
         v-if="loadError"
         :compact="dataReady"
@@ -53,12 +68,13 @@
         :busy="loading || mutating"
         @action="refreshData"
       />
-      <view
-        v-if="statsLoading && activeView === 'stats'"
-        class="api-status"
-        role="status"
-        >正在加载统计…</view
-      >
+      <view v-if="statsLoading && activeView === 'stats'" role="status"
+        ><page-header
+          title="统计"
+          secondary
+          @back="goBackView('home')" /><ui-skeleton
+          variant="hero" /><ui-skeleton variant="chart"
+      /></view>
       <template v-if="dataReady">
         <!-- 首页 -->
         <subscription-home-view
@@ -83,6 +99,7 @@
           :trend-data="trendData"
           :decorate-item="decorateItem"
           @toggle-amount="toggleAmount"
+          @open-stats="navigateToView('stats')"
           @enable-notification="enableNotification"
           @switch-all="switchTab('all')"
           @open-detail="openDetail"
@@ -102,6 +119,7 @@
           :sort-label="sortLabel"
           :active-status-label="activeStatusLabel"
           :visible-subscriptions="visibleSubscriptions"
+          :decorate-item="decorateItem"
           :live-subscriptions="liveSubscriptions"
           :format-date="formatDate"
           :format-money="formatMoney"
@@ -124,6 +142,8 @@
           v-else-if="activeView === 'calendar'"
           :navigation-bar-height="navigationBarHeight"
           :calendar-title="calendarTitle"
+          :renewal-subscriptions="activeSubscriptions"
+          :decorate-item="decorateItem"
           :weekdays="weekdays"
           :calendar-days="calendarDays"
           :selected-date="selectedDate"
@@ -153,10 +173,12 @@
           :stats-total="statsTotal"
           :stats-subscription-count="statsSubscriptionCount"
           :category-stats="categoryStats"
+          :category-order="categories"
           :donut-background="donutBackground"
           :trend-data="trendData"
           :format-money="formatMoney"
           :compact-amount="compactAmount"
+          @back="goBackView('home')"
           @currency-change="changeStatsCurrency"
           @period-change="statsPeriod = $event"
           @open-form="openForm"
@@ -173,6 +195,8 @@
           :free-quota-text="freeQuotaText"
           :membership-quota-percent="membershipQuotaPercent"
           :membership-entry-enabled="membershipEntryEnabled"
+          :reduced-motion="reducedMotion"
+          @motion-change="reducedMotion = $event"
           :currencies="currencies"
           :deleted-subscriptions="deletedSubscriptions"
           :notification-ready="notificationReady"
@@ -217,9 +241,20 @@
         />
 
         <!-- 详情 -->
+        <subscription-detail-load-state
+          v-else-if="
+            activeView === 'detail' &&
+            (detailLoading || detailError || !selectedSubscription)
+          "
+          :error="detailError"
+          :scroll-offset="uiScrollTop"
+          @back="goBackView('all')"
+          @retry="openDetail({ id: selectedId })"
+        />
         <subscription-detail-view
           v-else-if="activeView === 'detail' && selectedSubscription"
           :subscription="selectedSubscription"
+          :scroll-offset="uiScrollTop"
           :notification-enabled="notificationReady"
           :renewal-history="selectedRenewalHistory"
           :renewal-locked="renewalLocked"
@@ -245,6 +280,7 @@
         <subscription-form-view
           v-else-if="activeView === 'form'"
           :editing-id="editingId"
+          :scroll-offset="uiScrollTop"
           :form="form"
           :service-templates="serviceTemplates"
           :categories="categories"
@@ -259,6 +295,8 @@
           :form-reminder-preview="formReminderPreview"
           :format-date="formatDate"
           :cycle-text="cycleText"
+          :format-money="formatMoney"
+          :days-text="daysText"
           @back="goBackView(editingId ? 'detail' : 'home')"
           @apply-template="applyTemplate"
           @category-change="form.category = $event"
@@ -300,11 +338,14 @@
       :tabs="tabs"
       :active-view="activeView"
       @switch="switchTab"
+      @create="openForm()"
     />
   </view>
 </template>
 
 <script>
+import PageHeader from "@/components/subscription/PageHeader.vue";
+import UiSkeleton from "@/components/subscription/UiSkeleton.vue";
 import SubscriptionHomeView from "@/components/subscription/SubscriptionHomeView.vue";
 import SubscriptionListView from "@/components/subscription/SubscriptionListView.vue";
 import SubscriptionCalendarView from "@/components/subscription/SubscriptionCalendarView.vue";
@@ -312,6 +353,7 @@ import SubscriptionStatsView from "@/components/subscription/SubscriptionStatsVi
 import SubscriptionProfileView from "@/components/subscription/SubscriptionProfileView.vue";
 import MembershipView from "@/components/subscription/MembershipView.vue";
 import SubscriptionDetailView from "@/components/subscription/SubscriptionDetailView.vue";
+import SubscriptionDetailLoadState from "@/components/subscription/SubscriptionDetailLoadState.vue";
 import SubscriptionFormView from "@/components/subscription/SubscriptionFormView.vue";
 import ReminderSettingsView from "@/components/subscription/ReminderSettingsView.vue";
 import SubscriptionSortSheet from "@/components/subscription/SubscriptionSortSheet.vue";
@@ -325,7 +367,19 @@ import {
 } from "./subscription-page-logic.js";
 
 export default {
+  provide() {
+    const page = this;
+    return {
+      uiMotion: {
+        get reduced() {
+          return page.reducedMotion;
+        },
+      },
+    };
+  },
   components: {
+    PageHeader,
+    UiSkeleton,
     SubscriptionHomeView,
     SubscriptionListView,
     SubscriptionCalendarView,
@@ -333,6 +387,7 @@ export default {
     SubscriptionProfileView,
     MembershipView,
     SubscriptionDetailView,
+    SubscriptionDetailLoadState,
     SubscriptionFormView,
     ReminderSettingsView,
     SubscriptionSortSheet,
@@ -340,7 +395,16 @@ export default {
     AsyncStateView,
   },
   data() {
-    return createSubscriptionPageState();
+    return {
+      ...createSubscriptionPageState(),
+      reducedMotion: false,
+      uiScrollTop: 0,
+    };
+  },
+  watch: {
+    activeView() {
+      this.uiScrollTop = 0;
+    },
   },
   computed: subscriptionComputed,
   onLoad(options) {

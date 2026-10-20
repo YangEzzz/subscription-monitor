@@ -81,6 +81,7 @@ const remoteComputed = {
 const remoteMethods = {
   ...pages_subscription_membershipRemote.membershipMethods,
   clearAccountData() {
+    this.cancelDetailLoad();
     this.membershipRequestId++;
     this.membershipOrders = [];
     this.membershipOrder = null;
@@ -168,7 +169,7 @@ const remoteMethods = {
       if (!this.dataReady)
         this.statsCurrency = settings.defaultCurrency;
       this.dataReady = true;
-      if (this.selectedId && !this.selectedSubscription) {
+      if (this.selectedId && !this.selectedSubscription && !this.detailLoading && !this.detailError) {
         this.selectedId = null;
         this.switchTab("all");
       }
@@ -318,19 +319,60 @@ const remoteMethods = {
     return true;
   },
   async openDetail(item) {
-    if (this.loading || this.mutating)
+    if (!(item == null ? void 0 : item.id) || this.mutating)
       return;
-    this.loading = true;
+    this.cancelDetailLoad();
+    const id = String(item.id);
+    const sequence = ++this.detailRequestId;
+    const userId = this.currentUserId;
+    this.selectedId = id;
+    this.detailLoading = true;
+    this.detailError = "";
+    let cancelled = false, task;
+    this.detailRequestCancel = () => {
+      var _a;
+      cancelled = true;
+      (_a = task == null ? void 0 : task.abort) == null ? void 0 : _a.call(task);
+    };
+    this.navigateToView("detail");
+    const isActive = () => sequence === this.detailRequestId && this.activeView === "detail" && this.selectedId === id && this.currentUserId === userId;
+    const isCurrent = () => {
+      var _a;
+      return isActive() && (!userId || ((_a = api_auth.getSession()) == null ? void 0 : _a.user.id) === userId);
+    };
     try {
-      const detail = await api_subscriptions.subscriptionApi.detail(item.id);
+      const detail = await api_subscriptions.subscriptionApi.detail(id, {
+        isCancelled: () => cancelled,
+        onTask: (value) => {
+          var _a;
+          task = value;
+          if (cancelled)
+            (_a = task == null ? void 0 : task.abort) == null ? void 0 : _a.call(task);
+        }
+      });
+      if (!isCurrent()) {
+        if (isActive())
+          this.detailError = "账号已切换，请重新加载";
+        return;
+      }
       this.upsertSubscription(detail);
-      this.selectedId = detail.id;
-      this.navigateToView("detail");
     } catch (error) {
-      toast(error.message);
+      if (isActive())
+        this.detailError = error.message || "订阅详情加载失败，请重试";
     } finally {
-      this.loading = false;
+      if (sequence === this.detailRequestId) {
+        this.detailLoading = false;
+        this.detailRequestCancel = null;
+      }
     }
+  },
+  cancelDetailLoad() {
+    var _a;
+    this.detailRequestId++;
+    (_a = this.detailRequestCancel) == null ? void 0 : _a.call(this);
+    this.detailRequestCancel = null;
+    this.detailLoading = false;
+    this.detailError = "";
   },
   async saveSubscription(force = false) {
     if (this.loading || this.mutating || !this.dataReady)

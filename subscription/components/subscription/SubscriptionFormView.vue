@@ -1,38 +1,81 @@
 <template>
-  <view class="page form-page subscription-form-page">
-    <view class="detail-titlebar"
-      ><button
-        role="button"
-        tabindex="0"
-        class="icon-button plain"
-        aria-label="返回"
-        @tap.stop="$emit('back')"
+  <view
+    class="page form-page subscription-form-page redesign-page redesign-ancillary flow-page"
+  >
+    <view class="flow-header"
+      ><page-header
+        :title="editingId ? '编辑订阅' : '新增订阅'"
+        secondary
+        pinned
+        :scrolled="scrollOffset > 8"
+        @back="$emit('back')"
+    /></view>
+    <view class="form-intro card hero"
+      ><view class="form-intro-top"
+        ><view class="icon-tile blue form-intro-icon"
+          ><uni-icons type="compose" size="24" color="var(--blue)" /></view
+        ><view class="form-intro-copy"
+          ><text class="form-intro-title">{{
+            editingId ? "更新这项订阅" : "记录一项持续支出"
+          }}</text
+          ><text>先确认服务与扣费日期，金额和备注可稍后补充。</text></view
+        ></view
       >
-        <uni-icons type="left" size="24" color="#202622" /></button
-      ><text class="page-title">{{ editingId ? "编辑订阅" : "新增订阅" }}</text
-      ><view class="icon-spacer"></view
-    ></view>
-    <view class="form-intro soft-summary"
-      ><text class="form-intro-title">{{
-        editingId ? "更新这项订阅" : "记录一项持续支出"
-      }}</text
-      ><text>先确认服务与扣费日期，金额和备注可稍后补充。</text></view
-    >
-    <view v-if="!editingId" class="template-section"
+      <view class="live-preview">
+        <view class="preview-caption"
+          ><view class="dot"></view><text>预览</text></view
+        >
+        <view class="preview-row">
+          <view class="preview-logo" :style="logoPaint(form.color)">{{
+            form.name ? Array.from(form.name)[0].toUpperCase() : "?"
+          }}</view>
+          <view class="preview-copy"
+            ><text
+              class="preview-name"
+              :class="{ 'preview-placeholder': !form.name }"
+              >{{ form.name || "服务名称" }}</text
+            ><text class="preview-meta"
+              >{{ form.category }} ·
+              <text class="num">{{
+                formatDate(form.nextBillingDate, false)
+              }}</text></text
+            ></view
+          >
+          <view class="preview-side"
+            ><text
+              class="preview-amount num"
+              :class="{
+                'amount-missing': form.amount === '' || form.amount == null,
+              }"
+              >{{ formatMoney(form.amount, form.currency) }}</text
+            ><text class="due num" :class="dueTone(form.nextBillingDate)">{{
+              daysText(form)
+            }}</text></view
+          >
+        </view>
+      </view>
+    </view>
+    <view v-if="!editingId" class="template-section card"
       ><view class="form-section-head"
         ><text>常用模板</text><text>快速填充</text></view
       ><scroll-view scroll-x :show-scrollbar="false" class="template-scroll"
         ><view class="template-row"
           ><button
+            hover-class="is-pressed"
             role="button"
             tabindex="0"
             v-for="item in serviceTemplates"
             :key="item.name"
             class="template-chip"
-            @tap="$emit('apply-template', item)"
+            :class="{ 'template-selected': selectedTemplate === item.name }"
+            :aria-pressed="selectedTemplate === item.name"
+            @tap="
+              selectedTemplate = item.name;
+              $emit('apply-template', item);
+            "
           >
-            <view class="template-logo" :style="{ background: item.color }"
-              ><uni-icons :type="item.icon" size="26" color="#ffffff" /></view
+            <view class="template-logo" :style="logoPaint(item.color)"
+              ><text>{{ item.logo }}</text></view
             ><text>{{ item.short }}</text>
           </button></view
         ></scroll-view
@@ -40,7 +83,7 @@
     >
     <view class="form-section"
       ><text class="form-section-title">基本信息</text
-      ><view class="form-card"
+      ><view class="form-card card list"
         ><label class="form-row"
           ><text class="form-label required">服务名称</text
           ><input
@@ -70,36 +113,51 @@
               ><uni-icons
                 type="right"
                 size="16"
-                color="#a2a7a3" /></view></view></picker
+                color="var(--ink-4)" /></view></view></picker
         ><view class="form-row brand-color-row"
           ><text class="form-label">品牌标识</text
           ><view class="color-options"
             ><button
+              hover-class="is-pressed"
               role="button"
               tabindex="0"
               v-for="color in logoColors"
               :key="color"
               :aria-label="`选择品牌色 ${color}`"
               :class="{ selected: form.color === color }"
-              :style="{ background: color }"
+              :style="{ '--service-color': color }"
+              :aria-pressed="form.color === color"
               @tap="form.color = color"
-            ></button></view></view></view
+            >
+              <view class="color-face"
+                ><uni-icons
+                  v-if="form.color === color"
+                  class="color-check"
+                  type="checkmarkempty"
+                  size="18"
+                  color="var(--surface)"
+              /></view></button></view></view></view
     ></view>
     <view class="form-section"
       ><text class="form-section-title">扣费信息</text
-      ><view class="form-card"
-        ><label class="form-row"
+      ><view class="form-card card list"
+        ><label class="form-row amount-row"
           ><view
             ><text class="form-label">金额</text
             ><text class="form-hint">可稍后补充</text></view
-          ><view class="money-input"
+          ><view class="money-input amount-input"
             ><picker
               :range="currencies"
               :value="currencies.indexOf(form.currency)"
               @change="
                 $emit('currency-change', currencies[$event.detail.value])
               "
-              ><text class="currency-code">{{ form.currency }}</text></picker
+              ><view class="currency-code"
+                >{{ form.currency
+                }}<uni-icons
+                  type="bottom"
+                  size="11"
+                  color="var(--blue)" /></view></picker
             ><input
               v-model="form.amount"
               aria-label="订阅金额"
@@ -112,15 +170,19 @@
           ><view class="form-row"
             ><text class="form-label required">计费周期</text
             ><view class="form-value"
-              ><text>{{ cycleText(form) }}</text
+              ><text :class="{ num: form.cycle === '自定义天数' }">{{
+                cycleText(form)
+              }}</text
               ><uni-icons
                 type="right"
                 size="16"
-                color="#a2a7a3" /></view></view></picker
+                color="var(--ink-4)" /></view></view></picker
         ><view v-if="form.cycle === '自定义天数'" class="form-row"
           ><view
             ><text class="form-label required">周期天数</text
-            ><text class="form-hint">1–365 个自然日</text></view
+            ><text class="form-hint"
+              ><text class="num">1–365</text> 个自然日</text
+            ></view
           ><view class="money-input"
             ><input
               v-model="form.cycleValue"
@@ -138,7 +200,7 @@
               ><uni-icons
                 type="right"
                 size="16"
-                color="#a2a7a3" /></view></view></picker
+                color="var(--ink-4)" /></view></view></picker
         ><picker
           mode="date"
           :start="todayKey"
@@ -148,31 +210,42 @@
             ><text class="form-label required"
               >下次{{ form.autoRenew ? "扣费" : "到期" }}日</text
             ><view class="form-value"
-              ><text>{{ formatDate(form.nextBillingDate) }}</text
+              ><text class="due num" :class="dueTone(form.nextBillingDate)">{{
+                daysText(form)
+              }}</text
+              ><text class="num">{{ formatDate(form.nextBillingDate) }}</text
               ><uni-icons
                 type="right"
                 size="16"
-                color="#a2a7a3" /></view></view></picker
+                color="var(--ink-4)" /></view></view></picker
         ><view class="form-row auto-renew-row"
           ><view
             ><text class="form-label">自动续费</text
             ><text class="form-hint">{{
               form.autoRenew ? "按预计扣费提醒" : "仅作为普通到期待办"
             }}</text></view
-          ><switch
-            :checked="form.autoRenew"
-            color="#315acb"
-            @change="$emit('auto-renew-change', $event.detail.value)" /></view
+          ><view class="flow-switch" :class="{ 'switch-on': form.autoRenew }"
+            ><view class="switch-track"><view class="switch-thumb"></view></view
+            ><switch
+              class="switch-native"
+              :checked="form.autoRenew"
+              color="var(--blue)"
+              @change="
+                $emit('auto-renew-change', $event.detail.value)
+              " /></view></view
         ><view class="form-row auto-renew-row"
           ><view
             ><text class="form-label">试用期</text
             ><text class="form-hint">{{
               form.trial ? "试用期内显示试用中" : "非试用订阅"
             }}</text></view
-          ><switch
-            :checked="form.trial"
-            color="#315acb"
-            @change="$emit('set-trial', $event.detail.value)" /></view
+          ><view class="flow-switch" :class="{ 'switch-on': form.trial }"
+            ><view class="switch-track"><view class="switch-thumb"></view></view
+            ><switch
+              class="switch-native"
+              :checked="form.trial"
+              color="var(--blue)"
+              @change="$emit('set-trial', $event.detail.value)" /></view></view
         ><picker
           v-if="form.trial"
           mode="date"
@@ -184,13 +257,13 @@
               ><text class="form-label required">试用截止日</text
               ><text class="form-hint">到期后按上方扣费日处理</text></view
             ><view class="form-value"
-              ><text>{{
+              ><text :class="{ num: Boolean(form.trialEndDate) }">{{
                 form.trialEndDate ? formatDate(form.trialEndDate) : "请选择"
               }}</text
               ><uni-icons
                 type="right"
                 size="16"
-                color="#a2a7a3" /></view></view></picker></view
+                color="var(--ink-4)" /></view></view></picker></view
     ></view>
     <view class="form-section reminder-form-section"
       ><view class="form-section-head"
@@ -198,29 +271,38 @@
         ><text>可多选</text></view
       ><view class="reminder-options"
         ><button
+          hover-class="is-pressed"
           role="button"
           tabindex="0"
           v-for="option in reminderOptions"
           :key="option.value"
           :class="{ selected: form.reminders.includes(option.value) }"
+          :aria-pressed="form.reminders.includes(option.value)"
           @tap="$emit('toggle-reminder', option.value)"
         >
-          <uni-icons
-            v-if="form.reminders.includes(option.value)"
-            type="checkmarkempty"
-            size="12"
-            color="#315acb"
-          />{{ option.label }}
+          <view class="reminder-option-face num"
+            ><uni-icons
+              v-if="form.reminders.includes(option.value)"
+              type="checkmarkempty"
+              size="12"
+              color="var(--blue)"
+            />{{ option.label }}</view
+          >
         </button></view
-      ><view class="form-preview"
-        ><uni-icons type="notification" size="14" color="#315acb" /><text
-          >预计最近提醒：{{ formReminderPreview }}</text
+      ><view class="form-preview" aria-live="polite"
+        ><view class="icon-tile blue"
+          ><uni-icons type="notification" size="16" color="var(--blue)" /></view
+        ><view
+          ><text class="preview-reminder-label">预计最近提醒</text
+          ><text class="preview-reminder-value num">{{
+            formReminderPreview
+          }}</text></view
         ></view
       ></view
     >
     <view class="form-section supplement-form-section"
       ><text class="form-section-title">补充信息</text
-      ><view class="form-card"
+      ><view class="form-card card list"
         ><label class="form-row textarea-row"
           ><text class="form-label">备注</text
           ><textarea
@@ -247,29 +329,39 @@
       class="form-error"
       id="subscription-form-error"
       role="alert"
-      ><uni-icons type="info-filled" size="18" color="#c5444c" /><text>{{
+      ><uni-icons type="info-filled" size="18" color="var(--red)" /><text>{{
         formError
       }}</text></view
     >
-    <button
-      role="button"
-      tabindex="0"
-      class="primary-button save-button"
-      :disabled="busy"
-      :aria-busy="busy ? 'true' : 'false'"
-      @tap="$emit('save')"
+    <view class="flow-actionbar form-actionbar"
+      ><button
+        hover-class="is-pressed"
+        role="button"
+        tabindex="0"
+        class="primary-button save-button"
+        :disabled="busy"
+        :aria-busy="busy ? 'true' : 'false'"
+        @tap="$emit('save')"
+      >
+        <uni-icons type="checkmarkempty" size="20" color="var(--surface)" />{{
+          busy ? "正在保存" : editingId ? "保存修改" : "保存订阅"
+        }}
+      </button></view
     >
-      <uni-icons type="checkmarkempty" size="20" color="#ffffff" />{{
-        busy ? "正在保存" : editingId ? "保存修改" : "保存订阅"
-      }}
-    </button>
   </view>
 </template>
 
 <script>
+import PageHeader from "./PageHeader.vue";
 import { syncNativeFieldLabels } from "./platform-inputs.js";
+import { dueTone, logoPaint } from "./subscription-presentation.js";
 export default {
+  components: { PageHeader },
   name: "SubscriptionFormView",
+  data() {
+    return { selectedTemplate: "" };
+  },
+  methods: { dueTone, logoPaint },
   mounted() {
     syncNativeFieldLabels(this.$el);
   },
@@ -301,6 +393,9 @@ export default {
     "save",
   ],
   props: {
+    scrollOffset: { type: Number, default: 0 },
+    formatMoney: { type: Function, required: true },
+    daysText: { type: Function, required: true },
     editingId: { type: [String, Number], default: null },
     form: { type: Object, required: true },
     serviceTemplates: { type: Array, default: () => [] },

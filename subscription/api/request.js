@@ -38,13 +38,22 @@ const responseRequestId = response => {
 	return response.data?.requestId || headers['x-request-id'] || headers['X-Request-Id'] || ''
 }
 
-async function sendRequest(path, { method = 'GET', data, query } = {}, accessToken) {
+const assertNotCancelled = options => {
+	if (options.isCancelled?.()) throw new ApiError('请求已取消', { code: 'REQUEST_CANCELLED' })
+}
+
+async function sendRequest(path, options = {}, accessToken) {
+	assertNotCancelled(options)
+	const { method = 'GET', data, query, onTask } = options
 	const search = Object.entries(query || {}).filter(([, value]) => value !== undefined && value !== null)
 		.map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`).join('&')
 	return new Promise((resolve, reject) => {
-		uni.request({
+		const task = uni.request({
 			url: `${API_CONFIG.baseUrl.replace(/\/$/, '')}${path}${search ? '?' + search : ''}`,
 			method, data, timeout: API_CONFIG.timeout,
+			// #ifdef MP-WEIXIN
+			enableHttp2: true,
+			// #endif
 			header: { 'Content-Type': 'application/json', ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}) },
 			success(response) {
 				if (response.statusCode >= 200 && response.statusCode < 300) return resolve(response.data)
@@ -59,6 +68,7 @@ async function sendRequest(path, { method = 'GET', data, query } = {}, accessTok
 				}))
 			},
 			fail(cause) {
+				if (options.isCancelled?.()) return reject(new ApiError('请求已取消', { code: 'REQUEST_CANCELLED', uncertain: method !== 'GET' }))
 				const timeout = (cause.errMsg || '').includes('timeout')
 				const writing = method !== 'GET'
 				reject(new ApiError(
@@ -71,16 +81,20 @@ async function sendRequest(path, { method = 'GET', data, query } = {}, accessTok
 				))
 			}
 		})
+		onTask?.(task)
 	})
 }
 
 export async function request(path, options = {}) {
+	assertNotCancelled(options)
 	if (options.auth === false) return sendRequest(path, options)
 	const session = await ensureSession()
+	assertNotCancelled(options)
 	try { return await sendRequest(path, options, session.accessToken) }
 	catch (error) {
 		if (error.status !== 401) throw error
 		clearSession(session.accessToken)
+		assertNotCancelled(options)
 		// A rejected credential has not reached the operation. Do not replay writes;
 		// safely retry a read once after obtaining a fresh WeChat code.
 		if (options.method && options.method !== 'GET') throw error

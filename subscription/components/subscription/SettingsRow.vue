@@ -1,28 +1,33 @@
 <template>
   <view
-    class="setting-row"
+    class="setting-row setrow"
     :role="action ? 'button' : undefined"
     :tabindex="action && !disabled ? 0 : undefined"
-    :aria-label="action ? `${title}，${description}` : undefined"
+    :aria-label="action ? `${title}，${value || description}` : undefined"
     :aria-disabled="disabled"
+    :class="{ 'is-disabled': disabled }"
+    :hover-class="action && !disabled ? 'row-pressed' : 'none'"
     @tap="!disabled && $emit('activate')"
   >
-    <view class="setting-icon" :class="iconClass"
+    <view class="setting-icon icon-tile" :class="iconClass"
       ><uni-icons :type="icon" size="18" :color="iconColor"
     /></view>
     <view class="setting-copy"
-      ><text>{{ title }}</text
-      ><text>{{ description }}</text></view
+      ><text class="setting-title">{{ title }}</text
+      ><text v-if="description" class="setting-description">{{
+        description
+      }}</text></view
     >
+    <text v-if="value" class="setting-value num">{{ value }}</text>
     <switch
       v-if="switchable"
       :key="switchRevision"
       :checked="checked"
       :disabled="disabled"
-      color="#315acb"
+      color="var(--blue)"
       @change="changeSwitch"
     />
-    <uni-icons v-else-if="action" type="right" size="17" color="#aab0ac" />
+    <uni-icons v-else-if="action" type="right" size="17" color="var(--ink-4)" />
   </view>
 </template>
 
@@ -47,9 +52,10 @@ export default {
     disabled: { type: Boolean, default: false },
     icon: { type: String, required: true },
     iconClass: { type: String, default: "" },
-    iconColor: { type: String, default: "#315acb" },
+    iconColor: { type: String, default: "var(--blue)" },
     title: { type: String, required: true },
     description: { type: String, default: "" },
+    value: { type: String, default: "" },
     switchable: { type: Boolean, default: false },
     checked: { type: Boolean, default: false },
     action: { type: Boolean, default: false },

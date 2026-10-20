@@ -1,5 +1,17 @@
 # 续订清单 UX Contract
 
+## 订阅详情加载（2026-10-20 用户补充）
+
+退出详情、改选其他订阅及账号清理时，除失效响应序号外，还必须调用原生 RequestTask.abort 释放在途连接。若请求仍在等待会话，取消后不得继续发送。公共请求层仅向微信小程序显式开启 enableHttp2；认证、错误映射、401 读请求一次重试和写请求不自动重发保持原约定。
+
+点击订阅立即进入详情视图并显示骨架屏，详情请求由独立的 detailLoading/detailError/detailRequestId 拥有，不占用全局 refresh 的 loading 状态。请求完成前隐藏缓存详情及操作按钮；成功后展示当前请求返回的数据，失败时保留详情导航与原返回栈，使用 AsyncStateView 提供重新加载。返回、离开详情和账号清理使在途详情请求失效；旧响应不可重新打开页面、覆盖新选择或回写旧账号数据。重试不新增返回栈。骨架复用 UiSkeleton 和全局减少动态效果规则，不引入人为最短等待时间。用户本次明确授权调整详情加载顺序，取代此前“先请求再切页”的实现。
+
+## 2026-10-20 新规范的展示组件适配
+
+用户已确认保留 `pages/subscription/index` 单路由与 `activeView/viewStack`，后续方案 A 的四个导航项和普通新增按钮由现有 SubscriptionTabBar 拥有；统计作为内部二级视图，入口从首页进入并使用既有返回栈，不迁移业务状态至多个 Page。现有请求、筛选、排序、表单、额度、订阅消息、支付与账号隔离保持原所有权。
+
+PageHeader 仅读取屏幕与胶囊位置；UiSelection 仅输出 select，不拥有业务筛选或查询；UiSkeleton 无业务请求。SettingsRow 继续使用 activate / checked-change，subscription-row 继续使用 activate，避免与小程序原生冒泡事件重名。样式可改变布局和语义颜色，不改变状态码、金额与统计口径。公共减少动态效果样式只控制位移与循环动画。
+
 ## 模拟会员购买
 
 业务依据：`deploy/模拟会员支付.md`、`subscription/docs/会员功能设计.md` 与服务端 MembershipPaymentsService。`MembershipView.vue` 使用现有 SettingsRow、AsyncStateView 和 tokens，模拟收银台是同页展开区域，不是模态框。提交期间锁定操作，错误在 AsyncStateView 中提供刷新入口；订单与会员状态以服务端读取结果为准，不由客户端支付结果直接修改。撤销测试权益用页面内两步确认，显示数据保留及无实际退款说明。
@@ -129,3 +141,9 @@ H5 760px 起五个导航项以侧栏呈现，移动端继续底部导航。表�
 ## 剩余页面的外观与可访问适配
 
 共享外观归 `styles/_surfaces.scss`，摘要由 `.soft-summary`、内容面板由 `.soft-panel` 及已有业务选择器拥有。日历布局为移动上下、桌面双栏；月导航/日期/当天项目的操作仍由 SubscriptionCalendarView emits → 原页面方法拥有。统计周期和币种仍由 StatSummaryCard 及既有远程统计拥有，图中文字与选择周期保持一致。SettingsRow 在 action 变体提供 role、tabindex 和可访问名称，保留独立 activate 业务事件，平台 picker 仍是单选拥有者。会员按钮的 aria-disabled 直接镜像原 disabled 条件，不改购买、支付或退款判断。所有表单、草稿返回、写入确认和支付来源继续遵循原契约。
+
+## 会员中心信息流（2026-10-20）
+
+依据用户本次重设计要求及 subscription/docs/会员功能设计.md 的现有权益规则，会员页改为活跃的会员俱乐部外观。身份、权益和永久方案优先展示；普通历史订单通过「我的订单」按钮展开，本次待处理/已选择订单保持原有同页收银台。FAQ 使用本地 disclosure 状态，不触发请求。订单刷新继续由 membership-remote.js 拥有，加载、错误和支付回执仍复用 AsyncStateView 与原状态区域。
+
+会员页不展示商户服务费、结算周期和商户总额限制。模拟模式继续标注不扣款与测试权益；真实购买、重复提交保护、iOS 限制、撤销确认与金额来源保持既有契约。会员保障与基础功能说明不可描述为新增独占能力。视觉 token 所有权及用户明确的风格覆盖见 DESIGN.md「会员中心：活跃会员俱乐部」。

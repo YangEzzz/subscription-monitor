@@ -26,7 +26,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     a: common_vendor.p({
       type: $props.tone === "error" ? "info-filled" : "spinner-cycle",
       size: "20",
-      color: $props.tone === "error" ? "#b43d47" : "#146747"
+      color: $props.tone === "error" ? "var(--red)" : "var(--blue)"
     }),
     b: common_vendor.t($props.title),
     c: common_vendor.t($props.description),
@@ -35,7 +35,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     e: common_vendor.t($props.busy ? $props.busyLabel : $props.actionLabel),
     f: $props.busy,
     g: $props.busy ? "true" : "false",
-    h: common_vendor.o(($event) => _ctx.$emit("action"), "00")
+    h: common_vendor.o(($event) => _ctx.$emit("action"), "29")
   } : {}, {
     i: common_vendor.n({
       compact: $props.compact

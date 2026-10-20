@@ -1,12 +1,7 @@
 <template>
-  <view class="page profile-page">
-    <view
-      class="primary-titlebar"
-      :style="{ height: navigationBarHeight + 'px' }"
-      ><text class="page-title">我的</text></view
-    >
-    <text class="page-lead">管理提醒、账号额度与数据偏好</text>
-    <view class="profile-head soft-summary"
+  <view class="page profile-page redesign-page">
+    <page-header title="我的" subtitle="管理提醒、账号额度与数据偏好" />
+    <view class="profile-head card hero"
       ><view class="profile-user-row"
         ><view class="avatar">续</view
         ><view class="profile-copy"
@@ -26,7 +21,7 @@
     >
     <view
       v-if="membershipEntryEnabled"
-      class="membership-entry"
+      class="membership-entry card"
       :class="{ active: isMember }"
       role="button"
       aria-label="查看账号额度"
@@ -38,7 +33,7 @@
           ><uni-icons
             :type="isMember ? 'checkbox-filled' : 'vip-filled'"
             size="22"
-            color="#ffffff"
+            color="var(--surface)"
         /></view>
         <view class="membership-copy"
           ><text class="membership-kicker">{{
@@ -55,7 +50,7 @@
           class="membership-arrow"
           type="right"
           size="18"
-          color="#315acb"
+          color="var(--blue)"
         />
       </view>
       <view v-if="!isMember" class="membership-quota"
@@ -68,13 +63,13 @@
           ></view></view
         ><view class="membership-benefits"
           ><view class="membership-benefit"
-            ><uni-icons type="checkmarkempty" size="13" color="#8b641f" />
+            ><uni-icons type="checkmarkempty" size="13" color="var(--gold)" />
             <text>订阅管理</text></view
           ><view class="membership-benefit"
-            ><uni-icons type="checkmarkempty" size="13" color="#8b641f" />
+            ><uni-icons type="checkmarkempty" size="13" color="var(--gold)" />
             <text>支出统计</text></view
           ><view class="membership-benefit"
-            ><uni-icons type="checkmarkempty" size="13" color="#8b641f" />
+            ><uni-icons type="checkmarkempty" size="13" color="var(--gold)" />
             <text>续费提醒</text></view
           ></view
         ></view
@@ -84,11 +79,11 @@
     <view class="profile-settings-grid">
       <view class="settings-section">
         <text class="settings-title">提醒设置</text>
-        <view class="settings-card">
+        <view class="settings-card card list">
           <settings-row
             icon="notification"
-            icon-class="green-bg"
-            icon-color="#315acb"
+            icon-class="blue-bg"
+            icon-color="var(--blue)"
             title="续费通知"
             :description="notificationDescription"
             :disabled="notificationBusy"
@@ -98,6 +93,8 @@
           <settings-row
             v-if="settings.notificationEnabled"
             icon="notification"
+            icon-class="gray-bg"
+            icon-color="var(--ink-2)"
             title="暂停微信通知"
             description="暂停发送，保留已有授权"
             action
@@ -106,6 +103,8 @@
           />
           <settings-row
             icon="list"
+            icon-class="violet-bg"
+            icon-color="var(--violet)"
             title="通知发送记录"
             description="查看最近的发送结果"
             action
@@ -114,7 +113,7 @@
           <settings-row
             icon="calendar"
             icon-class="orange-bg"
-            icon-color="#bb6b18"
+            icon-color="var(--orange)"
             title="默认提醒规则"
             :description="`提前 ${settings.defaultReminders.join('、')} 天 · ${settings.reminderTime}`"
             action
@@ -125,20 +124,20 @@
 
       <view class="settings-section">
         <text class="settings-title">数据与偏好</text>
-        <view class="settings-card">
+        <view class="settings-card card list">
           <picker :range="currencies" @change="changeDefaultCurrency"
             ><settings-row
               icon="wallet"
-              icon-class="violet-bg"
-              icon-color="#6458c9"
+              icon-class="green-bg"
+              icon-color="var(--green)"
               title="默认币种"
-              :description="settings.defaultCurrency"
+              :value="settings.defaultCurrency"
               action
           /></picker>
           <settings-row
             icon="download"
             icon-class="green-bg"
-            icon-color="#315acb"
+            icon-color="var(--blue)"
             title="导出订阅数据"
             description="生成 CSV 或复制表格数据"
             action
@@ -147,7 +146,7 @@
           <settings-row
             icon="trash"
             icon-class="orange-bg"
-            icon-color="#bb6b18"
+            icon-color="var(--orange)"
             title="回收站"
             :description="
               deletedSubscriptions.length
@@ -160,16 +159,23 @@
           <settings-row
             icon="locked"
             icon-class="blue-bg"
-            icon-color="#3c7fc1"
+            icon-color="var(--blue)"
             title="隐私与数据说明"
             description="了解账号登录与数据保存"
             action
             @activate="$emit('privacy')"
           />
           <settings-row
+            icon="loop"
+            title="减少动态效果"
+            switchable
+            :checked="reducedMotion"
+            @checked-change="$emit('motion-change', $event)"
+          />
+          <settings-row
             icon="refresh"
             icon-class="red-bg"
-            icon-color="#cc4b52"
+            icon-color="var(--red)"
             title="重新加载数据"
             description="从服务端刷新订阅与设置"
             action
@@ -183,11 +189,12 @@
 </template>
 
 <script>
+import PageHeader from "./PageHeader.vue";
 import SettingsRow from "./SettingsRow.vue";
 
 export default {
   name: "SubscriptionProfileView",
-  components: { SettingsRow },
+  components: { SettingsRow, PageHeader },
   emits: [
     "open-membership",
     "notification-change",
@@ -198,8 +205,10 @@ export default {
     "trash",
     "privacy",
     "refresh",
+    "motion-change",
   ],
   props: {
+    reducedMotion: { type: Boolean, default: false },
     membershipEntryEnabled: { type: Boolean, default: false },
     notificationReady: { type: Boolean, default: false },
     notificationDescription: { type: String, default: "" },

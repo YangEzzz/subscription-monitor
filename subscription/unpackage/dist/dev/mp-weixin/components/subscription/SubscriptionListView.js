@@ -1,10 +1,16 @@
 "use strict";
+const components_subscription_platformInputs = require("./platform-inputs.js");
 const common_vendor = require("../../common/vendor.js");
-const BrandLogo = () => "./brand-logo.js";
+const PageHeader = () => "./PageHeader.js";
+const UiSelection = () => "./UiSelection.js";
+const SubscriptionRow = () => "./subscription-row.js";
 const EmptyStateView = () => "./EmptyStateView.js";
 const _sfc_main = {
   name: "SubscriptionListView",
-  components: { BrandLogo, EmptyStateView },
+  mounted() {
+    components_subscription_platformInputs.syncNativeFieldLabels(this.$el);
+  },
+  components: { PageHeader, UiSelection, SubscriptionRow, EmptyStateView },
   emits: [
     "search",
     "clear-search",
@@ -35,6 +41,15 @@ const _sfc_main = {
         this.searchDraft = value;
     }
   },
+  computed: {
+    categoryOptions() {
+      return this.categoryFilters.map((item) => ({
+        value: item.name,
+        label: item.name,
+        count: item.count
+      }));
+    }
+  },
   methods: {
     handleSearchInput(event) {
       const value = (event.detail && event.detail.value || "").trim();
@@ -52,6 +67,7 @@ const _sfc_main = {
     }
   },
   props: {
+    decorateItem: { type: Function, required: true },
     navigationBarHeight: { type: Number, default: 0 },
     searchKeyword: { type: String, default: "" },
     categoryFilters: { type: Array, default: () => [] },
@@ -71,10 +87,12 @@ const _sfc_main = {
   }
 };
 if (!Array) {
+  const _component_page_header = common_vendor.resolveComponent("page-header");
   const _easycom_uni_icons2 = common_vendor.resolveComponent("uni-icons");
-  const _component_brand_logo = common_vendor.resolveComponent("brand-logo");
+  const _component_ui_selection = common_vendor.resolveComponent("ui-selection");
+  const _component_subscription_row = common_vendor.resolveComponent("subscription-row");
   const _component_empty_state_view = common_vendor.resolveComponent("empty-state-view");
-  (_easycom_uni_icons2 + _component_brand_logo + _component_empty_state_view)();
+  (_component_page_header + _easycom_uni_icons2 + _component_ui_selection + _component_subscription_row + _component_empty_state_view)();
 }
 const _easycom_uni_icons = () => "../../uni_modules/uni-icons/components/uni-icons/uni-icons.js";
 if (!Math) {
@@ -82,11 +100,14 @@ if (!Math) {
 }
 function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   return common_vendor.e({
-    a: $props.navigationBarHeight + "px",
+    a: common_vendor.p({
+      title: "全部订阅",
+      subtitle: "集中管理每一项持续支出"
+    }),
     b: common_vendor.p({
       type: "search",
-      size: "19",
-      color: "#8c938e"
+      size: "18",
+      color: "var(--ink-3)"
     }),
     c: $data.searchFocused,
     d: common_vendor.o([($event) => $data.searchDraft = $event.detail.value, (...args) => $options.handleSearchInput && $options.handleSearchInput(...args)], "b3"),
@@ -96,95 +117,74 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     g: common_vendor.p({
       type: "clear",
       size: "18",
-      color: "#9ca19d"
+      color: "var(--ink-4)"
     }),
-    h: common_vendor.o((...args) => $options.clearSearch && $options.clearSearch(...args), "cf")
+    h: common_vendor.o((...args) => $options.clearSearch && $options.clearSearch(...args), "a6")
   } : {}, {
-    i: common_vendor.f($props.categoryFilters, (filter, k0, i0) => {
-      return {
-        a: common_vendor.t(filter.name),
-        b: common_vendor.t(filter.count),
-        c: filter.name,
-        d: $props.activeCategory === filter.name ? 1 : "",
-        e: common_vendor.o(($event) => _ctx.$emit("category", filter.name), filter.name)
-      };
+    i: common_vendor.o(($event) => _ctx.$emit("open-form"), "60"),
+    j: common_vendor.o(($event) => _ctx.$emit("category", $event), "60"),
+    k: common_vendor.p({
+      options: $options.categoryOptions,
+      ["model-value"]: $props.activeCategory,
+      variant: "chips",
+      label: "按服务分类筛选，可左右滑动"
     }),
-    j: common_vendor.f($props.statusFilters, (status, k0, i0) => {
-      return {
-        a: common_vendor.t(status.label),
-        b: status.value,
-        c: $props.activeStatus === status.value ? 1 : "",
-        d: common_vendor.o(($event) => _ctx.$emit("status", status.value), status.value)
-      };
-    }),
-    k: common_vendor.t($props.sortLabel),
-    l: common_vendor.t($props.activeStatusLabel),
+    l: common_vendor.o(($event) => _ctx.$emit("status", $event), "d2"),
     m: common_vendor.p({
-      type: "right",
-      size: "15",
-      color: "#89938c"
+      options: $props.statusFilters,
+      ["model-value"]: $props.activeStatus,
+      variant: "tabs",
+      label: "按订阅状态筛选，可左右滑动"
     }),
-    n: common_vendor.o(($event) => _ctx.$emit("choose-sort"), "e1"),
-    o: $props.visibleSubscriptions.length
+    n: common_vendor.t($props.sortLabel),
+    o: common_vendor.t($props.activeStatusLabel),
+    p: common_vendor.t($props.visibleSubscriptions.length),
+    q: common_vendor.o(($event) => _ctx.$emit("choose-sort"), "60"),
+    r: $props.visibleSubscriptions.length
   }, $props.visibleSubscriptions.length ? {
-    p: common_vendor.f($props.visibleSubscriptions.slice(0, $data.displayLimit), (item, k0, i0) => {
+    s: common_vendor.f($props.visibleSubscriptions.slice(0, $data.displayLimit), (item, index, i0) => {
       return {
-        a: "4bd9411a-3-" + i0,
-        b: common_vendor.p({
-          item
-        }),
-        c: common_vendor.t(item.name),
-        d: common_vendor.t($props.statusText(item)),
-        e: common_vendor.n($props.getStatus(item)),
-        f: common_vendor.t($props.cycleText(item)),
-        g: common_vendor.t(item.amount === null ? "金额待补充" : $props.formatMoney(item.amount, item.currency)),
-        h: common_vendor.t(item.payment),
-        i: common_vendor.t($props.formatDate(item.nextBillingDate)),
-        j: common_vendor.t($props.daysText(item)),
-        k: "4bd9411a-4-" + i0,
-        l: item.id,
-        m: common_vendor.o(($event) => _ctx.$emit("open-detail", item), item.id)
+        a: item.id,
+        b: Math.min(index, 10) * 30 + "ms",
+        c: common_vendor.o(($event) => _ctx.$emit("open-detail", item), item.id),
+        d: "ca51a8d2-5-" + i0,
+        e: common_vendor.p({
+          item: {
+            ...$props.decorateItem(item),
+            cycle: $props.cycleText(item),
+            amountText: item.amount === null ? "金额待补充" : $props.formatMoney(item.amount, item.currency)
+          },
+          ["show-date"]: true,
+          ["date-label"]: $props.formatDate(item.nextBillingDate)
+        })
       };
-    }),
-    q: common_vendor.p({
-      type: "right",
-      size: "17",
-      color: "#b0b5b1"
     })
   } : {}, {
-    r: $props.visibleSubscriptions.length > $data.displayLimit
+    t: $props.visibleSubscriptions.length > $data.displayLimit
   }, $props.visibleSubscriptions.length > $data.displayLimit ? {
-    s: common_vendor.t($data.displayLimit),
-    t: common_vendor.t($props.visibleSubscriptions.length),
-    v: common_vendor.o(($event) => $data.displayLimit += 20, "09")
+    v: common_vendor.t($data.displayLimit),
+    w: common_vendor.t($props.visibleSubscriptions.length),
+    x: common_vendor.o(($event) => $data.displayLimit += 20, "cb")
   } : {}, {
-    w: !$props.visibleSubscriptions.length && $props.liveSubscriptions.length
+    y: !$props.visibleSubscriptions.length && $props.liveSubscriptions.length
   }, !$props.visibleSubscriptions.length && $props.liveSubscriptions.length ? {
-    x: common_vendor.o(($event) => _ctx.$emit("reset-filters"), "ff"),
-    y: common_vendor.p({
+    z: common_vendor.o(($event) => _ctx.$emit("reset-filters"), "d2"),
+    A: common_vendor.p({
       icon: "search",
       title: "没有匹配的订阅",
       description: "调整搜索词或筛选条件，也可以新增一条订阅",
-      ["action-label"]: "重置筛选",
-      ["action-class"]: "secondary-button"
+      ["action-label"]: "重置筛选"
     })
   } : !$props.liveSubscriptions.length ? {
-    A: common_vendor.o(($event) => _ctx.$emit("open-form"), "9a"),
-    B: common_vendor.p({
+    C: common_vendor.o(($event) => _ctx.$emit("open-form"), "9b"),
+    D: common_vendor.p({
       icon: "plus",
       title: "还没有添加订阅",
       description: "添加第一条订阅后，这里会显示所有续费项目",
-      ["action-label"]: "新增订阅",
-      ["action-class"]: "primary-button empty-add"
+      ["action-label"]: "新增订阅"
     })
   } : {}, {
-    z: !$props.liveSubscriptions.length,
-    C: common_vendor.p({
-      type: "plus",
-      size: "27",
-      color: "#ffffff"
-    }),
-    D: common_vendor.o(($event) => _ctx.$emit("open-form"), "bc")
+    B: !$props.liveSubscriptions.length
   });
 }
 const Component = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render]]);

@@ -29,26 +29,26 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     a: common_vendor.p({
       type: "closeempty",
       size: "21",
-      color: "#5f6862"
+      color: "var(--ink-2)"
     }),
-    b: common_vendor.o(($event) => _ctx.$emit("close"), "bb"),
+    b: common_vendor.o(($event) => _ctx.$emit("close"), "5a"),
     c: common_vendor.f($props.sortOptions, (option, k0, i0) => {
       return common_vendor.e({
-        a: "0e7d40ba-1-" + i0,
+        a: "c186b446-1-" + i0,
         b: common_vendor.p({
           type: option.icon,
           size: "20",
-          color: $props.sortMode === option.value ? "#177e4b" : "#6f7972"
+          color: $props.sortMode === option.value ? "var(--blue)" : "var(--ink-3)"
         }),
         c: common_vendor.t(option.label),
         d: common_vendor.t(option.desc),
         e: $props.sortMode === option.value
       }, $props.sortMode === option.value ? {
-        f: "0e7d40ba-2-" + i0,
+        f: "c186b446-2-" + i0,
         g: common_vendor.p({
           type: "checkmarkempty",
           size: "15",
-          color: "#ffffff"
+          color: "var(--surface)"
         })
       } : {}, {
         h: $props.sortMode === option.value ? 1 : "",
@@ -58,10 +58,10 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       });
     }),
     d: common_vendor.o(() => {
-    }, "8c"),
-    e: common_vendor.o(($event) => _ctx.$emit("close"), "e1"),
+    }, "d9"),
+    e: common_vendor.o(($event) => _ctx.$emit("close"), "06"),
     f: common_vendor.o(() => {
-    }, "b8")
+    }, "e6")
   };
 }
 const Component = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render]]);

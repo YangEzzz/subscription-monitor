@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>新增订阅</title>
+<link rel="stylesheet" href="../assets/tokens.css">
+<link rel="stylesheet" href="../assets/components.css">
+<style>
+  /* 滚动容器：头部吸顶，底部操作栏常驻 */
+  .page{height:844px;overflow-y:auto;padding-bottom:0;scrollbar-width:none}
+  .tail{height:116px}
+  .page::-webkit-scrollbar{display:none}
+  .full .page{height:auto;overflow:visible}
+  .topbar{position:sticky;top:0;z-index:3;transition:background var(--dur-2),box-shadow var(--dur-2)}
+  .topbar.scrolled{background:linear-gradient(180deg,rgba(236,238,250,.98),rgba(244,245,249,.97));box-shadow:0 1px 0 var(--hair),0 8px 16px -12px rgba(21,22,28,.18)}
+  .full .topbar{position:relative}
+
+  /* 预览卡 */
+  .intro{margin-top:10px;padding:16px 16px 0;overflow:hidden}
+  .intro-top{display:flex;gap:12px;align-items:flex-start}
+  .intro .t{font-size:16.5px;font-weight:700}
+  .intro .d{margin-top:4px;font-size:12px;letter-spacing:-.01em;color:var(--ink-3);line-height:1.5}
+  .preview{margin:14px -16px 0;border-top:1px dashed var(--border-strong);background:linear-gradient(180deg,rgba(234,240,255,.45),rgba(234,240,255,0))}
+  .preview .cap{display:flex;align-items:center;gap:6px;padding:10px 16px 0;font-size:11px;font-weight:600;color:var(--ink-3);letter-spacing:.06em}
+  .preview .cap .dot{background:var(--blue);box-shadow:0 0 0 3px rgba(47,91,234,.14)}
+  .preview .srow{cursor:default}
+  .preview .name.ph{color:var(--ink-4)}
+  #pvLogo{transition:background var(--dur-2)}
+
+  /* 常用模板 */
+  .tpl-card{margin-top:12px;padding:14px 0 14px}
+  .tpl-card .card-head{padding:0 16px}
+  .tpl{display:flex;gap:10px;overflow-x:auto;padding:12px 16px 0;scrollbar-width:none;-webkit-mask-image:linear-gradient(90deg,#000 85%,transparent)}
+  .tpl::-webkit-scrollbar{display:none}
+  .tpl-item{flex-shrink:0;width:78px;padding:12px 0 10px;border-radius:16px;display:flex;flex-direction:column;align-items:center;gap:8px;
+    background:#fff;border:1px solid var(--border);font-size:12px;color:var(--ink-2);font-weight:500;cursor:pointer;
+    transition:transform var(--dur-1) var(--ease-out),border-color var(--dur-2),background var(--dur-2)}
+  .tpl-item:active{transform:scale(.95)}
+  .tpl-item .logo{width:40px;height:40px;border-radius:12px;font-size:16px}
+  .tpl-item.on{border-color:var(--blue-line);background:var(--blue-soft);color:var(--blue);font-weight:600}
+  .logo.wy{background:linear-gradient(160deg,#F2575B,#D22F35);--glow:rgba(229,72,77,.7)}
+  .logo.xl{background:linear-gradient(160deg,#4F7BF5,#2552D8);--glow:rgba(47,91,234,.7)}
+  .logo.bd{background:linear-gradient(160deg,#5AA6FA,#2A78E4);--glow:rgba(59,142,240,.7)}
+
+  /* 表单行 */
+  .form{overflow:hidden}
+  .frow{display:flex;align-items:center;gap:12px;min-height:54px;padding:0 16px;position:relative}
+  .frow+.frow::before,.fblock+.frow::before,.frow+.fblock::before{content:'';position:absolute;left:16px;right:0;top:0;height:1px;background:var(--hair)}
+  .flabel{flex-shrink:0;font-size:15px;font-weight:600;display:flex;align-items:center;gap:3px}
+  .flabel .req{color:var(--red);font-size:14px;line-height:1}
+  .fhint{margin-top:3px;font-size:11.5px;color:var(--ink-3);font-weight:400}
+  .finput{flex:1;min-width:0;border:0;outline:0;background:none;text-align:right;font:500 15px var(--font);color:var(--ink)}
+  .finput::placeholder{color:var(--ink-4);font-weight:400}
+  .fval{margin-left:auto;display:flex;align-items:center;gap:6px;font-size:15px;color:var(--ink-2);font-weight:500}
+  .fval .num{font-size:16px;color:var(--ink)}
+  .frow.tap{cursor:pointer;transition:background var(--dur-1)}
+  .frow.tap:active{background:rgba(21,22,28,.03)}
+  .fblock{padding:14px 16px 16px;position:relative}
+  .fblock .flabel{margin-bottom:12px}
+
+  .swatches{display:flex;justify-content:space-between;padding:0 2px}
+  .sw{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;cursor:pointer;position:relative;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.3),inset 0 0 0 1px rgba(0,0,0,.06),0 4px 10px -5px var(--c);background:var(--c);
+    transition:transform var(--dur-2) var(--ease-spring)}
+  .sw::after{content:'';position:absolute;inset:-5px;border-radius:50%;border:2px solid var(--c);opacity:0;transform:scale(.85);transition:opacity var(--dur-2),transform var(--dur-2) var(--ease-spring)}
+  .sw svg{width:16px;height:16px;color:#fff;opacity:0;transform:scale(.5);transition:opacity var(--dur-2),transform var(--dur-2) var(--ease-spring)}
+  .sw.on::after{opacity:.35;transform:scale(1)}
+  .sw.on svg{opacity:1;transform:scale(1)}
+
+  .money{display:flex;align-items:center;height:40px;border-radius:12px;border:1px solid var(--border);background:#fff;overflow:hidden;width:176px;margin-left:auto;
+    transition:border-color var(--dur-2),box-shadow var(--dur-2)}
+  .money:focus-within{border-color:var(--blue-line);box-shadow:0 0 0 4px rgba(47,91,234,.08)}
+  .money .cur{height:100%;display:flex;align-items:center;gap:3px;padding:0 9px 0 11px;font-family:var(--font-num);font-weight:700;font-size:13px;color:var(--blue);
+    background:var(--blue-soft);border-right:1px solid var(--blue-line)}
+  .money .cur svg{width:11px;height:11px}
+  .money input{flex:1;min-width:0;border:0;outline:0;background:none;text-align:right;padding:0 12px;font-family:var(--font-num);font-weight:700;font-size:17px;color:var(--ink)}
+  .money input::placeholder{font-family:var(--font);font-weight:400;font-size:14px;color:var(--ink-4)}
+
+  .switch{width:50px;height:30px;border-radius:15px;flex-shrink:0;margin-left:auto;position:relative;cursor:pointer;
+    background:rgba(21,22,28,.09);border:1px solid var(--border);transition:background var(--dur-2),border-color var(--dur-2)}
+  .switch i{position:absolute;top:2px;left:2px;width:24px;height:24px;border-radius:50%;background:#fff;
+    box-shadow:0 2px 5px rgba(21,22,28,.2),0 0 0 .5px rgba(21,22,28,.06);transition:transform var(--dur-3) var(--ease-spring)}
+  .switch.on{background:linear-gradient(160deg,#4C76FF,#2448DA);border-color:rgba(30,60,190,.6)}
+  .switch.on i{transform:translateX(20px)}
+
+  /* 提醒节点 */
+  .remind{padding:14px 14px 0;overflow:hidden}
+  .nodes{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .node{height:42px;border-radius:13px;display:flex;align-items:center;justify-content:center;gap:5px;cursor:pointer;
+    font-size:13.5px;font-weight:500;color:var(--ink-2);background:#fff;border:1px solid var(--border);
+    transition:background var(--dur-2),color var(--dur-2),border-color var(--dur-2),transform var(--dur-1)}
+  .node:active{transform:scale(.96)}
+  .node .num{font-size:15px}
+  .node svg{width:14px;height:14px;display:none}
+  .node.on{color:var(--blue);background:var(--blue-soft);border-color:var(--blue-line);font-weight:600}
+  .node.on svg{display:block}
+  .next-remind{display:flex;align-items:center;gap:11px;margin:14px -14px 0;padding:13px 16px 14px;border-top:1px solid var(--hair);
+    background:linear-gradient(90deg,rgba(234,240,255,.8),rgba(234,240,255,0))}
+  .next-remind .icon-tile{width:32px;height:32px;border-radius:10px}
+  .next-remind .icon-tile svg{width:16px;height:16px}
+  .next-remind .k{font-size:11.5px;color:var(--ink-3)}
+  .next-remind .v{margin-top:2px;font-size:14px;font-weight:600;color:var(--blue)}
+  .next-remind .v .num{font-size:15.5px}
+
+  .area{width:100%;height:86px;border-radius:13px;border:1px solid var(--border);background:var(--surface-sunken);padding:11px 13px;resize:none;outline:0;
+    font:400 14px/1.55 var(--font);color:var(--ink);transition:border-color var(--dur-2),background var(--dur-2),box-shadow var(--dur-2)}
+  .area::placeholder{color:var(--ink-4)}
+  .area:focus{background:#fff;border-color:var(--blue-line);box-shadow:0 0 0 4px rgba(47,91,234,.08)}
+
+  /* 底部操作栏 */
+  .actionbar{position:absolute;left:0;right:0;bottom:0;z-index:5;padding:26px 16px 30px;
+    background:linear-gradient(180deg,rgba(244,245,249,0),rgba(244,245,249,.94) 34%)}
+  .actionbar .btn{width:100%;height:50px;border-radius:16px;font-size:15.5px}
+</style>
+</head>
+<body class="canvas no-dock">
+<div class="device">
+  <div class="page" id="page">
+    <div class="topbar" id="topbar">
+      <div class="navbar">
+        <div class="icon-btn" aria-label="返回"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg></div>
+        <div class="title">新增订阅</div>
+        <div class="capsule"></div>
+      </div>
+    </div>
+
+    <section class="card hero intro">
+      <div class="intro-top">
+        <div class="icon-tile blue" style="width:40px;height:40px;border-radius:13px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h8"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></div>
+        <div><div class="t">记录一项持续支出</div><div class="d">先确认服务与扣费日期，金额和备注可稍后补充。</div></div>
+      </div>
+      <div class="preview">
+        <div class="cap"><span class="dot"></span>预览</div>
+        <div class="srow">
+          <div class="logo" id="pvLogo" style="background:linear-gradient(160deg,#2CC271,#16904D);--glow:rgba(31,163,91,.7)">?</div>
+          <div class="info">
+            <div class="name ph" id="pvName">服务名称</div>
+            <div class="meta">其他<span class="sep">·</span><span class="num" style="font-size:12.5px">10</span>月<span class="num" style="font-size:12.5px">27</span>日</div>
+          </div>
+          <div class="right"><div class="amount todo">金额待补充</div><div class="due hot">7 天后</div></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card tpl-card">
+      <div class="card-head"><div class="card-title">常用模板</div><span class="pill gray">快速填充</span></div>
+      <div class="tpl" id="tpl">
+        <div class="tpl-item" data-name="网易云音乐" data-c="#E5484D"><div class="logo wy">网</div>网易云音乐</div>
+        <div class="tpl-item" data-name="QQ音乐" data-c="#1FA35B"><div class="logo qq">Q</div>QQ音乐</div>
+        <div class="tpl-item" data-name="迅雷" data-c="#3B8EF0"><div class="logo xl">迅</div>迅雷</div>
+        <div class="tpl-item" data-name="百度网盘" data-c="#3B8EF0"><div class="logo bd">百</div>百度网盘</div>
+      </div>
+    </section>
+
+    <div class="sec-head"><div class="sec-title">基本信息</div></div>
+    <section class="card form">
+      <label class="frow">
+        <span class="flabel">服务名称<span class="req">*</span></span>
+        <input class="finput" id="nameInput" placeholder="例如：腾讯视频 VIP">
+      </label>
+      <label class="frow">
+        <span class="flabel">套餐名称</span>
+        <input class="finput" placeholder="选填">
+      </label>
+      <div class="frow tap">
+        <span class="flabel">分类<span class="req">*</span></span>
+        <span class="fval">其他<svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>
+      </div>
+      <div class="fblock">
+        <div class="flabel">品牌标识</div>
+        <div class="swatches" id="sw">
+          <span class="sw on" style="--c:#1FA35B"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>
+          <span class="sw" style="--c:#3B8EF0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>
+          <span class="sw" style="--c:#E5484D"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>
+          <span class="sw" style="--c:#E0458F"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>
+          <span class="sw" style="--c:#6A55E0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>
+          <span class="sw" style="--c:#24262D"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>
+        </div>
+      </div>
+    </section>
+
+    <div class="sec-head"><div class="sec-title">扣费信息</div></div>
+    <section class="card form">
+      <div class="frow" style="min-height:64px">
+        <div><div class="flabel">金额</div><div class="fhint">可稍后补充</div></div>
+        <div class="money">
+          <span class="cur">CNY<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span>
+          <input inputmode="decimal" placeholder="选填">
+        </div>
+      </div>
+      <div class="frow tap">
+        <span class="flabel">下次扣费日<span class="req">*</span></span>
+        <span class="fval"><span class="due hot">7 天后</span><span><span class="num">2026</span>年<span class="num">10</span>月<span class="num">27</span>日</span><svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>
+      </div>
+      <div class="frow" style="min-height:64px">
+        <div><div class="flabel">自动续费</div><div class="fhint">按预计扣费提醒</div></div>
+        <span class="switch on"><i></i></span>
+      </div>
+      <div class="frow" style="min-height:64px">
+        <div><div class="flabel">试用期</div><div class="fhint">非试用订阅</div></div>
+        <span class="switch"><i></i></span>
+      </div>
+    </section>
+
+    <div class="sec-head"><div class="sec-title">提醒节点</div><span class="pill gray">可多选</span></div>
+    <section class="card remind">
+      <div class="nodes" id="nodes">
+        <div class="node"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>提前 <span class="num">14</span> 天</div>
+        <div class="node on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>提前 <span class="num">7</span> 天</div>
+        <div class="node on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>提前 <span class="num">3</span> 天</div>
+        <div class="node on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>提前 <span class="num">1</span> 天</div>
+        <div class="node"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>扣费当天</div>
+      </div>
+      <div class="next-remind">
+        <div class="icon-tile blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/></svg></div>
+        <div><div class="k">预计最近提醒</div><div class="v"><span class="num">2026</span>年<span class="num">10</span>月<span class="num">20</span>日 <span class="num">09:00</span></div></div>
+      </div>
+    </section>
+
+    <div class="sec-head"><div class="sec-title">补充信息</div></div>
+    <section class="card form">
+      <div class="fblock">
+        <div class="flabel">备注</div>
+        <textarea class="area" placeholder="记录使用人、账号尾号等非敏感信息"></textarea>
+      </div>
+      <div class="fblock" style="border-top:1px solid var(--hair)">
+        <div class="flabel">取消路径</div>
+        <textarea class="area" placeholder="例如：微信支付 > 自动续费管理"></textarea>
+      </div>
+    </section>
+    <div class="tail"></div>
+  </div>
+
+  <div class="actionbar"><button class="btn btn-primary">保存订阅</button></div>
+</div>
+<script src="../assets/shell.js"></script>
+<script>
+  const page = document.getElementById('page');
+  const topbar = document.getElementById('topbar');
+  topbar.prepend(page.querySelector('.statusbar'));
+  page.addEventListener('scroll', () => topbar.classList.toggle('scrolled', page.scrollTop > 8));
+
+  const pvLogo = document.getElementById('pvLogo'), pvName = document.getElementById('pvName');
+  const nameInput = document.getElementById('nameInput');
+  const sws = [...document.querySelectorAll('#sw .sw')];
+  const tpls = [...document.querySelectorAll('#tpl .tpl-item')];
+  const shade = (hex, k) => '#' + hex.slice(1).match(/../g).map(h => Math.max(0, Math.min(255, Math.round(parseInt(h, 16) * k))).toString(16).padStart(2, '0')).join('');
+  function setColor(c) {
+    sws.forEach(s => s.classList.toggle('on', s.style.getPropertyValue('--c').trim().toLowerCase() === c.toLowerCase()));
+    pvLogo.style.background = `linear-gradient(160deg,${shade(c, 1.12)},${shade(c, .82)})`;
+    pvLogo.style.setProperty('--glow', c + 'B3');
+  }
+  function setName(n) {
+    pvName.textContent = n || '服务名称';
+    pvName.classList.toggle('ph', !n);
+    pvLogo.textContent = n ? n.trim()[0].toUpperCase() : '?';
+  }
+  sws.forEach(s => s.addEventListener('click', () => setColor(s.style.getPropertyValue('--c').trim())));
+  nameInput.addEventListener('input', () => setName(nameInput.value.trim()));
+  tpls.forEach(t => t.addEventListener('click', () => {
+    tpls.forEach(x => x.classList.toggle('on', x === t));
+    nameInput.value = t.dataset.name; setName(t.dataset.name); setColor(t.dataset.c);
+  }));
+  document.querySelectorAll('.switch').forEach(s => s.addEventListener('click', () => s.classList.toggle('on')));
+  document.querySelectorAll('#nodes .node').forEach(n => n.addEventListener('click', () => n.classList.toggle('on')));
+
+  const q = new URLSearchParams(location.search);
+  if (q.has('scroll')) { page.scrollTop = q.get('scroll') === 'end' ? page.scrollHeight : +q.get('scroll'); topbar.classList.toggle('scrolled', page.scrollTop > 8); }
+</script>
+</body>
+</html>

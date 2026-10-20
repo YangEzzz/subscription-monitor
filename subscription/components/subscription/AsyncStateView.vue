@@ -9,7 +9,7 @@
       <uni-icons
         :type="tone === 'error' ? 'info-filled' : 'spinner-cycle'"
         size="20"
-        :color="tone === 'error' ? '#b43d47' : '#315acb'"
+        :color="tone === 'error' ? 'var(--red)' : 'var(--blue)'"
       />
     </view>
     <view class="state-copy">
@@ -18,7 +18,8 @@
     </view>
     <button
       v-if="actionLabel"
-      class="state-action"
+      class="state-action btn-ghost pressable"
+      hover-class="is-pressed"
       :disabled="busy"
       :aria-busy="busy ? 'true' : 'false'"
       @tap="$emit('action')"
@@ -45,46 +46,36 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-@import "../../styles/tokens";
-
 .async-state {
   box-sizing: border-box;
-  margin: 32rpx;
-  padding: 30rpx;
+  margin: 23.0769rpx 30.7692rpx;
+  padding: 30.7692rpx;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 22rpx;
-  border: 1rpx solid #ead8d9;
-  border-radius: 24rpx;
-  background: #fffafa;
+  gap: 23.0769rpx;
+  text-align: center;
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  background: var(--surface-glass);
 }
 .async-state.compact {
-  margin-top: 18rpx;
-  margin-bottom: 8rpx;
-  padding: 22rpx 24rpx;
+  padding: 23.0769rpx;
 }
 .state-mark {
-  position: relative;
-  width: 58rpx;
-  height: 64rpx;
-  flex: 0 0 58rpx;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 10rpx;
-  background: #f8e9ea;
-  overflow: hidden;
+  width: 69.2308rpx;
+  height: 69.2308rpx;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--surface-sunken);
 }
 .state-mark-line {
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 6rpx;
-  background: $danger;
+  display: none;
 }
 .state-copy {
-  flex: 1;
   min-width: 0;
 }
 .state-title,
@@ -92,70 +83,29 @@ export default {
   display: block;
 }
 .state-title {
-  color: #542b2f;
-  font-size: 26rpx;
-  line-height: 1.35;
-  font-weight: 700;
+  color: var(--ink);
+  font-size: 28.8462rpx;
+  line-height: 1.4;
+  font-weight: 600;
 }
 .state-description {
-  margin-top: 6rpx;
-  color: #80666a;
-  font-size: 22rpx;
+  margin-top: 11.5385rpx;
+  color: var(--ink-3);
+  font-size: 23.0769rpx;
   line-height: 1.5;
-  word-break: break-all;
+  overflow-wrap: anywhere;
 }
 .state-action {
-  min-width: 148rpx;
-  min-height: 72rpx;
+  min-height: 44px;
   margin: 0;
-  padding: 0 22rpx;
-  border: 1rpx solid #cfaeb1;
-  border-radius: 14rpx;
-  color: #8f3039;
-  background: $surface;
-  font-size: 23rpx;
-  line-height: 72rpx;
-  font-weight: 650;
+  padding: 0 30.7692rpx;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--white-glass);
+  color: var(--ink-2);
+  font-size: 26.9231rpx;
 }
 .state-action::after {
   border: 0;
 }
-.state-action[disabled] {
-  opacity: 0.55;
-}
-.tone-loading {
-  border-color: #d4e2fa;
-  background: #f4f8ff;
-}
-.tone-loading .state-mark {
-  background: #e4eeff;
-}
-.tone-loading .state-mark-line {
-  background: $green;
-}
-.tone-loading .state-title {
-  color: $text;
-}
-.tone-loading .state-description {
-  color: $muted;
-}
-/* #ifdef H5 */
-.state-description {
-  font-size: max(12px, 24rpx);
-}
-.state-action {
-  min-height: 44px;
-}
-@media (max-width: 480px) {
-  .async-state {
-    display: grid;
-    grid-template-columns: 32px minmax(0, 1fr);
-    gap: 12px;
-  }
-  .state-action {
-    grid-column: 2;
-    justify-self: start;
-  }
-}
-/* #endif */
 </style>

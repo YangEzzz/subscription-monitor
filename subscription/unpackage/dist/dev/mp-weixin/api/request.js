@@ -37,14 +37,22 @@ const responseRequestId = (response) => {
   const headers = response.header || response.headers || {};
   return ((_a = response.data) == null ? void 0 : _a.requestId) || headers["x-request-id"] || headers["X-Request-Id"] || "";
 };
-async function sendRequest(path, { method = "GET", data, query } = {}, accessToken) {
+const assertNotCancelled = (options) => {
+  var _a;
+  if ((_a = options.isCancelled) == null ? void 0 : _a.call(options))
+    throw new ApiError("请求已取消", { code: "REQUEST_CANCELLED" });
+};
+async function sendRequest(path, options = {}, accessToken) {
+  assertNotCancelled(options);
+  const { method = "GET", data, query, onTask } = options;
   const search = Object.entries(query || {}).filter(([, value]) => value !== void 0 && value !== null).map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`).join("&");
   return new Promise((resolve, reject) => {
-    common_vendor.index.request({
+    const task = common_vendor.index.request({
       url: `${api_config.API_CONFIG.baseUrl.replace(/\/$/, "")}${path}${search ? "?" + search : ""}`,
       method,
       data,
       timeout: api_config.API_CONFIG.timeout,
+      enableHttp2: true,
       header: { "Content-Type": "application/json", ...accessToken ? { Authorization: `Bearer ${accessToken}` } : {} },
       success(response) {
         if (response.statusCode >= 200 && response.statusCode < 300)
@@ -60,6 +68,9 @@ async function sendRequest(path, { method = "GET", data, query } = {}, accessTok
         }));
       },
       fail(cause) {
+        var _a;
+        if ((_a = options.isCancelled) == null ? void 0 : _a.call(options))
+          return reject(new ApiError("请求已取消", { code: "REQUEST_CANCELLED", uncertain: method !== "GET" }));
         const timeout = (cause.errMsg || "").includes("timeout");
         const writing = method !== "GET";
         reject(new ApiError(
@@ -72,18 +83,22 @@ async function sendRequest(path, { method = "GET", data, query } = {}, accessTok
         ));
       }
     });
+    onTask == null ? void 0 : onTask(task);
   });
 }
 async function request(path, options = {}) {
+  assertNotCancelled(options);
   if (options.auth === false)
     return sendRequest(path, options);
   const session = await api_auth.ensureSession();
+  assertNotCancelled(options);
   try {
     return await sendRequest(path, options, session.accessToken);
   } catch (error) {
     if (error.status !== 401)
       throw error;
     api_auth.clearSession(session.accessToken);
+    assertNotCancelled(options);
     if (options.method && options.method !== "GET")
       throw error;
     const renewed = await api_auth.ensureSession();

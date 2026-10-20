@@ -1272,17 +1272,17 @@ page {
   background: #fff;
   overflow: hidden;
 }
-.detail-grid view {
+.detail-grid > view {
   min-height: 96rpx;
   padding: 20rpx 24rpx;
   box-sizing: border-box;
   border-right: 1rpx solid $line;
   border-bottom: 1rpx solid $line;
 }
-.detail-grid view:nth-child(2n) {
+.detail-grid > view:nth-child(2n) {
   border-right: 0;
 }
-.detail-grid view:nth-child(n + 3) {
+.detail-grid > view:nth-child(n + 3) {
   border-bottom: 0;
 }
 .detail-grid text:first-child {
@@ -2599,3 +2599,8 @@ page {
 }
 @import "./ledger";
 @import "./surfaces";
+@import "./ui";
+@import "./dock";
+@import "./pages";
+@import "./ancillary";
+@import "./subscription-flows";

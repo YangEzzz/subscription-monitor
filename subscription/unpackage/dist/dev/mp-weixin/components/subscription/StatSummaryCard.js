@@ -1,7 +1,10 @@
 "use strict";
 const common_vendor = require("../../common/vendor.js");
+const DisplayAmount = () => "./DisplayAmount.js";
+const UiSelection = () => "./UiSelection.js";
 const _sfc_main = {
   name: "StatSummaryCard",
+  components: { DisplayAmount, UiSelection },
   emits: ["currency-change", "period-change"],
   props: {
     currencies: { type: Array, default: () => [] },
@@ -21,36 +24,28 @@ const _sfc_main = {
   }
 };
 if (!Array) {
-  const _easycom_uni_icons2 = common_vendor.resolveComponent("uni-icons");
-  _easycom_uni_icons2();
-}
-const _easycom_uni_icons = () => "../../uni_modules/uni-icons/components/uni-icons/uni-icons.js";
-if (!Math) {
-  _easycom_uni_icons();
+  const _component_display_amount = common_vendor.resolveComponent("display-amount");
+  const _component_ui_selection = common_vendor.resolveComponent("ui-selection");
+  (_component_display_amount + _component_ui_selection)();
 }
 function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   return {
     a: common_vendor.t($props.statsLabel),
     b: common_vendor.t($props.statsCurrency),
-    c: common_vendor.p({
-      type: "down",
-      size: "12",
-      color: "#177e4b"
+    c: $props.currencies,
+    d: $props.currencies.indexOf($props.statsCurrency),
+    e: common_vendor.o((...args) => $options.changeCurrency && $options.changeCurrency(...args), "81"),
+    f: common_vendor.p({
+      value: $props.formatMoney($props.statsTotal, $props.statsCurrency)
     }),
-    d: $props.currencies,
-    e: $props.currencies.indexOf($props.statsCurrency),
-    f: common_vendor.o((...args) => $options.changeCurrency && $options.changeCurrency(...args), "34"),
-    g: common_vendor.t($props.formatMoney($props.statsTotal, $props.statsCurrency)),
-    h: common_vendor.t($props.statsSubscriptionCount),
-    i: common_vendor.t($props.statsCurrency),
-    j: common_vendor.f($props.statPeriods, (period, k0, i0) => {
-      return {
-        a: common_vendor.t(period.label),
-        b: period.value,
-        c: $props.statsPeriod === period.value,
-        d: $props.statsPeriod === period.value ? 1 : "",
-        e: common_vendor.o(($event) => _ctx.$emit("period-change", period.value), period.value)
-      };
+    g: common_vendor.t($props.statsSubscriptionCount),
+    h: common_vendor.t($props.statsCurrency),
+    i: common_vendor.o(($event) => _ctx.$emit("period-change", $event), "62"),
+    j: common_vendor.p({
+      options: $props.statPeriods,
+      ["model-value"]: $props.statsPeriod,
+      variant: "segmented",
+      label: "统计口径"
     })
   };
 }

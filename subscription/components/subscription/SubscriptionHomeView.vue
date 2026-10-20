@@ -1,191 +1,216 @@
 <template>
-  <view class="page home-page">
-    <view
-      class="primary-titlebar home-head"
-      :style="{ height: navigationBarHeight + 'px' }"
-    >
-      <text class="page-title">续订清单</text>
-    </view>
-    <view class="home-overview">
-      <view class="home-intro">
-        <text class="home-kicker">续费概览</text>
-        <button
-          class="quick-add"
-          role="button"
-          tabindex="0"
-          aria-label="新增订阅"
-          @tap="$emit('open-form')"
-        >
-          <uni-icons type="plus" size="15" color="#315acb" /><text
-            >新增订阅</text
+  <view class="page home-page redesign-page">
+    <page-header title="续订清单" subtitle="近期扣费与待处理事项" online />
+    <view class="card hero rd-home-hero">
+      <view class="rd-hero-top"
+        ><text class="rd-eyebrow">未来 30 天预计扣费</text
+        ><view class="rd-hero-actions"
+          ><button
+            role="button"
+            tabindex="0"
+            class="rd-stat-link pressable"
+            hover-class="is-pressed"
+            @tap="$emit('open-stats')"
           >
-        </button>
-      </view>
-      <text class="home-lead">近期扣费与待处理事项</text>
-      <view class="summary-body">
-        <view class="summary-card">
-          <view class="summary-top"
-            ><text>未来 30 天预计扣费</text
-            ><button
-              role="button"
-              tabindex="0"
-              class="summary-eye"
-              aria-label="显示或隐藏金额"
-              @tap="$emit('toggle-amount')"
-            >
-              <uni-icons
+            <text class="rd-compact-face">统计 ›</text></button
+          ><button
+            role="button"
+            tabindex="0"
+            class="rd-eye pressable"
+            hover-class="is-pressed"
+            :aria-label="settings.amountVisible ? '隐藏金额' : '显示金额'"
+            @tap="$emit('toggle-amount')"
+          >
+            <view class="rd-compact-face"
+              ><uni-icons
                 :type="settings.amountVisible ? 'eye' : 'eye-slash'"
-                size="20"
-                color="#68758c"
-              /></button
-          ></view>
-          <text class="summary-amount compact-total">{{
-            settings.amountVisible ? next30TotalText : "••••"
+                size="18"
+                color="var(--ink-3)"
+            /></view></button></view
+      ></view>
+      <display-amount
+        :value="settings.amountVisible ? next30TotalText : '••••'"
+      />
+      <view class="rd-summary-meta"
+        >共 <text class="num">{{ next30Subscriptions.length }}</text> 项 ·
+        月均约
+        <text class="num">{{
+          settings.amountVisible ? monthlyAverageText : "•••"
+        }}</text></view
+      >
+      <view class="rd-timeline" aria-label="未来30天续费时间轴">
+        <view class="rd-timeline-track"
+          ><view class="rd-timeline-hot"></view></view
+        ><view class="rd-timeline-week"></view>
+        <view
+          v-for="(item, index) in next30Subscriptions"
+          :key="item.id"
+          class="rd-timeline-pin"
+          :class="{ 'rd-pin-urgent': index === 0 }"
+          :style="{
+            left: (decorateItem(item).days / 30) * 100 + '%',
+            backgroundColor: item.color || 'var(--blue)',
+          }"
+          :aria-label="item.name + '，' + decorateItem(item).shortDate"
+          ><text>{{ item.logo }}</text></view
+        >
+        <view class="rd-timeline-labels num"
+          ><text>今天</text><text class="rd-week-label">7 天</text
+          ><text>30 天</text></view
+        >
+      </view>
+      <view class="rd-kpis"
+        ><view class="rd-kpi"
+          ><view class="icon-tile blue"
+            ><uni-icons type="loop" size="20" color="var(--blue)" /></view
+          ><view
+            ><text class="rd-kpi-label">正在订阅</text
+            ><view class="rd-kpi-value num"
+              >{{ activeSubscriptions.length
+              }}<text class="rd-kpi-unit">项服务</text></view
+            ></view
+          ></view
+        ><view class="rd-kpi"
+          ><view class="icon-tile orange"
+            ><uni-icons
+              type="notification"
+              size="20"
+              color="var(--orange)" /></view
+          ><view
+            ><text class="rd-kpi-label">7 天内续费</text
+            ><view class="rd-kpi-value rd-orange num"
+              >{{ upcoming7.length
+              }}<text class="rd-kpi-unit">项提醒</text></view
+            ></view
+          ></view
+        ></view
+      >
+    </view>
+    <view class="sec-head"
+      ><text class="sec-title">即将续费</text
+      ><button
+        role="button"
+        tabindex="0"
+        class="link-pill pressable"
+        hover-class="is-pressed"
+        @tap="$emit('switch-all')"
+      >
+        <view class="link-pill-face"
+          ><text class="link-pill-label">全部</text>
+          <text class="link-pill-count num">{{
+            activeSubscriptions.length
           }}</text>
-          <view class="summary-meta"
-            ><text>共 {{ next30Subscriptions.length }} 项</text
-            ><view class="divider"></view
-            ><text
-              >月均约
-              {{ settings.amountVisible ? monthlyAverageText : "•••" }}</text
-            ></view
-          >
-        </view>
-        <view class="renewal-illustration" aria-hidden="true">
-          <view class="illustration-orbit"></view>
-          <view class="receipt-back"></view>
-          <view class="receipt-paper"
-            ><view class="receipt-line long"></view
-            ><view class="receipt-line"></view
-            ><view class="receipt-line short"></view
-          ></view>
-          <view class="receipt-clock"
-            ><view class="clock-hand hour"></view
-            ><view class="clock-hand minute"></view
-          ></view>
-        </view>
-      </view>
-      <view class="overview-metrics">
-        <view class="overview-metric"
-          ><text class="overview-metric-label">正在订阅</text
-          ><view class="overview-metric-value"
-            >{{ activeSubscriptions.length }}<text>项服务</text></view
-          ></view
-        >
-        <view class="overview-metric"
-          ><text class="overview-metric-label">7 天内续费</text
-          ><view class="overview-metric-value"
-            >{{ upcoming7.length }}<text>项提醒</text></view
-          ></view
-        >
-      </view>
+          <view class="link-pill-arrow"
+            ><uni-icons type="right" size="12" color="var(--ink-3)" /></view
+        ></view></button
+    ></view>
+    <view class="card list">
+      <view v-if="upcoming7.length" class="rd-group rd-orange"
+        >未来 7 天
+        <text class="count-badge num">{{ upcoming7.length }}</text></view
+      >
+      <subscription-row
+        v-for="item in upcoming7"
+        :key="item.id"
+        :item="decorateItem(item)"
+        @activate="$emit('open-detail', item)"
+      />
+      <view v-if="upcoming30Later.length" class="rd-group"
+        >8–30 天内
+        <text class="count-badge num">{{ upcoming30Later.length }}</text></view
+      >
+      <subscription-row
+        v-for="item in upcoming30Later.slice(0, 3)"
+        :key="item.id"
+        :item="decorateItem(item)"
+        @activate="$emit('open-detail', item)"
+      />
+      <empty-state-view
+        v-if="!next30Subscriptions.length"
+        icon="calendar"
+        title="未来 30 天暂无扣费"
+        action-label="新增订阅"
+        @action="$emit('open-form')"
+      />
+      <button
+        role="button"
+        tabindex="0"
+        v-if="next30Subscriptions.length > 4"
+        class="rd-more pressable"
+        hover-class="is-pressed"
+        @tap="$emit('switch-all')"
+      >
+        查看全部 <text class="num">{{ next30Subscriptions.length }}</text> 项
+      </button>
     </view>
-    <view class="home-body">
-      <view class="section-card renewal-agenda">
-        <view class="section-head"
-          ><view><text class="section-title">即将续费</text></view
-          ><button
-            role="button"
-            tabindex="0"
-            class="text-button"
-            @tap="$emit('switch-all')"
-          >
-            全部 {{ activeSubscriptions.length }}
-            <uni-icons type="right" size="14" color="#747b76" /></button
-        ></view>
-        <view v-if="upcoming7.length" class="group-title"
-          ><text>未来 7 天</text
-          ><text class="count-dot red">{{ upcoming7.length }}</text></view
-        >
-        <view v-if="upcoming7.length" class="renewal-group">
-          <subscription-row
-            v-for="item in upcoming7"
-            :key="item.id"
-            :item="decorateItem(item)"
-            @activate="$emit('open-detail', item)"
-          />
-        </view>
-        <view v-if="upcoming30Later.length" class="group-title second"
-          ><text>8–30 天内</text
-          ><text class="count-dot orange">{{
-            upcoming30Later.length
-          }}</text></view
-        >
-        <view v-if="upcoming30Later.length" class="renewal-group">
-          <subscription-row
-            v-for="item in upcoming30Later.slice(0, 3)"
-            :key="item.id"
-            :item="decorateItem(item)"
-            @activate="$emit('open-detail', item)"
-          />
-        </view>
-        <view v-if="!next30Subscriptions.length" class="empty-compact"
-          ><text>未来 30 天暂无扣费</text
-          ><button
-            role="button"
-            tabindex="0"
-            class="text-button green"
-            @tap="$emit('open-form')"
-          >
-            新增订阅
-          </button></view
-        >
-        <button
-          role="button"
-          tabindex="0"
-          v-if="next30Subscriptions.length > 4"
-          class="view-more"
-          @tap="$emit('switch-all')"
-        >
-          查看全部 {{ next30Subscriptions.length }} 项
-        </button>
-      </view>
-
-      <view class="home-secondary">
-        <view class="section-card reminder-card">
-          <view class="section-head"
-            ><text class="section-title">待处理事项</text
-            ><text class="section-caption"
-              >{{ actionableReminders.length }} 项</text
-            ></view
-          >
-          <button
-            role="button"
-            tabindex="0"
-            v-for="reminder in actionableReminders"
-            :key="reminder.key"
-            class="reminder-row"
-            :disabled="reminder.action === 'notification' && notificationBusy"
-            @tap="$emit('handle-reminder', reminder)"
-          >
-            <view class="reminder-icon" :class="reminder.tone"
-              ><uni-icons :type="reminder.icon" size="18" color="#ffffff"
-            /></view>
-            <view class="reminder-copy"
-              ><text class="reminder-title">{{ reminder.title }}</text
-              ><text class="reminder-desc">{{ reminder.desc }}</text></view
-            >
-            <uni-icons
-              v-if="reminder.action !== 'none'"
-              type="right"
-              size="16"
-              color="#a2a7a3"
-            />
-          </button>
-        </view>
-      </view>
-    </view>
+    <view class="sec-head"
+      ><text class="sec-title">待处理事项</text
+      ><text class="pill orange round num"
+        >{{ actionableReminders.length }} 项</text
+      ></view
+    >
+    <view class="card list"
+      ><settings-row
+        v-for="reminder in actionableReminders"
+        :key="reminder.key"
+        :icon="reminder.icon"
+        :icon-class="
+          reminder.tone === 'danger'
+            ? 'red-bg'
+            : reminder.tone === 'warning'
+              ? 'orange-bg'
+              : reminder.tone === 'success'
+                ? 'green-bg'
+                : 'blue-bg'
+        "
+        :icon-color="
+          reminder.tone === 'danger'
+            ? 'var(--red)'
+            : reminder.tone === 'warning'
+              ? 'var(--orange)'
+              : reminder.tone === 'success'
+                ? 'var(--green)'
+                : 'var(--blue)'
+        "
+        :title="reminder.title"
+        :description="reminder.desc"
+        :action="reminder.action !== 'none'"
+        :disabled="reminder.action === 'notification' && notificationBusy"
+        @activate="$emit('handle-reminder', reminder)"
+    /></view>
+    <view class="rd-home-add"
+      ><button
+        role="button"
+        tabindex="0"
+        class="btn-soft pressable"
+        hover-class="is-pressed"
+        @tap="$emit('open-form')"
+      >
+        新增订阅
+      </button></view
+    >
   </view>
 </template>
 
 <script>
+import PageHeader from "./PageHeader.vue";
+import DisplayAmount from "./DisplayAmount.vue";
+import EmptyStateView from "./EmptyStateView.vue";
+import SettingsRow from "./SettingsRow.vue";
 import SubscriptionRow from "./subscription-row.vue";
 
 export default {
   name: "SubscriptionHomeView",
-  components: { SubscriptionRow },
+  components: {
+    SubscriptionRow,
+    PageHeader,
+    DisplayAmount,
+    EmptyStateView,
+    SettingsRow,
+  },
   emits: [
     "toggle-amount",
+    "open-stats",
     "enable-notification",
     "switch-all",
     "open-detail",

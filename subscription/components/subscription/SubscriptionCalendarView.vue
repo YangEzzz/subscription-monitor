@@ -1,123 +1,150 @@
 <template>
-  <view class="page calendar-page">
-    <view
-      class="primary-titlebar"
-      :style="{ height: navigationBarHeight + 'px' }"
-      ><text class="page-title">续费日历</text></view
-    >
-    <text class="page-lead">按日期安排续费，查看每天的扣费明细</text>
-    <view class="calendar-layout">
-      <view class="calendar-card">
-        <view class="month-nav"
+  <view class="page calendar-page redesign-page">
+    <page-header
+      title="续费日历"
+      subtitle="按日期安排续费，查看每天的扣费明细"
+    />
+    <view class="card rd-calendar-card">
+      <view class="rd-month-nav"
+        ><text class="rd-month-name num">{{ calendarTitle }}</text
+        ><view class="rd-month-controls"
           ><button
             role="button"
             tabindex="0"
-            class="month-arrow"
+            class="rd-month-arrow pressable"
             aria-label="上个月"
+            hover-class="is-pressed"
             @tap="$emit('change-month', -1)"
           >
-            <uni-icons type="left" size="19" color="#5d655f" /></button
-          ><text class="month-name">{{ calendarTitle }}</text
+            ‹</button
           ><button
             role="button"
             tabindex="0"
-            class="month-arrow"
+            class="rd-month-arrow pressable"
             aria-label="下个月"
+            hover-class="is-pressed"
             @tap="$emit('change-month', 1)"
           >
-            <uni-icons type="right" size="19" color="#5d655f" /></button
-          ><button
-            role="button"
-            tabindex="0"
-            class="today-button"
-            @tap="$emit('today')"
-          >
-            今天
+            ›
           </button></view
+        ><button
+          role="button"
+          tabindex="0"
+          class="btn-soft rd-today pressable"
+          hover-class="is-pressed"
+          @tap="$emit('today')"
         >
-        <view class="calendar-grid week-grid"
-          ><text v-for="day in weekdays" :key="day">{{ day }}</text></view
-        ><view class="calendar-grid dates-grid"
-          ><button
-            role="button"
-            tabindex="0"
-            v-for="day in calendarDays"
-            :key="day.key"
-            class="date-cell"
-            :aria-pressed="day.key === selectedDate"
-            :aria-label="`${day.key}，${day.count ? day.count + '项续费' : '无续费'}${day.amountText ? '，' + day.amountText : ''}`"
-            :class="{
-              muted: !day.currentMonth,
-              selected: day.key === selectedDate,
-              today: day.key === todayKey,
-            }"
-            @tap="$emit('select-date', day.key)"
-          >
-            <text class="day-number">{{ day.day }}</text
-            ><view v-if="day.count" class="event-count">{{ day.count }}</view
-            ><text v-if="day.amountText" class="tiny-price">{{
-              day.amountText
-            }}</text>
-          </button></view
+          <text class="rd-compact-face">今天</text>
+        </button></view
+      >
+      <view class="rd-calendar-grid rd-weekdays"
+        ><text
+          v-for="(day, index) in weekdays"
+          :key="day"
+          :class="{ 'rd-weekend': index === 0 || index === 6 }"
+          >{{ day }}</text
         ></view
       >
-      <view class="calendar-detail"
-        ><view class="detail-heading"
-          ><view
-            ><text class="detail-date">{{ selectedDateTitle }}</text
-            ><text class="detail-week">{{ selectedWeekday }}</text></view
-          ><text class="detail-total"
-            >{{ selectedDateSubscriptions.length }} 项 ·
-            {{
-              selectedDateSubscriptions.length &&
-              selectedDateSubscriptions.every((item) => item.amount === null)
-                ? "金额待补充"
-                : selectedDateTotalText
-            }}</text
-          ></view
-        ><view v-if="selectedDateSubscriptions.length"
-          ><view
-            v-for="item in selectedDateSubscriptions"
-            :key="item.id"
-            class="calendar-subscription"
-            role="button"
-            tabindex="0"
-            @tap="$emit('open-detail', item)"
-            ><brand-logo :item="item" /><view class="list-main"
-              ><text class="list-name">{{ item.name }}</text
-              ><text class="list-detail"
-                >{{ cycleText(item) }} · {{ item.payment }}</text
-              ></view
-            ><text class="item-amount">{{
-              item.amount === null
-                ? "金额待补充"
-                : formatMoney(item.amount, item.currency)
-            }}</text></view
-          ></view
-        ><view v-else class="empty-compact calendar-empty"
-          ><text>当天没有续费项目</text
-          ><button
-            role="button"
-            tabindex="0"
-            class="text-button green"
-            @tap="$emit('open-form', selectedDate)"
-          >
-            添加到这一天
-          </button></view
+      <view class="rd-calendar-grid"
+        ><button
+          role="button"
+          tabindex="0"
+          v-for="day in calendarDays"
+          :key="day.key"
+          class="rd-calendar-day pressable"
+          :class="{
+            'rd-other-month': !day.currentMonth,
+            'rd-day-selected': day.key === selectedDate,
+            'rd-day-today': day.key === todayKey,
+          }"
+          :aria-pressed="day.key === selectedDate"
+          :aria-label="
+            day.key +
+            '，' +
+            (day.count ? day.count + '项续费' : '无续费') +
+            (day.amountText ? '，' + day.amountText : '')
+          "
+          hover-class="is-pressed"
+          @tap="$emit('select-date', day.key)"
+        >
+          <text class="rd-calendar-number num">{{ day.day }}</text
+          ><view v-if="day.count" class="rd-calendar-marks"
+            ><view
+              v-for="item in markersFor(day.key).slice(0, 3)"
+              :key="item.id"
+              class="rd-calendar-mark"
+              :style="{ backgroundColor: item.color || 'var(--blue)' }"
+            ></view
+            ><text v-if="day.count > 3" class="rd-calendar-extra num"
+              >+{{ day.count - 3 }}</text
+            ></view
+          ><text v-if="day.amountText" class="rd-calendar-price num">{{
+            day.amountText
+          }}</text>
+        </button></view
+      >
+    </view>
+    <view
+      :key="selectedDate"
+      class="card list rd-calendar-detail rd-enter motion"
+    >
+      <view class="rd-detail-head"
+        ><view class="rd-detail-title"
+          ><text class="num">{{ selectedDateTitle }}</text
+          ><text class="pill gray">{{ selectedWeekday }}</text></view
+        ><text class="rd-detail-total num"
+          >{{ selectedDateSubscriptions.length }} 项 ·
+          {{
+            selectedDateSubscriptions.length &&
+            selectedDateSubscriptions.every((item) => item.amount === null)
+              ? "金额待补充"
+              : selectedDateTotalText
+          }}</text
         ></view
       >
+      <subscription-row
+        v-for="item in selectedDateSubscriptions"
+        :key="item.id"
+        :item="{
+          ...decorateItem(item),
+          cycle: cycleText(item),
+          amountText:
+            item.amount === null
+              ? '金额待补充'
+              : formatMoney(item.amount, item.currency),
+        }"
+        @activate="$emit('open-detail', item)"
+      />
+      <empty-state-view
+        v-if="!selectedDateSubscriptions.length"
+        icon="calendar"
+        title="当天没有续费项目"
+        action-label="添加到这一天"
+        @action="$emit('open-form', selectedDate)"
+      />
     </view>
   </view>
 </template>
 
 <script>
-import BrandLogo from "./brand-logo.vue";
+import PageHeader from "./PageHeader.vue";
+import SubscriptionRow from "./subscription-row.vue";
+import EmptyStateView from "./EmptyStateView.vue";
 
 export default {
   name: "SubscriptionCalendarView",
-  components: { BrandLogo },
+  components: { PageHeader, SubscriptionRow, EmptyStateView },
   emits: ["change-month", "today", "select-date", "open-detail", "open-form"],
+  methods: {
+    markersFor(key) {
+      return this.renewalSubscriptions.filter(
+        (item) => item.nextBillingDate === key,
+      );
+    },
+  },
   props: {
+    renewalSubscriptions: { type: Array, default: () => [] },
+    decorateItem: { type: Function, required: true },
     navigationBarHeight: { type: Number, default: 0 },
     calendarTitle: { type: String, default: "" },
     weekdays: { type: Array, default: () => [] },

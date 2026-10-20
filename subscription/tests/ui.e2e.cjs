@@ -100,7 +100,7 @@ global.fetch = (url, options) =>
       });
       assert.equal(r.status, 201, await r.text());
     }
-    const root = resolve(__dirname, "../.preview/timebook-h5");
+    const root = resolve(__dirname, "../.preview/redesign-h5");
     server = createServer(async (req, res) => {
       let file = resolve(
         root,
@@ -169,26 +169,33 @@ global.fetch = (url, options) =>
     await expect(page.locator(".home-page")).toBeVisible();
     await expect(page.locator(".renewal-row")).toHaveCount(4); // 3 within week + up to 3 later
     await page.screenshot({
-      path: resolve(__dirname, "../.preview/timebook-home-mobile.png"),
+      path: resolve(__dirname, "../.preview/redesign-home-mobile.png"),
       fullPage: true,
     });
     await page.setViewportSize({ width: 1280, height: 900 });
     await page.screenshot({
-      path: resolve(__dirname, "../.preview/timebook-home-desktop.png"),
+      path: resolve(__dirname, "../.preview/redesign-home-desktop.png"),
       fullPage: true,
     });
 
     const shot = async (name) => {
+      await page.waitForTimeout(550);
       await expect(
         page.locator(".uni-toast:visible, .uni-sample-toast:visible"),
       ).toHaveCount(0);
       return page.screenshot({
-        path: resolve(__dirname, "../.preview/timebook-" + name + ".png"),
+        path: resolve(__dirname, "../.preview/redesign-" + name + ".png"),
         fullPage: true,
       });
     };
-    const tab = async (label) =>
-      page.locator(".tab-item").filter({ hasText: label }).click();
+    const tab = async (label) => {
+      if (await page.locator(".navbar-back").count())
+        await page.locator(".navbar-back").click();
+      if (label === "统计") {
+        await page.locator(".dock-tab").filter({ hasText: "首页" }).click();
+        await page.locator(".rd-stat-link").click();
+      } else await page.locator(".dock-tab").filter({ hasText: label }).click();
+    };
     const noOverflow = async () =>
       assert.ok(
         await page.evaluate(
@@ -200,58 +207,67 @@ global.fetch = (url, options) =>
     await page.setViewportSize({ width: 320, height: 740 });
     await noOverflow();
     await shot("home-320");
-    await page.locator(".summary-eye").click();
-    await expect(page.locator(".summary-amount")).toHaveText("••••");
-    await page.locator(".summary-eye").click();
+    await page.locator(".rd-eye").click();
+    await expect(page.locator(".display-amount")).toHaveText("••••");
+    await page.locator(".rd-eye").click();
     await tab("订阅");
-    await expect(page.locator(".list-item")).toHaveCount(4);
+    await expect(page.locator(".rd-subscriptions .srow")).toHaveCount(4);
     await noOverflow();
     await shot("list-320");
-    await expect(page.locator(".list-price.amount-missing")).toHaveText(
-      "金额待补充",
-    );
+    await expect(page.locator(".amount.todo")).toHaveText("金额待补充");
     await page.setViewportSize({ width: 390, height: 844 });
     await noOverflow();
     await shot("list-mobile");
-    await page.locator(".collection-add").click();
+    await page.locator(".rd-add").click();
     await expect(page.locator(".form-page")).toBeVisible();
     await page.getByRole("button", { name: "返回", exact: true }).click();
     await expect(page.locator(".list-page")).toBeVisible();
-    await page.locator(".filter-pill").filter({ hasText: "云存储" }).click();
-    await expect(page.locator(".list-item")).toHaveCount(1);
-    await expect(page.locator(".filter-pill.active")).toHaveAttribute(
-      "aria-pressed",
-      "true",
-    );
-    await page.locator(".status-pill").filter({ hasText: "全部状态" }).click();
-    await expect(page.locator(".list-item")).toHaveCount(1);
-    await page.locator(".filter-pill").filter({ hasText: "全部" }).click();
-    await expect(page.locator(".list-item")).toHaveCount(4);
-    await page.locator(".status-pill").filter({ hasText: "有效订阅" }).click();
-    await page.locator(".sort-summary").click();
+    await page
+      .locator(".selection-chips .selection-option")
+      .filter({ hasText: "云存储" })
+      .click();
+    await expect(page.locator(".rd-subscriptions .srow")).toHaveCount(1);
+    await expect(
+      page.locator(".selection-chips .selection-active"),
+    ).toHaveAttribute("aria-selected", "true");
+    await page
+      .locator(".selection-tabs .selection-option")
+      .filter({ hasText: "全部状态" })
+      .click();
+    await expect(page.locator(".rd-subscriptions .srow")).toHaveCount(1);
+    await page
+      .locator(".selection-chips .selection-option")
+      .filter({ hasText: "全部" })
+      .click();
+    await expect(page.locator(".rd-subscriptions .srow")).toHaveCount(4);
+    await page
+      .locator(".selection-tabs .selection-option")
+      .filter({ hasText: "有效订阅" })
+      .click();
+    await page.locator(".rd-sort").click();
     await page
       .locator(".sort-option")
       .filter({ hasText: "按金额从高到低" })
       .click();
-    await expect(page.locator(".list-name").first()).toHaveText(
+    await expect(page.locator(".renewal-name").first()).toHaveText(
       "团队效率工具 · 一个较长的服务名称",
     );
-    await page.locator(".sort-summary").click();
+    await page.locator(".rd-sort").click();
     await page
       .locator(".sort-option")
       .filter({ hasText: "按扣费日期" })
       .click();
     await page.setViewportSize({ width: 320, height: 740 });
-    await page.locator(".search-box input").fill("不存在的订阅");
+    await page.locator(".search input").fill("不存在的订阅");
     await expect(page.locator(".empty-title")).toHaveText("没有匹配的订阅");
-    await page.locator(".clear-search").click();
-    await expect(page.locator(".list-item")).toHaveCount(4);
-    await page.locator(".sort-summary").click();
+    await page.locator(".search-clear").click();
+    await expect(page.locator(".rd-subscriptions .srow")).toHaveCount(4);
+    await page.locator(".rd-sort").click();
     await expect(page.locator(".sort-sheet")).toBeVisible();
     await shot("sort-320");
     await page.keyboard.press("Escape");
     await expect(page.locator(".sort-sheet")).toBeHidden();
-    await page.locator(".list-item").first().click();
+    await page.locator(".rd-subscriptions .srow").first().click();
     await expect(page.locator(".detail-name")).toHaveText("家庭影音订阅");
     await noOverflow();
     await shot("detail-320");
@@ -263,13 +279,13 @@ global.fetch = (url, options) =>
     await expect(name).toHaveValue("家庭影音订阅");
     await expect(name).toHaveAttribute("aria-label", "服务名称，必填");
     await name.fill("未保存的修改");
-    await page.locator(".detail-titlebar .icon-button").click();
+    await page.locator(".navbar-back").click();
     await page
       .getByText("继续编辑", { exact: true })
       .filter({ visible: true })
       .click();
     await expect(name).toHaveValue("未保存的修改");
-    await page.locator(".detail-titlebar .icon-button").click();
+    await page.locator(".navbar-back").click();
     await page
       .getByText("放弃修改", { exact: true })
       .filter({ visible: true })
@@ -289,24 +305,24 @@ global.fetch = (url, options) =>
     await page.locator(".undo-button").click();
     await page.getByText("确认撤销", { exact: true }).click();
     await expect(page.locator(".process-button.success")).toBeVisible();
-    await page.locator(".detail-titlebar .icon-button").click();
+    await page.locator(".navbar-back").click();
     await expect(page.locator(".list-page")).toBeVisible();
     await tab("日历");
-    await expect(page.locator(".calendar-card")).toBeVisible();
+    await expect(page.locator(".rd-calendar-card")).toBeVisible();
     await noOverflow();
     await shot("calendar-320");
-    await page.locator(".month-arrow").last().click();
-    await page.locator(".today-button").click();
+    await page.locator(".rd-month-arrow").last().click();
+    await page.locator(".rd-today").click();
     await tab("统计");
-    await expect(page.locator(".stats-summary")).toBeVisible();
+    await expect(page.locator(".rd-stats-hero")).toBeVisible();
     await noOverflow();
     await shot("stats-320");
     await page
-      .locator(".stats-period-switch uni-button")
+      .locator(".selection-segmented .selection-option")
       .filter({ hasText: "年度" })
       .click();
-    await expect(page.locator(".stats-label")).toHaveText("年度预计支出");
-    await page.locator(".currency-filter").click();
+    await expect(page.locator(".rd-eyebrow")).toHaveText("年度预计支出");
+    await page.locator(".rd-currency").click();
     await expect(page.locator("uni-picker-view")).toBeVisible();
     await page
       .getByText("取消", { exact: true })
@@ -343,35 +359,35 @@ global.fetch = (url, options) =>
     await page.setViewportSize({ width: 390, height: 844 });
     await noOverflow();
     await shot("membership-mobile");
-    await page.locator(".detail-titlebar .icon-button").click();
+    await page.locator(".navbar-back").click();
     await expect(page.locator(".profile-page")).toBeVisible();
     await shot("profile-mobile");
     await tab("日历");
     await noOverflow();
     await shot("calendar-mobile");
     await page
-      .locator(".date-cell")
-      .filter({ has: page.locator(".event-count") })
+      .locator(".rd-calendar-day")
+      .filter({ has: page.locator(".rd-calendar-marks") })
       .first()
       .click();
-    await expect(page.locator(".calendar-subscription")).toHaveCount(1);
-    await page.locator(".calendar-subscription").click();
+    await expect(page.locator(".rd-calendar-detail .srow")).toHaveCount(1);
+    await page.locator(".rd-calendar-detail .srow").click();
     await expect(page.locator(".detail-page")).toBeVisible();
     await noOverflow();
     await shot("detail-mobile");
-    await page.locator(".detail-titlebar .icon-button").click();
+    await page.locator(".navbar-back").click();
     await tab("统计");
     await noOverflow();
     await shot("stats-mobile");
     await page
-      .locator('.stats-period-switch [role="button"]')
+      .locator(".selection-segmented .selection-option")
       .filter({ hasText: "未来30天" })
       .click();
-    await expect(page.locator(".donut-value")).toHaveText("未来30天");
+    await expect(page.locator(".rd-donut-title")).toHaveText("未来30天");
     await tab("我的");
     await page.setViewportSize({ width: 320, height: 740 });
     await tab("首页");
-    await page.locator(".quick-add").focus();
+    await page.locator(".dock-add").focus();
     await page.keyboard.press("Enter");
     await expect(page.locator(".form-page")).toBeVisible();
     await page.locator(".save-button").click();
@@ -416,11 +432,11 @@ global.fetch = (url, options) =>
       await noOverflow();
       await tab("订阅");
       await noOverflow();
-      await page.locator(".list-item").first().click();
+      await page.locator(".rd-subscriptions .srow").first().click();
       await page.locator(".edit-button").click();
       await noOverflow();
-      await page.locator(".detail-titlebar .icon-button").click();
-      await page.locator(".detail-titlebar .icon-button").click();
+      await page.locator(".navbar-back").click();
+      await page.locator(".navbar-back").click();
       await tab("统计");
       await noOverflow();
       await tab("首页");
@@ -438,7 +454,7 @@ global.fetch = (url, options) =>
     await page.locator(".membership-entry").click();
     await noOverflow();
     await shot("membership-desktop");
-    await page.locator(".detail-titlebar .icon-button").click();
+    await page.locator(".navbar-back").click();
     const emptySession = await realFetch(api + "/auth/wechat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -454,7 +470,7 @@ global.fetch = (url, options) =>
     );
     await page.setViewportSize({ width: 390, height: 844 });
     await page.reload();
-    await expect(page.locator(".empty-compact")).toContainText(
+    await expect(page.locator(".empty-state")).toContainText(
       "未来 30 天暂无扣费",
     );
     await tab("订阅");

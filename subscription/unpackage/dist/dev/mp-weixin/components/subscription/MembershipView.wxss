@@ -23,146 +23,450 @@
 /* 垂直间距 */
 /* 透明度 */
 /* 文章场景相关 */
-.membership-summary.data-v-7124b7df {
-  padding: 32rpx;
-  background: #104e37;
-  color: #ffffff;
-  border-radius: 24rpx;
+.club-pass.data-v-7124b7df {
+  position: relative;
+  margin: 0 30.7692rpx;
+  padding: 38.4615rpx 34.6154rpx 0;
+  border-radius: 46.1538rpx;
+  color: var(--surface);
+  background: var(--member-fill);
+  overflow: hidden;
+  box-shadow: var(--shadow-hero);
 }
-.membership-label.data-v-7124b7df {
+.club-pass.data-v-7124b7df::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at top right, var(--white-highlight), transparent 65%);
+  pointer-events: none;
+}
+.club-pass-free.data-v-7124b7df {
+  background: var(--member-free-fill);
+  color: var(--ink-2);
+}
+.club-pass-top.data-v-7124b7df,
+.club-pass-body.data-v-7124b7df,
+.club-pass-bottom.data-v-7124b7df,
+.club-section-heading.data-v-7124b7df,
+.club-plan-heading.data-v-7124b7df,
+.membership-price-line.data-v-7124b7df {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 15.3846rpx;
+}
+.club-brand.data-v-7124b7df {
+  font-size: 22.1154rpx;
+  font-weight: 600;
+}
+.club-status.data-v-7124b7df {
+  padding: 7.6923rpx 15.3846rpx;
+  border: 1px solid var(--white-highlight);
+  border-radius: 1921.1538rpx;
+  background: var(--white-highlight);
+  font-size: 20.1923rpx;
+  white-space: nowrap;
+}
+.club-pass-body.data-v-7124b7df {
+  padding: 42.3077rpx 0 38.4615rpx;
+  align-items: flex-start;
+  min-height: 269.2308rpx;
+  box-sizing: border-box;
+}
+.club-pass-copy.data-v-7124b7df {
+  flex: 1;
+  min-width: 0;
+}
+.club-eyebrow.data-v-7124b7df {
   display: block;
-  font-size: 24rpx;
+  font-size: 23.0769rpx;
+  color: var(--member-gold);
+  font-weight: 600;
+}
+.club-pass-free .club-eyebrow.data-v-7124b7df {
+  color: var(--ink-2);
+}
+.club-title.data-v-7124b7df {
+  display: block;
+  margin-top: 15.3846rpx;
+  font-size: 57.6923rpx;
+  font-weight: 700;
+  line-height: 1.25;
+}
+.club-description.data-v-7124b7df {
+  display: block;
+  margin-top: 19.2308rpx;
+  font-size: 23.0769rpx;
+  line-height: 1.7;
   opacity: 0.85;
 }
-.membership-headline.data-v-7124b7df {
-  display: block;
-  font-size: 38rpx;
-  font-weight: 650;
-  margin: 16rpx 0;
-  line-height: 1.4;
-}
-.membership-summary-copy.data-v-7124b7df,
-.membership-test-label.data-v-7124b7df {
-  display: block;
-  font-size: 24rpx;
-  line-height: 1.7;
-}
-.membership-test-label.data-v-7124b7df {
-  margin-top: 16rpx;
-}
-.membership-purchase > .membership-primary.data-v-7124b7df {
-  width: 100%;
-}
-.membership-purchase.data-v-7124b7df,
-.membership-cashier.data-v-7124b7df {
-  padding: 32rpx;
-  margin: 24rpx 0;
-  border: 1rpx solid #dfe7e2;
-  background: #ffffff;
-  border-radius: 24rpx;
-}
-.membership-price-line.data-v-7124b7df,
-.membership-order-top.data-v-7124b7df {
+.club-emblem.data-v-7124b7df {
+  position: relative;
+  flex: 0 0 180.7692rpx;
+  height: 207.6923rpx;
   display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 16rpx;
+  align-items: center;
+  justify-content: center;
+}
+.club-emblem-face.data-v-7124b7df {
+  width: 142.3077rpx;
+  height: 157.6923rpx;
+  border: 1px solid var(--white-highlight);
+  border-radius: 46.1538rpx;
+  background: var(--white-highlight);
+  transform: rotate(-10deg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-1);
+}
+.club-emblem-ring.data-v-7124b7df {
+  position: absolute;
+  inset: 0;
+  border: 1px solid var(--white-highlight);
+  border-radius: 50%;
+  opacity: 0.6;
+}
+.club-spark.data-v-7124b7df {
+  position: absolute;
+  color: var(--member-gold);
+  font-size: 34.6154rpx;
+}
+.club-spark-one.data-v-7124b7df {
+  top: 0;
+  right: 0;
+}
+.club-spark-two.data-v-7124b7df {
+  bottom: 15.3846rpx;
+  left: 0;
+  font-size: 21.1538rpx;
+}
+.club-pass-bottom.data-v-7124b7df {
+  padding: 26.9231rpx 0;
+  border-top: 1px solid var(--white-highlight);
+  font-size: 22.1154rpx;
+}
+.club-section-heading.data-v-7124b7df {
+  margin: 42.3077rpx 38.4615rpx 23.0769rpx;
   flex-wrap: wrap;
 }
-.membership-price.data-v-7124b7df {
-  font-family: "Bahnschrift", "DIN Alternate", Arial, sans-serif;
-  font-size: 48rpx;
-  font-weight: 650;
-  color: #146747;
+.club-section-title.data-v-7124b7df {
+  font-size: 32.6923rpx;
+  font-weight: 700;
+  color: var(--ink);
 }
-.membership-notice.data-v-7124b7df,
-.membership-order-line.data-v-7124b7df,
-.membership-order-id.data-v-7124b7df,
-.membership-order-time.data-v-7124b7df {
+.club-section-caption.data-v-7124b7df {
+  font-size: 20.1923rpx;
+  padding: 5.7692rpx 13.4615rpx;
+  border: 1px solid var(--violet-line);
+  border-radius: 11.5385rpx;
+  color: var(--violet);
+  background: var(--violet-soft);
+}
+.club-benefits.data-v-7124b7df,
+.club-plan.data-v-7124b7df,
+.membership-cashier.data-v-7124b7df,
+.club-order-history.data-v-7124b7df,
+.club-faq.data-v-7124b7df {
+  margin: 23.0769rpx 30.7692rpx;
+  border: 1px solid var(--border);
+  border-radius: 38.4615rpx;
+  background: var(--surface-glass);
+  overflow: hidden;
+  box-shadow: var(--shadow-1);
+}
+.club-benefit-main.data-v-7124b7df {
+  display: flex;
+  align-items: center;
+  gap: 23.0769rpx;
+  padding: 34.6154rpx 30.7692rpx;
+  background: var(--violet-soft);
+}
+.club-benefit-icon.data-v-7124b7df,
+.club-service-icon.data-v-7124b7df {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 69.2308rpx;
+  height: 69.2308rpx;
+  border: 1px solid var(--violet-line);
+  border-radius: 21.1538rpx;
+  background: var(--violet-soft);
+}
+.club-benefit-copy.data-v-7124b7df {
+  flex: 1;
+  min-width: 0;
+}
+.club-benefit-title.data-v-7124b7df {
   display: block;
-  font-size: 24rpx;
-  line-height: 1.7;
+  font-size: 28.8462rpx;
+  font-weight: 600;
+  color: var(--ink);
 }
-.membership-notice.data-v-7124b7df {
-  margin: 16rpx 0 24rpx;
-  color: #966018;
+.club-benefit-description.data-v-7124b7df {
+  display: block;
+  font-size: 23.0769rpx;
+  color: var(--ink-3);
+  line-height: 1.5;
+  margin-top: 9.6154rpx;
 }
-.membership-primary.data-v-7124b7df,
+.club-infinity.data-v-7124b7df {
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
+  font-size: 57.6923rpx;
+  color: var(--violet);
+}
+.club-benefit-pair.data-v-7124b7df {
+  display: flex;
+  border-top: 1px solid var(--hair);
+}
+.club-benefit-small.data-v-7124b7df {
+  flex: 1;
+  min-width: 0;
+  padding: 30.7692rpx;
+}
+.club-benefit-small + .club-benefit-small.data-v-7124b7df {
+  border-left: 1px solid var(--hair);
+}
+.club-benefit-small .club-benefit-title.data-v-7124b7df {
+  font-size: 24.0385rpx;
+  margin-top: 19.2308rpx;
+}
+.club-basic-note.data-v-7124b7df {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 11.5385rpx;
+  margin: 30.7692rpx;
+  color: var(--ink-3);
+  font-size: 22.1154rpx;
+}
+.club-plan.data-v-7124b7df,
+.membership-cashier.data-v-7124b7df,
+.club-order-history.data-v-7124b7df,
+.club-faq.data-v-7124b7df {
+  padding: 30.7692rpx;
+  box-sizing: border-box;
+}
+.club-plan-heading.data-v-7124b7df {
+  margin-bottom: 38.4615rpx;
+}
+.club-plan-tag.data-v-7124b7df {
+  font-size: 20.1923rpx;
+  padding: 5.7692rpx 13.4615rpx;
+  border: 1px solid var(--gold-line);
+  border-radius: 11.5385rpx;
+  background: var(--gold-soft);
+  color: var(--gold);
+}
+.club-plan-name.data-v-7124b7df {
+  display: block;
+  font-size: 30.7692rpx;
+  font-weight: 700;
+}
+.club-plan-description.data-v-7124b7df {
+  display: block;
+  margin-top: 9.6154rpx;
+  font-size: 23.0769rpx;
+  color: var(--ink-3);
+}
+.membership-price.data-v-7124b7df {
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
+  font-size: 69.2308rpx;
+  font-weight: 700;
+  color: var(--violet);
+}
+.membership-page .membership-primary.data-v-7124b7df,
 .membership-secondary.data-v-7124b7df,
 .membership-refresh.data-v-7124b7df {
-  min-height: 88rpx;
-  margin: 0;
-  border-radius: 16rpx;
-  font-size: 28rpx;
-  padding: 20rpx 24rpx;
-  line-height: 1.6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 84.6154rpx;
+  padding: 19.2308rpx 23.0769rpx;
+  margin: 30.7692rpx 0 0;
+  border: 1px solid var(--primary-line);
+  border-radius: 26.9231rpx;
+  background: var(--primary-fill);
+  color: var(--surface);
+  font-size: 26.9231rpx;
+  font-weight: 600;
+  line-height: 1.4;
+  box-shadow: var(--shadow-primary);
+  transition: transform var(--dur-1), opacity var(--dur-2);
 }
-.membership-primary.data-v-7124b7df {
-  background: #146747;
-  color: #ffffff;
+.membership-page .membership-owned.data-v-7124b7df {
+  border-color: var(--violet-line);
+  background: var(--violet-soft);
+  color: var(--violet);
+  box-shadow: none;
+  opacity: 1;
 }
-.membership-secondary.data-v-7124b7df {
-  background: #f3f5f4;
-  color: #172a22;
+.membership-owned.data-v-7124b7df::before {
+  content: "✓";
+  margin-right: 11.5385rpx;
+}
+.membership-secondary.data-v-7124b7df,
+.membership-refresh.data-v-7124b7df {
+  border-color: var(--border);
+  background: var(--white-glass);
+  color: var(--ink-2);
+  box-shadow: none;
 }
 .membership-refresh.data-v-7124b7df {
-  background: #ffffff;
-  color: #146747;
-  font-size: 24rpx;
+  width: auto;
+  font-size: 23.0769rpx;
+  margin: 0;
 }
-.membership-feedback.data-v-7124b7df {
-  min-height: 64rpx;
-  font-size: 26rpx;
-  color: #146747;
+.membership-primary.data-v-7124b7df::after,
+.membership-secondary.data-v-7124b7df::after,
+.membership-refresh.data-v-7124b7df::after,
+.club-service-row.data-v-7124b7df::after,
+.club-question.data-v-7124b7df::after,
+.membership-order.data-v-7124b7df::after {
+  border: 0;
+}
+.membership-notice.data-v-7124b7df,
+.club-platform-note.data-v-7124b7df,
+.club-test-note.data-v-7124b7df,
+.membership-footnote.data-v-7124b7df {
+  display: block;
+  margin: 19.2308rpx 0 0;
+  color: var(--ink-3);
+  font-size: 22.1154rpx;
   line-height: 1.6;
 }
-.membership-cashier-actions.data-v-7124b7df {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16rpx;
-  margin-top: 24rpx;
+.club-test-note.data-v-7124b7df {
+  margin: 23.0769rpx 38.4615rpx;
+  color: var(--orange);
 }
-.membership-cashier-actions .membership-primary.data-v-7124b7df {
-  grid-column: 1/-1;
+.membership-footnote.data-v-7124b7df {
+  margin: 38.4615rpx;
+  text-align: center;
 }
-.membership-order-id.data-v-7124b7df {
-  color: #65766d;
-  overflow-wrap: anywhere;
+.club-service-row.data-v-7124b7df {
+  display: flex;
+  align-items: center;
+  gap: 23.0769rpx;
+  width: calc(100% - 61.5385rpx);
+  min-height: 142.3077rpx;
+  box-sizing: border-box;
+  margin: 26.9231rpx 30.7692rpx;
+  padding: 25rpx 26.9231rpx;
+  background: var(--surface-glass);
+  border: 1px solid var(--border);
+  border-radius: 38.4615rpx;
   text-align: left;
+  line-height: 1.4;
 }
-.membership-orders-heading.data-v-7124b7df {
+.club-service-copy.data-v-7124b7df {
+  flex: 1;
+  min-width: 0;
+}
+.club-service-copy .club-service-title.data-v-7124b7df,
+.club-service-copy .club-service-description.data-v-7124b7df {
+  display: block;
+}
+.club-service-title.data-v-7124b7df {
+  font-size: 28.8462rpx;
+  font-weight: 600;
+  color: var(--ink);
+}
+.club-service-description.data-v-7124b7df {
+  font-size: 23.0769rpx;
+  color: var(--ink-3);
+  margin-top: 5.7692rpx;
+}
+.membership-orders-heading.data-v-7124b7df,
+.membership-order-top.data-v-7124b7df {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16rpx;
-}
-.membership-orders-heading .settings-title.data-v-7124b7df {
-  margin: 0;
+  gap: 15.3846rpx;
 }
 .membership-order.data-v-7124b7df {
-  display: block;
-  padding: 24rpx;
   width: 100%;
-  margin: 0;
-  border-radius: 0;
+  box-sizing: border-box;
+  margin: 23.0769rpx 0 0;
+  padding: 23.0769rpx;
+  border: 1px solid var(--border);
+  border-radius: 26.9231rpx;
+  background: var(--surface);
   text-align: left;
-  background: #ffffff;
-  color: #172a22;
-  border-bottom: 1rpx solid #dfe7e2;
+  line-height: 1.4;
+  font-size: 25rpx;
 }
-.membership-order-top.data-v-7124b7df {
-  font-size: 26rpx;
+.membership-order-id.data-v-7124b7df {
+  display: block;
+  overflow-wrap: anywhere;
+  color: var(--ink-3);
+  font-size: 22.1154rpx;
+  margin-top: 11.5385rpx;
 }
 .membership-order-time.data-v-7124b7df {
-  color: #65766d;
+  display: block;
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
+  font-size: 23.0769rpx;
+  color: var(--ink-3);
+  margin-top: 11.5385rpx;
+}
+.membership-order-line.data-v-7124b7df {
+  display: block;
+  font-size: 25rpx;
+  color: var(--ink-2);
+  line-height: 1.6;
+}
+.membership-feedback.data-v-7124b7df {
+  margin: 23.0769rpx 30.7692rpx;
+  padding: 23.0769rpx;
+  border: 1px solid var(--blue-line);
+  border-radius: 26.9231rpx;
+  background: var(--blue-soft);
+  font-size: 25rpx;
+  color: var(--blue);
 }
 .membership-empty.data-v-7124b7df {
-  padding: 40rpx 24rpx;
-  color: #65766d;
-  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 15.3846rpx;
+  padding: 38.4615rpx;
+  color: var(--ink-3);
+  font-size: 25rpx;
 }
-.membership-empty text.data-v-7124b7df {
+.membership-cashier-actions.data-v-7124b7df {
+  display: flex;
+  flex-direction: column;
+  gap: 7.6923rpx;
+}
+.club-faq-item + .club-faq-item.data-v-7124b7df {
+  border-top: 1px solid var(--hair);
+}
+.club-question.data-v-7124b7df {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15.3846rpx;
+  min-height: 84.6154rpx;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 23.0769rpx 0;
+  margin: 0;
+  background: transparent;
+  border: 0;
+  text-align: left;
+  font-size: 25rpx;
+  color: var(--ink);
+  line-height: 1.5;
+}
+.club-answer.data-v-7124b7df {
   display: block;
-  font-size: 24rpx;
-  line-height: 1.8;
+  padding: 0 0 26.9231rpx;
+  font-size: 23.0769rpx;
+  color: var(--ink-3);
+  line-height: 1.7;
 }

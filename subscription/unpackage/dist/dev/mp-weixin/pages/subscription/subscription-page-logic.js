@@ -60,6 +60,10 @@ function createSubscriptionPageState() {
     statsCurrency: "CNY",
     statPeriods: [{ value: "month", label: "月均" }, { value: "year", label: "年度" }, { value: "next", label: "未来30天" }],
     selectedId: null,
+    detailLoading: false,
+    detailError: "",
+    detailRequestId: 0,
+    detailRequestCancel: null,
     editingId: null,
     originalBillingDate: null,
     formError: "",
@@ -88,7 +92,7 @@ const subscriptionComputed = {
     return pages_subscription_subscriptionData.toDateKey(/* @__PURE__ */ new Date());
   },
   showTabBar() {
-    return ["home", "all", "calendar", "stats", "profile"].includes(this.activeView);
+    return ["home", "all", "calendar", "profile"].includes(this.activeView);
   },
   liveSubscriptions() {
     return this.subscriptions.filter((item) => !item.deletedAt);
@@ -343,6 +347,8 @@ const subscriptionMethods = {
   navigateToView(view) {
     if (view === this.activeView)
       return;
+    if (this.activeView === "detail")
+      this.cancelDetailLoad();
     this.viewStack.push(this.activeView);
     this.activeView = view;
     this.scrollToTop();
@@ -357,11 +363,15 @@ const subscriptionMethods = {
       } });
       return;
     }
+    if (this.activeView === "detail")
+      this.cancelDetailLoad();
     this.activeView = this.viewStack.length ? this.viewStack.pop() : fallback;
     this.formError = "";
     this.scrollToTop();
   },
   switchTab(tab) {
+    if (this.activeView === "detail")
+      this.cancelDetailLoad();
     this.sortSheetVisible = false;
     this.viewStack = [];
     this.activeView = tab;

@@ -1,0 +1,1 @@
+<view class="rd-donut" role="img" aria-label="{{d}}"><block wx:if="{{r0}}"><canvas class="rd-donut-canvas" id="{{a}}" canvas-id="{{b}}"></canvas></block><view class="rd-donut-center"><text class="rd-donut-title">{{c}}</text><text class="rd-donut-caption">分类占比</text></view></view>

@@ -119,3 +119,14 @@ Canonical UI Map 未解决项为 0；textarea 统一通过 resize-none 类和全
 小程序重新编译成功，产物检查确认会员WXSS只含class选择器、绿色摘要卡与按钮规则保留，JS/WXML/WXSS的scope ID一致。当前环境没有运行微信开发者工具，实际小程序画面需在用户工具中刷新复核。
 
 H5重编译和Edge会员页待支付/已支付、错误恢复、模拟隔离、320px布局检查通过；产物确认H5仍保留禁用状态与focus-visible规则。
+
+## 2026-10-20 会员中心信息流与活跃风格重设计
+
+- 信息流调整为会员通行证、会员权益、永久方案、折叠订单入口、可展开常见问题。移除商户结算费率、结算周期和商户总支付限额。保留后端价格、真实开通状态、模拟支付提示与全部收银台/订单操作。
+- 运行时会员色板记录于 styles/_tokens.scss，视觉与交互约束同步 DESIGN.md / UX-CONTRACT.md。没有新增依赖或更改支付 API；测试未知金额显示破折号。已开通、加载中、错误和未开放均禁用下单。
+- 个人端单元 41/41、Nest HTTP 集成 4/4 通过。已有全应用 Edge UI 回归 tests/ui.e2e.cjs 通过，pageerror=0。后台 format:check、typecheck、单元 5/5、生产构建、Edge E2E 11/11 均通过。
+- 专项浏览器脚本 .preview/check-membership-club.cjs 在实际 H5 构建上验证：320/390/1280px 无页面横向溢出、免费与永久会员、未开放/模拟/真实支付入口、订单空态与展开、FAQ 鼠标与 Enter 键盘展开收起、慢请求禁用、503 错误后刷新恢复、已开通禁止重复购买；付款写请求 0，pageerror=0。首次检查发现新增 disclosure 缺少 role/tabindex，已补齐并复测通过。截图 .preview/membership-club-overview.png、membership-club-320.png、membership-club-390.png、membership-club-active.png。
+- HBuilderX 5.26 的最终 H5 与 mp-weixin 构建通过，输出 .preview/timebook-h5 和 .preview/membership-club-mp。通过 HX_APP_ROOT / UNI_CLI_CONTEXT 使用内置依赖，未添加依赖包。保留 uniCloud 未启用、静态脚本以及第三方组件 Harmony UA 检测等既有编译警告。未手动修改 unpackage 产物。
+- 修改文件 Prettier 与 git diff --check 通过。designmd lint：0 errors、7 个已有 orphaned-token 警告。
+- premium strict 审计原始报告 .preview/membership-club-audit.json：59 项 actionless-button、canonical unresolved=0；均为 @tap 或 Reka 组合按钮未被静态规则识别，未修改审计器或隐藏报告。会员页所有按钮已逐个核对 @tap，新增展开操作已在浏览器验证，不据此声称 strict 审计通过。
+- 尚未在微信开发者工具/真实手机执行验收，未部署或执行实际付款。

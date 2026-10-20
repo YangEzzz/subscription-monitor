@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>续费日历</title>
+<link rel="stylesheet" href="../assets/tokens.css">
+<link rel="stylesheet" href="../assets/components.css">
+<style>
+  .cal{margin-top:16px;padding:14px 12px 10px}
+  .cal-head{display:flex;align-items:center;justify-content:space-between;padding:0 4px 0 6px}
+  .month{font-size:20px;font-weight:700;letter-spacing:-.01em;display:flex;align-items:baseline;gap:1px}
+  .month .num{font-size:22px}
+  .navs{display:flex;align-items:center;gap:8px}
+  .nav-group{display:flex;height:32px;border-radius:11px;border:1px solid var(--border);background:rgba(255,255,255,.8);overflow:hidden}
+  .nav-group button{width:34px;display:grid;place-items:center;border:0;background:none;color:var(--ink-2);cursor:pointer;transition:background var(--dur-1)}
+  .nav-group button:active{background:var(--surface-sunken)}
+  .nav-group button+button{border-left:1px solid var(--border)}
+  .nav-group svg{width:15px;height:15px}
+  .today-btn{height:32px;padding:0 12px;border-radius:11px;font-size:12.5px}
+
+  .week{display:grid;grid-template-columns:repeat(7,1fr);margin-top:14px;padding-bottom:6px;font-size:11.5px;color:var(--ink-3);text-align:center;font-weight:500}
+  .week .we{color:var(--ink-4)}
+  .grid{display:grid;grid-template-columns:repeat(7,1fr);row-gap:2px}
+  .cell{height:50px;border-radius:13px;display:flex;flex-direction:column;align-items:center;padding-top:6px;position:relative;cursor:pointer;
+    border:1px solid transparent;transition:background var(--dur-2) var(--ease-out),border-color var(--dur-2)}
+  .cell .d{font-family:var(--font-num);font-weight:700;font-size:16px;width:28px;height:24px;line-height:24px;text-align:center;border-radius:9px;color:var(--ink);transition:background var(--dur-2),color var(--dur-2)}
+  .cell.out .d{color:var(--ink-4)}
+  .cell.today .d{background:linear-gradient(160deg,#4C76FF,#2448DA);color:#fff;box-shadow:0 4px 10px -4px rgba(47,91,234,.7)}
+  .cell.sel{background:var(--blue-soft);border-color:var(--blue-line)}
+  .cell.sel:not(.today) .d{color:var(--blue)}
+  .marks{display:flex;gap:3px;margin-top:4px;height:6px}
+  .marks i{width:6px;height:6px;border-radius:2px;display:block}
+  .cell.out .marks{opacity:.55}
+  .cell .amt{font-family:var(--font-num);font-weight:700;font-size:9.5px;color:var(--ink-3);margin-top:2px;letter-spacing:0}
+  .cell.has .amt{display:block}
+
+  .day{margin-top:14px;overflow:hidden}
+  .day-head{display:flex;justify-content:space-between;align-items:center;padding:14px 16px 12px}
+  .day-head .l{display:flex;align-items:center;gap:8px}
+  .day-head .date{font-size:17px;font-weight:700}
+  .day-head .date .num{font-size:18px}
+  .day-head .r{font-size:12.5px;color:var(--ink-3);display:flex;align-items:center;gap:4px}
+  .day-head .r .num{font-size:14px;color:var(--ink-2)}
+  .empty{display:flex;flex-direction:column;align-items:center;padding:16px 16px 18px;text-align:center}
+  .empty .art{width:46px;height:46px;border-radius:15px;display:grid;place-items:center;color:var(--ink-3);
+    background:var(--surface-sunken);border:1px dashed var(--border-strong)}
+  .empty .art svg{width:22px;height:22px}
+  .empty p{margin-top:10px;font-size:13px;color:var(--ink-3)}
+  .empty .btn{margin-top:12px;height:38px;border-radius:12px;font-size:13.5px}
+  .swap{animation:swap var(--dur-2) var(--ease-out)}
+  @keyframes swap{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+</style>
+</head>
+<body class="canvas" data-tab="2">
+<div class="device">
+  <div class="page">
+    <div class="page-head">
+      <div>
+        <div class="page-title">续费日历</div>
+        <div class="page-sub">按日期安排续费，查看每天的扣费明细</div>
+      </div>
+      <div class="capsule"></div>
+    </div>
+
+    <section class="card cal">
+      <div class="cal-head">
+        <div class="month" id="month"></div>
+        <div class="navs">
+          <div class="nav-group">
+            <button id="prev" aria-label="上个月"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg></button>
+            <button id="next" aria-label="下个月"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>
+          </div>
+          <button class="btn btn-soft today-btn" id="today">今天</button>
+        </div>
+      </div>
+      <div class="week"><span class="we">日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span class="we">六</span></div>
+      <div class="grid" id="grid"></div>
+    </section>
+
+    <section class="card day" id="day"></section>
+  </div>
+</div>
+<script src="../assets/shell.js"></script>
+<script>
+  const TODAY = new Date(2026, 9, 20);
+  const EVENTS = {
+    '2026-10-21': [{ name: 'QQ音乐', logo: 'qq', letter: 'Q', color: 'var(--green)', meta: '每月 · 微信支付', amount: null }],
+    '2026-10-30': [{ name: 'Netflix Premium', logo: 'nf', letter: 'N', color: 'var(--red)', meta: '每月 · 信用卡', amount: 108 }],
+    '2026-11-07': [{ name: 'iCloud+', logo: 'ic', color: '#3B8EF0', meta: '每月 · App Store', amount: 21 }]
+  };
+  const WEEK = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
+  const CLOUD = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.4 10.6a6.5 6.5 0 0 0-12.7-1.3A5 5 0 0 0 7.5 19h11.4a4.2 4.2 0 0 0 .5-8.4z"/></svg>';
+  const key = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  const same = (a, b) => key(a) === key(b);
+  const money = n => n.toFixed(2);
+  let view = new Date(TODAY.getFullYear(), TODAY.getMonth(), 1);
+  let sel = new Date(TODAY);
+
+  function renderGrid() {
+    document.getElementById('month').innerHTML = `<span class="num">${view.getFullYear()}</span>年<span class="num">${view.getMonth() + 1}</span>月`;
+    const start = new Date(view); start.setDate(1 - view.getDay());
+    let html = '';
+    for (let i = 0; i < 42; i++) {
+      const d = new Date(start); d.setDate(start.getDate() + i);
+      const ev = EVENTS[key(d)] || [];
+      const total = ev.reduce((s, e) => s + (e.amount || 0), 0);
+      const cls = ['cell', d.getMonth() !== view.getMonth() && 'out', same(d, TODAY) && 'today', same(d, sel) && 'sel'].filter(Boolean).join(' ');
+      html += `<div class="${cls}" data-k="${key(d)}"><span class="d">${d.getDate()}</span>
+        <span class="marks">${ev.map(e => `<i style="background:${e.color}"></i>`).join('')}</span>
+        ${total ? `<span class="amt">¥${total}</span>` : ''}</div>`;
+    }
+    const grid = document.getElementById('grid');
+    grid.innerHTML = html;
+    grid.querySelectorAll('.cell').forEach(c => c.addEventListener('click', () => {
+      const [y, m, dd] = c.dataset.k.split('-').map(Number);
+      sel = new Date(y, m - 1, dd);
+      if (m - 1 !== view.getMonth()) { view = new Date(y, m - 1, 1); renderGrid(); }
+      else grid.querySelectorAll('.cell').forEach(x => x.classList.toggle('sel', x === c));
+      renderDay();
+    }));
+  }
+
+  function renderDay() {
+    const ev = EVENTS[key(sel)] || [];
+    const total = ev.reduce((s, e) => s + (e.amount || 0), 0);
+    const days = Math.round((sel - TODAY) / 864e5);
+    const dueCls = days <= 7 ? 'hot' : days <= 14 ? 'mid' : 'far';
+    const head = `<div class="day-head">
+      <div class="l"><span class="date"><span class="num">${sel.getMonth() + 1}</span>月<span class="num">${sel.getDate()}</span>日</span><span class="pill gray">${WEEK[sel.getDay()]}</span></div>
+      <div class="r"><span class="num">${ev.length}</span>项 · <span class="num">¥${money(total)}</span></div></div><div class="hair" style="margin:0 16px"></div>`;
+    const body = ev.length ? ev.map(e => `<div class="srow">
+        <div class="logo ${e.logo}">${e.letter || CLOUD}</div>
+        <div class="info"><div class="name">${e.name}</div><div class="meta">${e.meta}</div></div>
+        <div class="right">${e.amount ? `<div class="amount"><span class="c">¥</span>${money(e.amount)}</div>` : '<div class="amount todo">金额待补充</div>'}
+          ${days > 0 ? `<div class="due ${dueCls}">${days} 天后</div>` : ''}</div></div>`).join('')
+      : `<div class="empty"><div class="art"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4.5" width="17" height="16" rx="3.5"/><path d="M8 2.5v4M16 2.5v4M3.5 9.5h17"/></svg></div>
+        <p>当天没有续费项目</p>
+        <button class="btn btn-soft"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>添加到这一天</button></div>`;
+    const day = document.getElementById('day');
+    day.innerHTML = head + `<div class="swap">${body}</div>`;
+  }
+
+  document.getElementById('prev').onclick = () => { view = new Date(view.getFullYear(), view.getMonth() - 1, 1); renderGrid(); };
+  document.getElementById('next').onclick = () => { view = new Date(view.getFullYear(), view.getMonth() + 1, 1); renderGrid(); };
+  document.getElementById('today').onclick = () => { view = new Date(TODAY.getFullYear(), TODAY.getMonth(), 1); sel = new Date(TODAY); renderGrid(); renderDay(); };
+
+  const q = new URLSearchParams(location.search);
+  if (q.has('sel')) { const [y, m, d] = q.get('sel').split('-').map(Number); sel = new Date(y, m - 1, d); }
+  renderGrid(); renderDay();
+  if (q.has('sel')) document.querySelectorAll('.swap').forEach(s => s.style.animation = 'none');
+  else document.querySelectorAll('.swap').forEach(s => s.style.animation = 'none');
+</script>
+</body>
+</html>

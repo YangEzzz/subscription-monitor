@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>全部订阅</title>
+<link rel="stylesheet" href="../assets/tokens.css">
+<link rel="stylesheet" href="../assets/components.css">
+<style>
+  .toolbar{display:flex;gap:10px;padding:16px 16px 0}
+  .btn-add{padding:0 14px 0 12px}
+  .chips{margin-top:14px}
+  .utabs{margin-top:10px}
+  .utabs-wrap{position:relative}
+  .utabs-wrap::after{content:'';position:absolute;left:16px;right:16px;bottom:0;height:1px;background:var(--hair)}
+
+  .sortbar{display:flex;align-items:center;justify-content:space-between;padding:14px 22px 10px}
+  .sortbar .l{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--ink-3)}
+  .sortbar .sort{display:inline-flex;align-items:center;gap:5px;height:28px;padding:0 10px;border-radius:9px;
+    background:rgba(255,255,255,.8);border:1px solid var(--border);color:var(--ink-2);font-weight:500}
+  .sortbar .sort svg{width:13px;height:13px}
+  .sortbar .r{display:flex;align-items:center;gap:2px;font-size:12.5px;color:var(--ink-2);font-weight:500}
+  .sortbar .r b{font-family:var(--font-num);font-size:14px;margin-right:2px}
+
+  .srow{transition:opacity var(--dur-2) var(--ease-out),transform var(--dur-2) var(--ease-out),background var(--dur-1)}
+  .srow.hide{display:none}
+</style>
+</head>
+<body class="canvas" data-tab="1">
+<div class="device">
+  <div class="page">
+    <div class="page-head">
+      <div>
+        <div class="page-title">全部订阅</div>
+        <div class="page-sub">集中管理每一项持续支出</div>
+      </div>
+      <div class="capsule"></div>
+    </div>
+
+    <div class="toolbar">
+      <label class="search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+        搜索订阅
+      </label>
+      <button class="btn btn-soft btn-add">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>新增订阅
+      </button>
+    </div>
+
+    <div class="chips" id="chips">
+      <div class="chip on" data-cat="all">全部 <span class="c">3</span></div>
+      <div class="chip" data-cat="cloud">云存储 <span class="c">1</span></div>
+      <div class="chip" data-cat="video">影音娱乐 <span class="c">1</span></div>
+      <div class="chip" data-cat="music">音乐 <span class="c">1</span></div>
+    </div>
+
+    <div class="utabs-wrap">
+      <div class="utabs">
+        <div class="utab">全部状态</div>
+        <div class="utab on">有效订阅</div>
+        <div class="utab">试用中</div>
+        <div class="utab">即将到期</div>
+        <div class="utab">待处理</div>
+        <div class="utab">逾期</div>
+        <span class="bar"></span>
+      </div>
+    </div>
+
+    <div class="sortbar">
+      <div class="l">
+        <span class="sort"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4v16M3.5 16.5 7 20l3.5-3.5M17 20V4M13.5 7.5 17 4l3.5 3.5"/></svg>按扣费日排序</span>
+        <span>· 有效订阅</span>
+      </div>
+      <div class="r"><b id="count">3</b>项<svg class="chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></div>
+    </div>
+
+    <div class="card list" id="list">
+      <div class="srow urgent" data-cat="music">
+        <div class="logo qq">Q</div>
+        <div class="info">
+          <div class="name">QQ音乐 <span class="pill orange">即将到期</span></div>
+          <div class="meta">每月<span class="sep">·</span>微信支付</div>
+          <div class="sub"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>2026年10月21日</div>
+        </div>
+        <div class="right"><div class="amount todo">金额待补充</div><div class="due hot">1 天后</div></div>
+        <svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+      </div>
+      <div class="srow" data-cat="video">
+        <div class="logo nf">N</div>
+        <div class="info">
+          <div class="name">Netflix Premium <span class="pill green">正常</span></div>
+          <div class="meta">每月<span class="sep">·</span>信用卡</div>
+          <div class="sub"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>2026年10月30日</div>
+        </div>
+        <div class="right"><div class="amount"><span class="c">¥</span>108.00</div><div class="due mid">10 天后</div></div>
+        <svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+      </div>
+      <div class="srow" data-cat="cloud">
+        <div class="logo ic"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.4 10.6a6.5 6.5 0 0 0-12.7-1.3A5 5 0 0 0 7.5 19h11.4a4.2 4.2 0 0 0 .5-8.4z"/></svg></div>
+        <div class="info">
+          <div class="name">iCloud+ <span class="pill green">正常</span></div>
+          <div class="meta">每月<span class="sep">·</span>App Store</div>
+          <div class="sub"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>2026年11月7日</div>
+        </div>
+        <div class="right"><div class="amount"><span class="c">¥</span>21.00</div><div class="due far">18 天后</div></div>
+        <svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="../assets/shell.js"></script>
+<script>
+  const chips = [...document.querySelectorAll('#chips .chip')];
+  const rows = [...document.querySelectorAll('#list .srow')];
+  chips.forEach(c => c.addEventListener('click', () => {
+    chips.forEach(x => x.classList.toggle('on', x === c));
+    let n = 0;
+    rows.forEach(r => {
+      const show = c.dataset.cat === 'all' || r.dataset.cat === c.dataset.cat;
+      r.classList.toggle('hide', !show);
+      if (show) { n++; r.animate([{ opacity: 0, transform: 'translateY(6px)' }, { opacity: 1, transform: 'none' }], { duration: 260, easing: 'cubic-bezier(.25,.8,.25,1)', delay: n * 30, fill: 'backwards' }); }
+    });
+    document.getElementById('count').textContent = n;
+  }));
+</script>
+</body>
+</html>

@@ -41,7 +41,7 @@ export function createSubscriptionPageState() {
 				],
 				weekdays: ['日', '一', '二', '三', '四', '五', '六'], calendarCursor: today.slice(0, 7) + '-01', selectedDate: today,
 				statsPeriod: 'month', statsCurrency: 'CNY', statPeriods: [{ value: 'month', label: '月均' }, { value: 'year', label: '年度' }, { value: 'next', label: '未来30天' }],
-				selectedId: null, editingId: null, originalBillingDate: null, formError: '', formBaseline: '',
+				selectedId: null, detailLoading: false, detailError: '', detailRequestId: 0, detailRequestCancel: null, editingId: null, originalBillingDate: null, formError: '', formBaseline: '',
 				categories: [],
 				cycles: [],
 				payments: [], currencies: [],
@@ -61,7 +61,7 @@ export function createSubscriptionPageState() {
 export const subscriptionComputed = {
 			...remoteComputed,
 			todayKey() { return toDateKey(new Date()) },
-			showTabBar() { return ['home', 'all', 'calendar', 'stats', 'profile'].includes(this.activeView) },
+			showTabBar() { return ['home', 'all', 'calendar', 'profile'].includes(this.activeView) },
 			liveSubscriptions() { return this.subscriptions.filter(item => !item.deletedAt) },
 			deletedSubscriptions() { return this.subscriptions.filter(item => item.deletedAt).sort((a, b) => b.deletedAt - a.deletedAt) },
 
@@ -194,13 +194,13 @@ export const subscriptionMethods = {
 			statusText(item) { return STATUS_LABELS[this.getStatus(item)] || '逾期未确认' },
 			decorateItem(item) { return { ...item, shortDate: formatDate(item.nextBillingDate, false), days: daysUntil(item.nextBillingDate), amountText: item.amount === null ? '待补充' : this.formatMoney(item.amount, item.currency), displayStatus: this.statusText(item) } },
 			daysText(item) { const days = daysUntil(item.nextBillingDate); return days < 0 ? `已逾期 ${Math.abs(days)} 天` : days === 0 ? '今天扣费' : `${days} 天后` },
-			navigateToView(view) { if (view === this.activeView) return; this.viewStack.push(this.activeView); this.activeView = view; this.scrollToTop() },
+			navigateToView(view) { if (view === this.activeView) return; if (this.activeView === 'detail') this.cancelDetailLoad(); this.viewStack.push(this.activeView); this.activeView = view; this.scrollToTop() },
 			goBackView(fallback = 'home') {
  if (this.activeView === 'form' && this.formBaseline && JSON.stringify(this.form) !== this.formBaseline) {
    uni.showModal({ title: '放弃未保存的修改？', content: '返回后，本次修改不会保存。', confirmText: '放弃修改', cancelText: '继续编辑', success: result => { if (result.confirm) { this.formBaseline = ''; this.goBackView(fallback) } } }); return
  }
- this.activeView = this.viewStack.length ? this.viewStack.pop() : fallback; this.formError = ''; this.scrollToTop() },
-			switchTab(tab) { this.sortSheetVisible = false; this.viewStack = []; this.activeView = tab; this.scrollToTop() },
+ if (this.activeView === 'detail') this.cancelDetailLoad(); this.activeView = this.viewStack.length ? this.viewStack.pop() : fallback; this.formError = ''; this.scrollToTop() },
+			switchTab(tab) { if (this.activeView === 'detail') this.cancelDetailLoad(); this.sortSheetVisible = false; this.viewStack = []; this.activeView = tab; this.scrollToTop() },
 			scrollToTop() { this.scrollTop = this.scrollTop === 0 ? 1 : 0 },
 			handleReminder(item) { if (item.action === 'notification') this.enableNotification(); else if (item.action === 'overdue') { this.activeStatus = 'overdue'; this.switchTab('all') } else if (item.action === 'pending') { this.activeStatus = 'pending'; this.switchTab('all') } else if (item.action === 'incomplete') { this.activeStatus = 'incomplete'; this.switchTab('all') } },
 			chooseSort() { this.sortSheetVisible = true },

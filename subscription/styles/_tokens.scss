@@ -1,13 +1,21 @@
-// Canonical runtime tokens. DESIGN.md mirrors these values.
-$green: #315acb;
-$deep: #213d86;
-$text: #202c45;
-$muted: #68758c;
-$line: #dce3ef;
-$bg: #f4f6fb;
-$surface: #ffffff;
-$tint: #eaf0ff;
-$danger: #b43d47;
-$amber: #966018;
-$body-font: "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
-$number-font: "Bahnschrift", "DIN Alternate", Arial, sans-serif;
+// Sass compatibility aliases; canonical values live in ui-redesign/assets/tokens.css.
+// The historical $green name denotes the primary action color, not success.
+$green: var(--blue);
+$deep: var(--blue-600);
+$text: var(--ink);
+$muted: var(--ink-3);
+$line: var(--border);
+$bg: var(--bg);
+$surface: var(--surface);
+$tint: var(--blue-soft);
+$danger: var(--red);
+$amber: var(--orange);
+// Membership club palette: a lively business variant, shared by its pass and plan.
+$club-violet: var(--violet);
+$club-blue: var(--blue);
+$club-lilac: var(--violet-soft);
+$club-gold: var(--member-gold);
+$club-orange: var(--gold);
+$club-peach: var(--gold-soft);
+$body-font: var(--font);
+$number-font: var(--font-num);

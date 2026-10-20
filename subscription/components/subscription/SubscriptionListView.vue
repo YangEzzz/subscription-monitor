@@ -1,170 +1,123 @@
 <template>
-  <view class="page list-page">
-    <view
-      class="primary-titlebar"
-      :style="{ height: navigationBarHeight + 'px' }"
-      ><text class="page-title">全部订阅</text></view
-    >
-    <view class="collection-heading">
-      <text class="page-lead">集中管理每一项持续支出</text>
-    </view>
-    <view class="collection-toolbar">
-      <view class="search-box">
-        <uni-icons type="search" size="21" color="#7b8ba6" />
-        <input
+  <view class="page list-page redesign-page">
+    <page-header title="全部订阅" subtitle="集中管理每一项持续支出" />
+    <view class="rd-toolbar"
+      ><view class="search"
+        ><uni-icons type="search" size="18" color="var(--ink-3)" /><input
+          class="search-input"
           v-model="searchDraft"
           aria-label="搜索服务或套餐"
           :focus="searchFocused"
           @input="handleSearchInput"
           confirm-type="search"
           placeholder="搜索订阅"
-          placeholder-class="placeholder"
-        />
-        <button
-          v-if="searchDraft"
+          placeholder-class="rd-placeholder" /><button
           role="button"
           tabindex="0"
-          class="clear-search"
+          v-if="searchDraft"
+          class="search-clear pressable"
           aria-label="清空搜索"
+          hover-class="is-pressed"
           @tap="clearSearch"
         >
-          <uni-icons type="clear" size="18" color="#9ca19d" />
-        </button>
-      </view>
-      <button
-        class="collection-add"
-        role="button"
-        tabindex="0"
-        aria-label="新增订阅"
-        @tap="$emit('open-form')"
-      >
-        <uni-icons type="plus" size="15" color="#315acb" />
-        <text>新增订阅</text>
-      </button>
-    </view>
-    <scroll-view
-      class="filter-scroll"
-      scroll-x
-      :show-scrollbar="true"
-      aria-label="按服务分类筛选，可左右滑动"
-      ><view class="filter-row"
-        ><button
-          role="button"
-          tabindex="0"
-          v-for="filter in categoryFilters"
-          :key="filter.name"
-          class="filter-pill"
-          :class="{ active: activeCategory === filter.name }"
-          :aria-pressed="activeCategory === filter.name"
-          @tap="$emit('category', filter.name)"
-        >
-          <text class="filter-label">{{ filter.name }}</text
-          ><text class="filter-count">{{ filter.count }}</text>
-        </button></view
-      ></scroll-view
-    >
-    <scroll-view
-      class="status-scroll"
-      scroll-x
-      :show-scrollbar="true"
-      aria-label="按订阅状态筛选，可左右滑动"
-      ><view class="status-row"
-        ><button
-          role="button"
-          tabindex="0"
-          v-for="status in statusFilters"
-          :key="status.value"
-          class="status-pill"
-          :class="{ active: activeStatus === status.value }"
-          :aria-pressed="activeStatus === status.value"
-          @tap="$emit('status', status.value)"
-        >
-          {{ status.label }}
-        </button></view
-      ></scroll-view
-    >
-    <button
-      role="button"
-      tabindex="0"
-      class="sort-summary"
-      aria-label="选择排序方式"
-      @tap="$emit('choose-sort')"
-    >
-      <view
-        ><text>{{ sortLabel }}</text
-        ><text class="sort-divider">·</text
-        ><text>{{ activeStatusLabel }}</text></view
-      ><view class="sort-result"
-        ><text>{{ visibleSubscriptions.length }} 项</text
-        ><uni-icons type="right" size="15" color="#68758c"
-      /></view>
-    </button>
-    <view v-if="visibleSubscriptions.length" class="subscription-list"
+          <uni-icons
+            type="clear"
+            size="18"
+            color="var(--ink-4)"
+          /></button></view
       ><button
         role="button"
         tabindex="0"
-        v-for="item in visibleSubscriptions.slice(0, displayLimit)"
-        :key="item.id"
-        class="list-item"
-        :aria-label="`${item.name}，${statusText(item)}，${formatDate(item.nextBillingDate)}，${item.amount === null ? '金额待补充' : formatMoney(item.amount, item.currency)}`"
-        @tap="$emit('open-detail', item)"
+        class="btn-soft rd-add pressable"
+        aria-label="新增订阅"
+        hover-class="is-pressed"
+        @tap="$emit('open-form')"
       >
-        <brand-logo :item="item" /><view class="list-main"
-          ><view class="name-line"
-            ><text class="list-name">{{ item.name }}</text
-            ><text class="status-badge" :class="getStatus(item)">{{
-              statusText(item)
-            }}</text></view
-          ><text class="list-detail"
-            >{{ cycleText(item) }} · {{ item.payment }}</text
-          ><text class="list-date">{{
-            formatDate(item.nextBillingDate)
-          }}</text></view
-        ><view class="list-finance" :class="{ missing: item.amount === null }"
-          ><text
-            class="list-price"
-            :class="{ 'amount-missing': item.amount === null }"
-            >{{
-              item.amount === null
-                ? "金额待补充"
-                : formatMoney(item.amount, item.currency)
-            }}</text
-          ><text class="list-countdown">{{ daysText(item) }}</text></view
-        ><uni-icons type="right" size="17" color="#68758c" /></button
-    ></view>
+        ＋ 新增订阅
+      </button></view
+    >
+    <ui-selection
+      :options="categoryOptions"
+      :model-value="activeCategory"
+      variant="chips"
+      label="按服务分类筛选，可左右滑动"
+      @select="$emit('category', $event)"
+    />
+    <view class="rd-status"
+      ><ui-selection
+        :options="statusFilters"
+        :model-value="activeStatus"
+        variant="tabs"
+        label="按订阅状态筛选，可左右滑动"
+        @select="$emit('status', $event)"
+    /></view>
+    <button
+      role="button"
+      tabindex="0"
+      class="rd-sort pressable"
+      aria-label="选择排序方式"
+      hover-class="is-pressed"
+      @tap="$emit('choose-sort')"
+    >
+      <view
+        >{{ sortLabel
+        }}<text class="rd-sort-status"> · {{ activeStatusLabel }}</text></view
+      ><view class="num">{{ visibleSubscriptions.length }} 项 ›</view>
+    </button>
+    <view v-if="visibleSubscriptions.length" class="card list rd-subscriptions"
+      ><subscription-row
+        v-for="(item, index) in visibleSubscriptions.slice(0, displayLimit)"
+        :key="item.id"
+        class="rd-enter motion"
+        :style="{ 'animation-delay': Math.min(index, 10) * 30 + 'ms' }"
+        :item="{
+          ...decorateItem(item),
+          cycle: cycleText(item),
+          amountText:
+            item.amount === null
+              ? '金额待补充'
+              : formatMoney(item.amount, item.currency),
+        }"
+        show-date
+        :date-label="formatDate(item.nextBillingDate)"
+        @activate="$emit('open-detail', item)"
+    /></view>
     <button
       role="button"
       tabindex="0"
       v-if="visibleSubscriptions.length > displayLimit"
-      class="text-button green load-more"
+      class="rd-more pressable"
+      hover-class="is-pressed"
       @tap="displayLimit += 20"
     >
-      加载更多（已显示 {{ displayLimit }} / {{ visibleSubscriptions.length }}）
+      加载更多（已显示
+      <text class="num"
+        >{{ displayLimit }} / {{ visibleSubscriptions.length }}</text
+      >）
     </button>
-    <empty-state-view
-      v-if="!visibleSubscriptions.length && liveSubscriptions.length"
-      icon="search"
-      title="没有匹配的订阅"
-      description="调整搜索词或筛选条件，也可以新增一条订阅"
-      action-label="重置筛选"
-      action-class="secondary-button"
-      @action="$emit('reset-filters')"
-    />
-    <empty-state-view
-      v-else-if="!liveSubscriptions.length"
-      icon="plus"
-      title="还没有添加订阅"
-      description="添加第一条订阅后，这里会显示所有续费项目"
-      action-label="新增订阅"
-      action-class="primary-button empty-add"
-      @action="$emit('open-form')"
-    />
+    <view class="rd-inset"
+      ><empty-state-view
+        v-if="!visibleSubscriptions.length && liveSubscriptions.length"
+        icon="search"
+        title="没有匹配的订阅"
+        description="调整搜索词或筛选条件，也可以新增一条订阅"
+        action-label="重置筛选"
+        @action="$emit('reset-filters')" /><empty-state-view
+        v-else-if="!liveSubscriptions.length"
+        icon="plus"
+        title="还没有添加订阅"
+        description="添加第一条订阅后，这里会显示所有续费项目"
+        action-label="新增订阅"
+        @action="$emit('open-form')"
+    /></view>
   </view>
 </template>
 
 <script>
 import { syncNativeFieldLabels } from "./platform-inputs.js";
-import BrandLogo from "./brand-logo.vue";
+import PageHeader from "./PageHeader.vue";
+import UiSelection from "./UiSelection.vue";
+import SubscriptionRow from "./subscription-row.vue";
 import EmptyStateView from "./EmptyStateView.vue";
 
 export default {
@@ -172,7 +125,7 @@ export default {
   mounted() {
     syncNativeFieldLabels(this.$el);
   },
-  components: { BrandLogo, EmptyStateView },
+  components: { PageHeader, UiSelection, SubscriptionRow, EmptyStateView },
   emits: [
     "search",
     "clear-search",
@@ -202,6 +155,15 @@ export default {
       if (value !== this.searchDraft) this.searchDraft = value;
     },
   },
+  computed: {
+    categoryOptions() {
+      return this.categoryFilters.map((item) => ({
+        value: item.name,
+        label: item.name,
+        count: item.count,
+      }));
+    },
+  },
   methods: {
     handleSearchInput(event) {
       const value = ((event.detail && event.detail.value) || "").trim();
@@ -218,6 +180,7 @@ export default {
     },
   },
   props: {
+    decorateItem: { type: Function, required: true },
     navigationBarHeight: { type: Number, default: 0 },
     searchKeyword: { type: String, default: "" },
     categoryFilters: { type: Array, default: () => [] },

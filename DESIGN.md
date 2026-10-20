@@ -3,24 +3,24 @@ version: alpha
 name: 续订清单
 description: 以续费日期为线索的轻量订阅管理工具
 colors:
-  primary: "#315acb"
-  deep: "#213d86"
-  foreground: "#202c45"
-  muted: "#68758c"
-  border: "#dce3ef"
-  background: "#f4f6fb"
-  surface: "#ffffff"
-  tint: "#eaf0ff"
-  danger: "#b43d47"
-  amber: "#966018"
+  primary: "#2F5BEA"
+  deep: "#2448DA"
+  foreground: "#15161C"
+  muted: "#8A8C97"
+  border: "rgba(21,22,28,.08)"
+  background: "#F4F5F9"
+  surface: "#FFFFFF"
+  tint: "#EAF0FF"
+  danger: "#E5484D"
+  amber: "#E8690C"
 typography:
   sans:
-    fontFamily: "'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif"
+    fontFamily: "-apple-system, BlinkMacSystemFont, 'PingFang SC', 'Helvetica Neue', sans-serif"
   numeric:
-    fontFamily: "'Bahnschrift', 'DIN Alternate', Arial, sans-serif"
+    fontFamily: "'DIN Alternate', 'DIN Pro', 'Bahnschrift', -apple-system, 'Helvetica Neue', sans-serif"
 rounded:
-  DEFAULT: "12px"
-  sm: "8px"
+  DEFAULT: "20px"
+  sm: "10px"
 spacing:
   section-gap: "16px"
   page-gutter: "16px"
@@ -33,6 +33,20 @@ components:
 
 # 续订清单 Design System
 
+> 2026-10-20 小程序视觉重构：本次用户提供的 `ui-redesign/UI-设计规范.md` 为小程序视觉最高依据，数值以 `ui-redesign/assets/tokens.css` 为准。下述历史小程序配色、字号、阴影、侧条与五 Tab 约束由新规范替代；桌面管理后台保持原有设计。用户已确认保留单路由 `activeView` 架构，方案 A 用现有 Vue 底栏实现，不迁移原生多页面或配置原生 custom-tab-bar。
+
+小程序令牌路径：`ui-redesign/assets/tokens.css` → `subscription/scripts/sync-ui-tokens.mjs` → `subscription/styles/_design-tokens.scss` → `App.vue` 的全局 `page` 变量。生成器按 750/390 换算设计 px，保留 1px 细线；`--check` 检查漂移。`_tokens.scss` 的历史 Sass 名称仅映射到这些 CSS 变量，不另设数值。`_ui.scss` 中的补充材质令牌来自规范正文与 components.css，非业务值。管理后台的 token 所有权与数值不变。
+
+2026-10-20 用户调整：底栏新增圆按钮保持 58px 直径，将顶部偏移从 -31px 调整为 -19.3333px，约三分之一露在导航栏上方；对应实现为 `subscription/styles/_dock.scss`。
+
+首页“全部 N”胶囊保留中文系统字体与 DIN 数字；统一行高之外，数字向下补偿设计尺寸 2px，使可见字形中心对齐。外框中心一致不能替代混排字形的视觉检查。
+
+紧凑控件约束：44×44描述点击热区，不强制可见底块等高；首页辅助入口可见高30、全部胶囊28、日历工具组32、提醒Chip34，外层保留44点击高度。所有按钮明确重置默认margin、line-height和方向；金额币种与输入共用一个容器；详情处理按钮横排、高44，禁止继承旧纵向图标布局。`subscription/tests/ui-compact.e2e.cjs` 验证尺寸、靠右与320/390布局。
+
+表单细节以用户最新反馈为准：模板、输入框、金额组合及文本域采用白底细描边，取消灰色填充。单行输入高44px、纵向padding为0并保持同高line-height，占位文字与输入文字垂直居中；文本内容继续左对齐，金额继续右对齐，多行文本域保持顶部对齐。
+
+公共展示层由 `_ui.scss` 拥有：PageHeader 使用设备胶囊几何信息；UiSelection 拥有分类 Chip、状态下划线与分段滑块；UiSkeleton 拥有卡片骨架；SettingsRow、subscription-row、brand-logo、EmptyStateView、AsyncStateView 沿用原事件契约。数字字体采用规范 `--font-num`，等宽数字。六个主要视图和详情、新增/编辑、提醒设置均已迁移；没有独立效果图的辅助页也必须延续完整设计语言。辅助页的背景通过实际状态栏高度与 shell 氛围渐变对齐，内容使用同一套半透明白卡、hero、输入底色、胶囊与按钮，不能只替换导航而保留旧蓝灰内容样式。最终记录见 `subscription/docs/ui-redesign-report.md`。
+
 ## Overview
 
 面向中文用户的移动端订阅工具，首要任务是看清下一笔扣费并处理续费事项。
@@ -41,7 +55,7 @@ components:
 比较过三个方向：蓝墨时间簿（时间队列与清晰数据）、暖色生活收纳（按服务分类的卡片）、深色监测台（异常中心与高密度数据）。选定第一种，因为日期是个人续费和消息排查共同的任务线索，也适合日常维护、表单输入和多币种阅读。避免营销大字海报、装饰趋势、虚构增长率、密集阴影与满屏彩色卡片。
 
 中文为默认语言，货币代码保留 ISO 表示，不据此推断日本市场。
-业务依据为 subscription/docs/前后端联调说明.md 与现有 API；账号额度展示真实后端状态，会员为 ¥9.90 永久方案。个人主体虚拟支付由 WECHAT_VIRTUAL_PAY_ENABLED 控制，道具 lifetime_member 售价990分，收银台、支付通知与查单遵循 deploy/个人主体虚拟支付.md；配置默认关闭，开通以服务端确认结果为准。模拟购买由独立后端开关控制且明确不实际扣款，真实支付开启时停用模拟写操作。会员中心沿用蓝墨色和时间簿样式，以账号状态、权益、标价、支付与订单为顺序；撤销测试权益只用于模拟订单并使用页面内确认。微信通知依据已配置模板、授权类型与状态、定时任务与发送记录显示真实状态。
+业务依据为 subscription/docs/前后端联调说明.md 与现有 API；账号额度展示真实后端状态，会员为 ¥9.90 永久方案。个人主体虚拟支付由 WECHAT_VIRTUAL_PAY_ENABLED 控制，道具 lifetime_member 售价990分，收银台、支付通知与查单遵循 deploy/个人主体虚拟支付.md；配置默认关闭，开通以服务端确认结果为准。模拟购买由独立后端开关控制且明确不实际扣款，真实支付开启时停用模拟写操作。会员中心按用户最新要求使用活跃的会员俱乐部风格，以身份、权益、开通方案、订单入口、常见问题为顺序；撤销测试权益只用于模拟订单并使用页面内确认。微信通知依据已配置模板、授权类型与状态、定时任务与发送记录显示真实状态。
 
 ## Colors
 
@@ -91,7 +105,7 @@ uni-app picker、switch、showModal 使用平台交互；详见 UX-CONTRACT.md�
 
 ## Do's and Don'ts
 
-- 先展示金额、日期，再展示解释；使用真实聚合数据。
+- 日常管理先展示金额、日期，再展示解释；使用真实聚合数据。会员中心先展示身份与权益。
 - 用颜色和文字同时表达状态，保持操作目标至少 44px。
 - 不增加装饰性趋势或虚构增长数据。
 - 不修改接口、计费规则或用户已有数据。
@@ -123,3 +137,11 @@ uni-app picker、switch、showModal 使用平台交互；详见 UX-CONTRACT.md�
 日历：月份控制与日期网格属于同一白色面板，日期明细独立，桌面双栏；日期按钮有选中语义，未知金额不显示为零。统计：币种、周期与总金额一体，分类和未来估算在桌面并列，明确区分预测与历史，未来30天的标签跟随周期。详情：服务标识和下次扣费在同一摘要，原有确认、撤销、稍后、管理和编辑保持原语义。表单：引导、模板、基本信息、扣费、提醒和补充分组，继续原生平台选择器；输入框为淡蓝白色面，错误保留独立提示。我的：账号和指标一体，权益、提醒与数据偏好分组。会员：浅蓝账号摘要、白色权益和订单，不为未开放购买营造可开通假象；按钮可访问禁用状态跟随既有 disabled 条件。
 
 首页和列表的新增入口统一使用轻量「＋ 新增订阅」蓝色文字操作，透明背景、无阴影、宽度随内容，保留44px高的点击区域；避免抢占摘要注意力的实心蓝色块，禁止将短文案新增按钮做成近正方形。列表入口在搜索框右侧居中对齐；首页入口与概览标题对齐，说明文字单独放在下方。顶部保留微信胶囊安全空间。
+
+## 会员中心：活跃会员俱乐部（2026-10-20）
+
+用户明确要求重新设计会员信息流、使用活跃气氛风格。本节替代前述会员页沿用浅蓝摘要的约束，日常管理页面保持原样。移动端会员中心的任务是看懂身份、会员价值与开通状态。布局为会员通行证 → 权益 → 永久方案 → 我的订单 → 常见问题。唯一主视觉是蓝紫通行证与倾斜金色会员徽章，外围使用平静白色内容面，不增加彩色侧边装饰。
+
+会员业务变体的运行时色板由 `subscription/styles/_tokens.scss` 拥有：club-violet `#5146bb`、club-blue `#3b61d9`、club-lilac `#f0edff`、club-gold `#ffe2a0`、club-orange `#a45a1b`、club-peach `#fff2dc`。正文沿用中文系统字体，金额和无限符号使用 numeric 字体栈；通行证标题 42rpx、分区标题 30rpx、正文 24–27rpx，320px 标题缩为 38rpx。会员页局部样式由 MembershipView.vue 拥有，不覆盖全局品牌色。
+
+仅「不限订阅数量」作为升级核心价值；永久有效与账号绑定作为方案保障。提醒、统计、导出明确免费版也可用。商品价格读取服务端，未知显示破折号；不虚构会员折扣、原价、倒计时、会员人数、专属客服、月卡年卡或自动续费。移除商户费率、结算周期、商户支付限额；保留用户需知道的购买限制、模拟支付标识与错误恢复。已开通不可重复购买。订单默认折叠，当前订单仍直接展示；FAQ 为可展开按钮，无新路由或模态。保持自然纵向滚动，无固定底部购买条、无自动播放动画。
