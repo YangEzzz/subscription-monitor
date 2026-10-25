@@ -18,6 +18,7 @@ export type AppConfig = {
   wechatReminderTemplateId?: string;
   wechatSubscriptionType?: 'once' | 'long_term';
   wechatMessageState?: 'formal' | 'developer' | 'trial';
+  analyticsCollectionEnabled?: boolean;
   notificationSchedulerEnabled?: boolean;
   membershipSimulationEnabled?: boolean;
   virtualPay?: import('../subscriptions/virtual-pay.service').VirtualPayConfig;

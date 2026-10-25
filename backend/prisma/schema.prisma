@@ -56,6 +56,13 @@ enum MembershipPlan {
 }
 
 model AppUser {
+  isTest Boolean @default(false) @map("is_test")
+  testNote String? @map("test_note") @db.VarChar(200)
+  testUpdatedBy String? @map("test_updated_by") @db.VarChar(80)
+  testUpdatedAt DateTime? @map("test_updated_at") @db.Timestamptz(3)
+  labelEvents AdminUserLabelEvent[]
+  dailyActivity UserDailyActivity[]
+  authEvents AuthEvent[]
   lastAccessIp String? @map("last_access_ip") @db.VarChar(45)
   lastAccessAt DateTime? @map("last_access_at") @db.Timestamptz(3)
   id            String         @id @db.VarChar(128)
@@ -211,6 +218,8 @@ model Membership {
 }
 
 model MembershipOrder {
+  refundReceipts PaymentRefundReceipt[]
+  refund MembershipRefund?
   paymentRequestedAt DateTime? @map("payment_requested_at") @db.Timestamptz(3)
   deliveryConfirmedAt DateTime? @map("delivery_confirmed_at") @db.Timestamptz(3)
   transactionId String? @unique @map("transaction_id") @db.VarChar(64)
@@ -231,4 +240,73 @@ model MembershipOrder {
   @@index([userId, createdAt], map: "membership_orders_user_created_idx")
   @@index([channel, status, id], map: "membership_orders_reconcile_idx")
   @@map("membership_orders")
+}
+
+model AuthEvent {
+  id String @id @db.Uuid
+  userId String @map("user_id") @db.VarChar(128)
+  user AppUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+  action String @db.VarChar(16)
+  appId String @map("app_id") @db.VarChar(64)
+  clientIp String? @map("client_ip") @db.VarChar(45)
+  peerIp String? @map("peer_ip") @db.VarChar(45)
+  requestId String @map("request_id") @db.VarChar(128)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  @@index([createdAt(sort: Desc), id(sort: Desc)], map: "auth_events_created_at_id_idx")
+  @@index([userId, createdAt(sort: Desc)], map: "auth_events_user_id_created_at_idx")
+  @@map("auth_events")
+}
+
+model UserDailyActivity {
+  userId String @map("user_id") @db.VarChar(128)
+  activityDate DateTime @map("activity_date") @db.Date
+  firstSeenAt DateTime @map("first_seen_at") @db.Timestamptz(3)
+  lastSeenAt DateTime @map("last_seen_at") @db.Timestamptz(3)
+  user AppUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@id([userId, activityDate])
+  @@index([activityDate], map: "user_daily_activity_date_idx")
+  @@map("user_daily_activity")
+}
+
+model MembershipRefund {
+  orderId String @id @map("order_id") @db.VarChar(64)
+  order MembershipOrder @relation(fields:[orderId],references:[id],onDelete:Restrict)
+  refundId String @unique @map("refund_id") @db.VarChar(32)
+  amount Int
+  status String @db.VarChar(24)
+  reason String @db.VarChar(200)
+  reasonCode String @map("reason_code") @db.VarChar(1)
+  operator String @db.VarChar(80)
+  errorCode String? @map("error_code") @db.VarChar(64)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @map("updated_at") @db.Timestamptz(3)
+  completedAt DateTime? @map("completed_at") @db.Timestamptz(3)
+  @@index([status,orderId],map:"membership_refunds_status_order_idx")
+  @@map("membership_refunds")
+}
+
+model AdminUserLabelEvent {
+ id String @id @db.Uuid
+ userId String @map("user_id") @db.VarChar(128)
+ user AppUser @relation(fields:[userId],references:[id],onDelete:Cascade,onUpdate:NoAction)
+ previousIsTest Boolean @map("previous_is_test")
+ isTest Boolean @map("is_test")
+ note String @db.VarChar(200)
+ operator String @db.VarChar(80)
+ createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+ @@index([userId,createdAt],map:"admin_user_label_events_user_idx")
+ @@map("admin_user_label_events")
+}
+model PaymentRefundReceipt {
+ id String @id @db.VarChar(160)
+ orderId String @map("order_id") @db.VarChar(64)
+ order MembershipOrder @relation(fields:[orderId],references:[id],onDelete:Restrict,onUpdate:NoAction)
+ amount Int
+ confirmedAt DateTime? @map("confirmed_at") @db.Timestamptz(3)
+ observedAt DateTime @default(now()) @map("observed_at") @db.Timestamptz(3)
+ source String @db.VarChar(24)
+ timeSource String @map("time_source") @db.VarChar(24)
+ @@index([orderId],map:"payment_refund_receipts_order_idx")
+ @@index([confirmedAt],map:"payment_refund_receipts_confirmed_idx")
+ @@map("payment_refund_receipts")
 }

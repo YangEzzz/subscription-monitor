@@ -1,5 +1,10 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { format, defaultAddress, detailColumns } from '../src/lib/data';
+import {
+  format,
+  defaultAddress,
+  detailColumns,
+  displayId,
+} from '../src/lib/data';
 
 afterEach(() => vi.unstubAllGlobals());
 describe('后台数据口径', () => {
@@ -13,6 +18,11 @@ describe('后台数据口径', () => {
       '模拟成功',
     );
     expect(format('status', 'paid', { channel: 'wechat' })).toBe('已支付');
+    expect(format('status', 'refunded', { channel: 'virtual' })).toBe('已退款');
+    expect(format('status', 'refunded', { channel: 'simulation' })).toBe(
+      '已撤销测试权益',
+    );
+    expect(format('status', 'sent', {}, 'notifications')).toBe('微信已受理');
     expect(format('id', 'active')).toBe('active');
     expect(format('status', 'future-status')).toBe('future-status');
   });
@@ -39,4 +49,13 @@ describe('后台数据口径', () => {
       columns.length,
     );
   });
+});
+
+it('长账号标识保留首尾供区分，短标识保持完整', () => {
+  const id = 'wx_' + 'a'.repeat(56) + '12345678';
+  expect(displayId(id)).toBe(id.slice(0, 14) + '…12345678');
+  expect(displayId('wx-user-1')).toBe('wx-user-1');
+  expect(
+    detailColumns('subscriptions').some((column) => column.key === 'userId'),
+  ).toBe(true);
 });

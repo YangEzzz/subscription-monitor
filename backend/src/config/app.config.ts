@@ -141,6 +141,8 @@ export default registerAs<AppConfig>('app', () => {
           | 'developer'
           | 'trial')
       : 'formal',
+    analyticsCollectionEnabled:
+      process.env.ANALYTICS_COLLECTION_ENABLED !== 'false',
     notificationSchedulerEnabled:
       process.env.NOTIFICATION_SCHEDULER_ENABLED !== 'false',
     membershipSimulationEnabled:

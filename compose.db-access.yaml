@@ -1,0 +1,7 @@
+# Optional direct access for a local backend. Restrict TCP 5432 to the
+# developer's public IP in the cloud security group before enabling this file.
+# Keep this override in subsequent Compose commands while direct access is needed.
+services:
+  postgres:
+    ports:
+      - "0.0.0.0:5432:5432"

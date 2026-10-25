@@ -7,6 +7,7 @@ describe('MemorySubscriptionsRepository', () => {
     const service = new SubscriptionsService(repository);
     const created = (await service.create('user', {
       name: 'Original record',
+      amount: 0,
       category: 'other',
       cycle: 'monthly',
       nextBillingDate: '2099-01-01',

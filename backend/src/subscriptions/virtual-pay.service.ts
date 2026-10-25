@@ -40,10 +40,18 @@ export type VirtualTransaction = {
   env: number;
 };
 export type VirtualQuery = {
-  state: 'pending' | 'paid' | 'closed' | 'refunded';
+  state:
+    | 'pending'
+    | 'paid'
+    | 'closed'
+    | 'refunded'
+    | 'refunding'
+    | 'refund_failed';
   transaction: VirtualTransaction;
   delivered: boolean;
   refundFee: number;
+  leftFee?: number;
+  orderType?: number;
 };
 export type VirtualEvent = Record<string, any>;
 export const virtualPaySignature = (
@@ -308,13 +316,19 @@ export class VirtualPayService implements OnModuleInit {
       ? 'paid'
       : value.status === 8
         ? 'refunded'
-        : value.status === 6
-          ? 'closed'
-          : 'pending';
+        : value.status === 5
+          ? 'refunding'
+          : value.status === 7
+            ? 'refund_failed'
+            : value.status === 6
+              ? 'closed'
+              : 'pending';
     return {
       state,
       delivered: value.status === 4,
       refundFee: value.refund_fee,
+      leftFee: value.left_fee,
+      orderType: value.order_type,
       transaction: {
         orderId: value.order_id,
         wxOrderId: value.wx_order_id,
@@ -336,6 +350,62 @@ export class VirtualPayService implements OnModuleInit {
       { order_id: id, env: 0 },
       true,
     );
+  }
+  async refund(
+    order: MembershipOrder,
+    openid: string,
+    refundId: string,
+    leftFee: number,
+    reasonCode: string,
+  ) {
+    const value = await this.request(
+      '/xpay/refund_order',
+      {
+        openid,
+        order_id: order.id,
+        refund_order_id: refundId,
+        left_fee: leftFee,
+        refund_fee: order.amount,
+        biz_meta: '',
+        refund_reason: reasonCode,
+        req_from: '1',
+        env: 0,
+      },
+      true,
+    );
+    if (
+      value.refund_order_id !== refundId ||
+      value.pay_order_id !== order.id ||
+      value.pay_wx_order_id !== order.transactionId
+    )
+      throw new BadGatewayException('退款受理结果暂未核实，请查询原退款单。');
+  }
+  async queryRefund(
+    refundId: string,
+    openid: string,
+  ): Promise<{ status: number; amount: number; confirmedAt?: string } | null> {
+    const { order } = await this.request(
+      '/xpay/query_order',
+      { openid, env: 0, order_id: refundId },
+      true,
+    );
+    if (!order || (!order.order_id && order.status === 0)) return null;
+    if (
+      order.order_id !== refundId ||
+      order.env_type !== 1 ||
+      order.order_type !== 1 ||
+      !Number.isInteger(order.status) ||
+      !Number.isInteger(order.refund_fee)
+    )
+      throw new BadGatewayException('退款查单结果不匹配');
+    return {
+      status: order.status,
+      amount: order.refund_fee,
+      confirmedAt:
+        Number(order.paid_time) > 0
+          ? new Date(Number(order.paid_time) * 1000).toISOString()
+          : undefined,
+    };
   }
   parseMessage(text: string): { value: VirtualEvent; format: 'xml' | 'json' } {
     try {

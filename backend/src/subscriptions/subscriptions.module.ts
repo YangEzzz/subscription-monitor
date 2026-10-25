@@ -62,6 +62,11 @@ export function createSubscriptionsRepository(
     MembershipPaymentsService,
     VirtualPayService,
   ],
-  exports: [SubscriptionsService, SUBSCRIPTIONS_REPOSITORY],
+  exports: [
+    SubscriptionsService,
+    SUBSCRIPTIONS_REPOSITORY,
+    MembershipPaymentsService,
+    VirtualPayService,
+  ],
 })
 export class SubscriptionsModule {}

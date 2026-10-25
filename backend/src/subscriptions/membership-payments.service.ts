@@ -136,7 +136,7 @@ export class MembershipPaymentsService
     const result = await this.virtualPay.query(order, identity.openId);
     if (!result) return order;
     if (result.state === 'refunded')
-      return this.refundVirtual(result.transaction, result.refundFee);
+      return this.syncConfirmedRefund(order, identity.openId);
     if (result.state === 'paid') {
       const paid = await this.confirmVirtualPayment(result.transaction);
       if (paid.status === 'refunded') return paid;
@@ -345,7 +345,15 @@ export class MembershipPaymentsService
         throw new ConflictException('虚拟支付订单信息不匹配');
       if (order.transactionId && order.transactionId !== tx.wxOrderId)
         throw new ConflictException('平台交易号不匹配');
-      if (order.status === 'refunded' || order.status === 'paid') return order;
+      if (order.status === 'refunded') {
+        if (!order.paidAt) {
+          order.paidAt = tx.paidAt;
+          order.transactionId = tx.wxOrderId;
+          await repo.saveMembershipOrder(order);
+        }
+        return order;
+      }
+      if (order.status === 'paid') return order;
       if (order.status !== 'pending') throw new ConflictException('订单已结束');
       order.transactionId = tx.wxOrderId;
       order.status = 'paid';
@@ -375,9 +383,26 @@ export class MembershipPaymentsService
       return order;
     });
   }
+  private async syncConfirmedRefund(order: MembershipOrder, openId: string) {
+    const request = await this.repository.findMembershipRefund(order.id);
+    if (!request || !this.virtualPay) return order;
+    const result = await this.virtualPay.queryRefund(request.refundId, openId);
+    if (!result || result.status !== 8 || result.amount !== request.amount)
+      return order;
+    return this.refundVirtual(
+      { orderId: order.id, wxOrderId: order.transactionId!, openId },
+      result.amount,
+      {
+        refundId: request.refundId,
+        confirmedAt: result.confirmedAt,
+        source: 'query',
+      },
+    );
+  }
   async refundVirtual(
     tx: Pick<VirtualTransaction, 'orderId' | 'wxOrderId' | 'openId'>,
     amount: number,
+    confirmation?: { refundId?: string; confirmedAt?: string; source?: string },
   ) {
     const existing = await this.repository.findMembershipOrderById(tx.orderId);
     if (!existing) throw new NotFoundException('没有找到此订单');
@@ -397,8 +422,39 @@ export class MembershipPaymentsService
         amount > order.amount
       )
         throw new ConflictException('退款订单信息不匹配');
-      // A partial refund keeps permanent entitlement; full refund revokes only this order's grant.
-      if (amount < order.amount) return order;
+      const refund = await repo.findMembershipRefund(order.id);
+      const refundId =
+        confirmation?.refundId ||
+        (amount === order.amount ? refund?.refundId : undefined);
+      if (refundId && !/^[A-Za-z0-9_-]{1,128}$/.test(refundId))
+        throw new ConflictException('退款单号不正确');
+      const confirmedAt = confirmation?.confirmedAt || null;
+      if (
+        confirmedAt &&
+        (!Number.isFinite(Date.parse(confirmedAt)) ||
+          Date.parse(confirmedAt) > Date.now() + 300000)
+      )
+        throw new ConflictException('退款时间不正确');
+      if (refundId || amount === order.amount)
+        await repo.recordRefundReceipt({
+          id: refundId ? 'refund:' + refundId : 'full:' + order.id,
+          orderId: order.id,
+          amount,
+          confirmedAt,
+          observedAt: new Date().toISOString(),
+          source: confirmation?.source || 'query',
+          timeSource: confirmedAt ? 'platform' : 'unknown',
+        });
+      const receipts = await repo.listRefundReceipts(order.id);
+      const total = receipts.reduce((s, r) => s + r.amount, 0);
+      // Partial receipts are retained, but permanent entitlement remains until fully refunded.
+      if (total < order.amount) return order;
+      if (refund && refund.amount === total) {
+        refund.status = 'succeeded';
+        refund.errorCode = null;
+        refund.updatedAt = refund.completedAt = new Date().toISOString();
+        await repo.saveMembershipRefund(refund);
+      }
       order.status = 'refunded';
       order.transactionId = tx.wxOrderId;
       order.updatedAt = new Date().toISOString();
@@ -462,13 +518,30 @@ export class MembershipPaymentsService
         const result = await this.virtualPay.query(existing, identity.openId);
         if (!result || !['paid', 'refunded'].includes(result.state))
           throw new ConflictException('支付尚未确认');
-        if (result.state === 'refunded')
-          await this.refundVirtual(result.transaction, result.refundFee);
+        if (result.state === 'refunded') {
+          await this.syncConfirmedRefund(existing, identity.openId);
+          return this.virtualPay.reply(
+            { ErrCode: 0, ErrMsg: 'success' },
+            query.nonce,
+            format,
+          );
+        }
         tx = result.transaction;
       }
       await this.confirmVirtualPayment(tx);
       await this.markDelivered(existing.userId, existing.id);
     } else if (event.Event === 'xpay_refund_notify') {
+      if (
+        Number(event.RetCode) === 0 &&
+        !event.MchRefundId &&
+        !event.WxRefundId
+      ) {
+        const original = await this.repository.findMembershipOrderById(
+          String(event.MchOrderId),
+        );
+        if (!original || Number(event.RefundFee) !== original.amount)
+          throw new ConflictException('部分退款通知缺少退款单号，无法去重');
+      }
       if (Number(event.RetCode) === 0)
         await this.refundVirtual(
           {
@@ -477,6 +550,16 @@ export class MembershipPaymentsService
             openId: event.OpenId,
           },
           Number(event.RefundFee),
+          {
+            refundId: event.MchRefundId || event.WxRefundId,
+            confirmedAt:
+              Number(event.RefundSuccTimestamp) > 0
+                ? new Date(
+                    Number(event.RefundSuccTimestamp) * 1000,
+                  ).toISOString()
+                : undefined,
+            source: 'callback',
+          },
         );
     } else throw new ConflictException('暂不支持此支付推送事件');
     return this.virtualPay.reply(

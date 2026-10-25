@@ -1,4 +1,5 @@
 node_modules/
+.pnpm-store/
 subscription/.preview/
 subscription/cache/
 subscription/unpackage/dist/dev/.sourcemap/
@@ -17,3 +18,5 @@ deploy/secrets/
 admin/.runtime/
 *.log
 /backups/
+
+**/.env.admin-initial

@@ -1,7 +1,13 @@
 <script setup lang="ts">
 import { ArrowUpRight } from '@lucide/vue';
-import { computed } from 'vue';
-import { sections, format, tone, type Section, type Row } from '../lib/data';
+import {
+  sections,
+  format,
+  tone,
+  displayId,
+  type Section,
+  type Row,
+} from '../lib/data';
 import Badge from './StatusBadge.vue';
 import { Button } from './ui/button';
 import {
@@ -15,22 +21,20 @@ import {
 } from './ui/table';
 import AsyncState from './AsyncState.vue';
 
-const props = defineProps<{
+defineProps<{
   section: Section;
   items?: Row[];
   loading: boolean;
   error?: string;
   search?: string;
-  compact?: boolean;
 }>();
-defineEmits<{ detail: [row: Row]; user: [id: string]; retry: []; clear: [] }>();
-const columns = computed(() =>
-  props.compact
-    ? sections[props.section].columns.filter((column) =>
-        ['name', 'amount', 'nextBillingDate', 'status'].includes(column.key),
-      )
-    : sections[props.section].columns,
-);
+defineEmits<{
+  detail: [row: Row];
+  user: [id: string];
+  subscriptions: [id: string];
+  retry: [];
+  clear: [];
+}>();
 </script>
 <template>
   <Table
@@ -40,13 +44,12 @@ const columns = computed(() =>
     :aria-busy="loading"
   >
     <TableCaption class="sr-only">
-      {{ sections[section].label
-      }}{{ compact ? '，列表前 5 条' : '，每页 20 条' }}
+      {{ sections[section].label }}，每页 20 条
     </TableCaption>
     <TableHeader>
       <TableRow>
         <TableHead
-          v-for="column in columns"
+          v-for="column in sections[section].columns"
           :key="column.key"
           scope="col"
           :class="{ 'align-right': column.key === 'amount' }"
@@ -58,7 +61,7 @@ const columns = computed(() =>
     </TableHeader>
     <TableBody>
       <TableRow v-if="!items?.length">
-        <TableCell :colspan="columns.length + 1">
+        <TableCell :colspan="sections[section].columns.length + 1">
           <AsyncState
             :loading="loading"
             :error="error"
@@ -74,7 +77,7 @@ const columns = computed(() =>
         :class="{ 'row-deleted': row.deletedAt }"
       >
         <TableCell
-          v-for="column in columns"
+          v-for="column in sections[section].columns"
           :key="column.key"
           :class="{
             'align-right numeric': column.key === 'amount',
@@ -99,18 +102,56 @@ const columns = computed(() =>
               ><small v-if="row.deletedAt">已删除记录</small></span
             >
           </div>
+          <div
+            v-else-if="section === 'users' && column.key === 'id'"
+            class="account-cell"
+            :title="String(row.id)"
+          >
+            <span class="account-avatar" aria-hidden="true">{{
+              String(row.id).replace(/^wx_/, '').slice(0, 2).toUpperCase()
+            }}</span>
+            <span class="account-id">{{ displayId(row.id) }}</span>
+          </div>
+          <a
+            v-else-if="
+              section === 'users' &&
+              column.key === 'subscriptions' &&
+              Number(row.subscriptions) > 0
+            "
+            :href="`?view=subscriptions&userId=${encodeURIComponent(String(row.id))}`"
+            class="subscription-link"
+            :aria-label="`查看${String(row.id)}的订阅`"
+            @click.prevent="$emit('subscriptions', String(row.id))"
+            >{{ row.subscriptions }} <span>条订阅</span
+            ><ArrowUpRight :size="12"
+          /></a>
           <a
             v-else-if="column.key === 'userId'"
             :href="`?view=users&search=${encodeURIComponent(String(row.userId))}`"
             class="id-link"
+            :title="String(row.userId)"
+            :aria-label="String(row.userId)"
             @click.prevent="$emit('user', String(row.userId))"
-            >{{ row.userId }}</a
+            >{{ displayId(row.userId) }}</a
           >
           <Badge
             v-else-if="
-              ['status', 'plan', 'notificationEnabled'].includes(column.key)
+              [
+                'issue',
+                'action',
+                'status',
+                'plan',
+                'notificationEnabled',
+                'isTest',
+              ].includes(column.key)
             "
-            :tone="tone(row[column.key])"
+            :tone="
+              column.key === 'isTest'
+                ? row.isTest
+                  ? 'warning'
+                  : 'neutral'
+                : tone(row[column.key])
+            "
             >{{ format(column.key, row[column.key], row, section) }}</Badge
           >
           <span
@@ -121,6 +162,8 @@ const columns = computed(() =>
                 'billingDate',
                 'attempts',
                 'subscriptions',
+                'clientIp',
+                'peerIp',
                 'lastAccessIp',
                 'lastAccessAt',
               ].includes(column.key),

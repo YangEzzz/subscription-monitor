@@ -72,3 +72,32 @@ pnpm db:generate
 ## Docker 生产部署
 
 仓库根目录提供 `compose.yaml`，包含 PostgreSQL、自动迁移和 API 服务。生产环境变量、Nginx 与 HTTPS 配置步骤见 [deploy/README.md](../deploy/README.md)。
+
+
+## 本地后端读取线上数据库
+
+开发链路：本地 Vue（5174）→ 本地 Nest 管理接口（3002）→ SSH 隧道（15432）→ 服务器 PostgreSQL。后端修改由 watch 重新编译，无需部署 API。数据库新增表或字段仍需迁移；开发新表/写操作优先使用独立开发库或线上数据副本，不向线上库自动运行迁移。
+
+1. 用已有 SSH 登录方式，查询服务器 postgres 容器当前的内网 IP。该 IP 不是公网地址；数据库无需开放公网端口。
+2. 保持 SSH 隧道运行：`ssh -N -o ExitOnForwardFailure=yes -L 127.0.0.1:15432:数据库容器IP:5432 SSH主机别名`。本机只监听 127.0.0.1。
+3. 在 backend 目录运行 `pnpm start:local`，或者 `node scripts/start-local.cjs`。复用 `.env` 的账号密码和数据库名，只在启动进程内把数据库主机/端口改为 127.0.0.1:15432；不会覆盖原 `.env`。
+4. 将 `admin/.env.local` 的 `VITE_DEV_API_TARGET` 设为 `http://127.0.0.1:3002`，删除 `VITE_DEV_API_ORIGIN`，重启 Vite。前端 `/api/` 转发到本地 Nest。
+
+启动脚本默认启用数据库会话只读，关闭通知定时任务和支付任务，业务/管理端口均监听本机。只读模式可以查真实用户和已有数据，但不能测试注册、登录写日志等写操作；缺少 auth_events 表时日志接口仍报错，不伪造空日志。
+
+可在不提交的 `backend/.env.local` 中覆盖 `DATABASE_URL`（如开发库凭据）、`LOCAL_DATABASE_HOST`、`LOCAL_DATABASE_PORT`；明确需要在独立开发库测试写入时设置 `LOCAL_DATABASE_READ_ONLY=false`。脚本不会创建隧道、不会复制数据库、不会执行迁移，也不会部署服务器。隧道未就绪时启动失败并给出提示，不输出连接密码。
+
+
+### 直接连接服务器数据库（已选择的本地配置）
+
+本机 `backend/.env.local` 已配置 `LOCAL_DATABASE_HOST=47.123.5.37`、`LOCAL_DATABASE_PORT=5432`、`LOCAL_DATABASE_READ_ONLY=true`，凭据继续取自不提交的 `.env`。
+
+服务器可额外使用根目录 `compose.db-access.yaml` 发布 PostgreSQL 端口。云安全组先仅允许开发机公网 IP `/32` 访问 TCP 5432，再在项目根目录执行：
+
+```bash
+sudo docker compose --env-file deploy/.env.production -f compose.yaml -f compose.db-access.yaml up -d --no-deps postgres
+```
+
+这一步会重建数据库容器以增加端口映射，复用现有 postgres-data 数据卷；不执行迁移、不重建 API，数据库连接可能短暂中断。不要使用 `down -v`。以后服务器 Compose 更新应继续带上这两个 `-f` 参数，避免意外移除端口映射。
+
+端口连通后本机执行 `node backend/scripts/start-local.cjs`，并将 Vite 管理代理切换为 `http://127.0.0.1:3002`。修改本地后端无需部署服务器。线上现有库缺少新表时仍需一次数据库迁移，或改用有迁移的开发库测试新功能。

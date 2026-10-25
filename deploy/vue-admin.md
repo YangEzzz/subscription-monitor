@@ -1,6 +1,6 @@
 # Vue 管理后台部署
 
-前端源码为仓库根 `admin/`，API 源码为 `backend/`。前端通过同源 `/api/` 访问独立只读管理端口，生产 Nginx 在 Docker 内网转发。前端不需要配置数据库账号或微信 AppSecret。
+前端源码为仓库根 `admin/`，API 源码为 `backend/`。前端通过同源 `/api/` 访问独立管理端口，生产 Nginx 在 Docker 内网转发。前端不需要配置数据库账号或微信 AppSecret。
 
 ## 与现有后端一同部署
 
@@ -75,7 +75,7 @@ pnpm install --frozen-lockfile
 pnpm build
 ```
 
-将整个 `dist/` 上传到静态服务器，按 `admin/nginx/default.conf.template` 配置 SPA 回退、静态资源缓存与 `/api/` 代理。这里的代理目标必须是能访问只读管理端口的服务器地址；模板中的 `${ADMIN_API_UPSTREAM}` 在普通 Nginx 部署时替换为实际地址，例如 `127.0.0.1:3002`。Docker 官方 Nginx 启动脚本会自动替换此环境变量。
+将整个 `dist/` 上传到静态服务器，按 `admin/nginx/default.conf.template` 配置 SPA 回退、静态资源缓存与 `/api/` 代理。这里的代理目标必须是能访问独立管理端口的服务器地址；模板中的 `${ADMIN_API_UPSTREAM}` 在普通 Nginx 部署时替换为实际地址，例如 `127.0.0.1:3002`。Docker 官方 Nginx 启动脚本会自动替换此环境变量。
 
 不能只上传 index.html：它会引用 `assets` 里的 Vue 代码和 CSS。部署时不要让 `/api/` 请求回退到 index.html；API 错误必须保留 HTTP 状态。
 
@@ -88,3 +88,5 @@ docker compose --env-file deploy/.env.production logs --tail=100 admin api
 ```
 
 页面打不开时检查 admin 服务与资源路径；页面能打开但数据读取失败时，检查 `LOCAL_ADMIN_ENABLED=true`、API 3002 端口和 `ADMIN_API_UPSTREAM`。不需要调整小程序 `/api/v1` 地址。当前版本仅查询，不修改用户数据、购买会员或发送通知。
+
+退款操作与当前只读开发限制见[后台退款方案](后台退款方案.md)。后台来源与管理员会话鉴权保持生效，生产已新增订单退款 POST 接口。

@@ -19,6 +19,28 @@ describe('user access recording', () => {
     socket: { remoteAddress: '127.0.0.1' },
   });
   afterEach(() => jest.restoreAllMocks());
+  it('records activity even without a usable IP, and permits read-only development to disable collection', async () => {
+    const repo = new MemorySubscriptionsRepository([]);
+    await repo.saveWechatIdentity({
+      userId: 'alice',
+      appId: 'app',
+      openId: 'private',
+    });
+    await new AuthService(config, repo).recordAccess('alice', {
+      headers: {},
+      socket: {},
+    });
+    expect((await repo.adminStats(7)).activity.dau).toBe(1);
+    const record = jest.spyOn(repo, 'recordUserActivity');
+    const disabled = new ConfigService({
+      app: { analyticsCollectionEnabled: false },
+    });
+    await new AuthService(disabled, repo).recordAccess('alice', {
+      headers: {},
+      socket: {},
+    });
+    expect(record).not.toHaveBeenCalled();
+  });
   it('records login and authenticated requests, ignores unauthorized/public reads, keeps IP out of sessions', async () => {
     const repo = new MemorySubscriptionsRepository([]);
     const auth = new AuthService(config, repo);

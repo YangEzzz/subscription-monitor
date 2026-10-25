@@ -1,3 +1,14 @@
+import { REFUND_RECEIPTS_SQL } from './finance-sql';
+import {
+  StatsDetailQuery,
+  StatsDetailPage,
+  RefundReceipt,
+  detailSql,
+} from './statistics-details';
+import { NotFoundException, ConflictException } from '@nestjs/common';
+import { MembershipRefund } from '../domain/membership-refund';
+import { ADMIN_STATS_SQL, AdminStats, finishStats } from './admin-stats';
+import { BILLING_AUDIT_SQL } from './billing-audit';
 import { MembershipOrder } from '../domain/membership-order';
 import { Prisma, PrismaClient } from '../../generated/prisma/client';
 import { OnApplicationShutdown } from '@nestjs/common';
@@ -34,6 +45,7 @@ type PrismaExecutor = Pick<
   | 'membershipOrder'
   | 'notificationGrant'
   | 'notificationDelivery'
+  | '$queryRawUnsafe'
   | '$queryRaw'
 >;
 
@@ -125,24 +137,213 @@ export class PrismaSubscriptionsRepository
     });
   }
 
-  async adminOverview(): Promise<AdminOverview> {
-    const [users, subscriptions, notifications, failedNotifications] =
-      await Promise.all([
-        this.executor.appUser.count(),
-        this.executor.subscription.count({
-          where: { deletedAt: null, isDemo: false },
-        }),
-        this.executor.notificationDelivery.count(),
-        this.executor.notificationDelivery.count({
-          where: { status: { in: ['failed', 'unknown'] } },
-        }),
-      ]);
-    return { users, subscriptions, notifications, failedNotifications };
+  async findUserTestFlag(userId: string) {
+    const [row] = await this.executor.$queryRaw<
+      {
+        isTest: boolean;
+        testNote: string | null;
+        testUpdatedBy: string | null;
+        testUpdatedAt: string | null;
+      }[]
+    >`SELECT is_test AS "isTest",test_note AS "testNote",test_updated_by AS "testUpdatedBy",to_char(test_updated_at AT TIME ZONE 'UTC','YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') AS "testUpdatedAt" FROM app_users WHERE id=${userId}`;
+    if (!row) throw new NotFoundException('没有找到此账号');
+    return row;
+  }
+  async setUserTestFlag(
+    userId: string,
+    isTest: boolean,
+    note: string,
+    operator: string,
+  ): Promise<void> {
+    const write = async (repo: PrismaSubscriptionsRepository) => {
+      const before = await (
+        repo as PrismaSubscriptionsRepository
+      ).findUserTestFlag(userId);
+      await (repo as PrismaSubscriptionsRepository).executor
+        .$queryRaw`UPDATE app_users SET is_test=${isTest},test_note=${note},test_updated_by=${operator},test_updated_at=CURRENT_TIMESTAMP WHERE id=${userId} RETURNING id`;
+      await (repo as PrismaSubscriptionsRepository).executor
+        .$queryRaw`INSERT INTO admin_user_label_events(id,user_id,previous_is_test,is_test,note,operator) VALUES(${randomUUID()}::uuid,${userId},${before.isTest},${isTest},${note},${operator}) RETURNING id`;
+    };
+    if (this.rootClient) {
+      // This dedicated admin operation writes classification metadata only.
+      // Local business connections keep their default read-only transaction mode.
+      await this.rootClient.$transaction(async (tx) => {
+        await tx.$executeRaw`SET TRANSACTION READ WRITE`;
+        await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended(${userId},0))::text`;
+        await write(new PrismaSubscriptionsRepository(tx));
+      });
+    } else await write(this);
+  }
+  async recordRefundReceipt(r: RefundReceipt): Promise<void> {
+    const existing = await this.listRefundReceipts(r.orderId);
+    const legacy = existing.find((x) => x.id.startsWith('legacy:'));
+    if (legacy && existing.length === 1 && legacy.amount === r.amount) {
+      if (!legacy.confirmedAt && r.confirmedAt)
+        await this.executor
+          .$queryRaw`UPDATE payment_refund_receipts SET confirmed_at=${r.confirmedAt}::timestamptz,time_source='platform' WHERE id=${legacy.id} AND confirmed_at IS NULL RETURNING id`;
+      return;
+    }
+    const repeated = existing.find((x) => x.id === r.id);
+    if (repeated) {
+      if (repeated.amount !== r.amount)
+        throw new ConflictException('退款凭据金额不一致');
+      if (!repeated.confirmedAt && r.confirmedAt)
+        await this.executor
+          .$queryRaw`UPDATE payment_refund_receipts SET confirmed_at=${r.confirmedAt}::timestamptz,time_source='platform' WHERE id=${r.id} AND confirmed_at IS NULL RETURNING id`;
+      return;
+    }
+    const order = await this.findMembershipOrderById(r.orderId);
+    if (
+      !order ||
+      existing.reduce((s, x) => s + x.amount, 0) + r.amount > order.amount
+    )
+      throw new ConflictException('累计退款超过订单金额');
+    const inserted = await this.executor.$queryRaw<
+      { id: string }[]
+    >`INSERT INTO payment_refund_receipts(id,order_id,amount,confirmed_at,observed_at,source,time_source) VALUES(${r.id},${r.orderId},${r.amount},${r.confirmedAt}::timestamptz,${r.observedAt}::timestamptz,${r.source},${r.timeSource}) ON CONFLICT(id) DO NOTHING RETURNING id`;
+    if (!inserted.length)
+      throw new ConflictException('退款凭据已被其他记录使用');
+  }
+  async listRefundReceipts(orderId: string): Promise<RefundReceipt[]> {
+    return this.executor.$queryRaw<
+      RefundReceipt[]
+    >`SELECT id,order_id AS "orderId",amount,to_char(confirmed_at AT TIME ZONE 'UTC','YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') AS "confirmedAt",to_char(observed_at AT TIME ZONE 'UTC','YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') AS "observedAt",source,time_source AS "timeSource" FROM payment_refund_receipts WHERE order_id=${orderId}`;
+  }
+  async statsDetails(q: StatsDetailQuery): Promise<StatsDetailPage> {
+    const spec = detailSql(q.metric),
+      base = `WITH detail_rows AS (${spec.sql}), filtered AS (SELECT * FROM detail_rows r WHERE strpos(lower(row_to_json(r)::text),lower($4))>0 AND ($6::boolean OR NOT $6::boolean))`;
+    const [result] = await this.executor.$queryRawUnsafe<
+      {
+        items: Record<string, unknown>[];
+        total: number;
+        totalAmountCny: number | null;
+      }[]
+    >(
+      base +
+        ` SELECT COALESCE((SELECT json_agg(p) FROM (SELECT * FROM filtered ORDER BY id LIMIT 20 OFFSET $5) p),'[]'::json) items,(SELECT COUNT(*)::int FROM filtered) total,` +
+        (spec.hasAmount
+          ? `(SELECT COALESCE(SUM(ROUND(amount*100)),0)::double precision/100 FROM filtered)`
+          : 'NULL::double precision') +
+        ` AS "totalAmountCny"`,
+      q.from,
+      q.to,
+      q.excludeTest,
+      q.search,
+      (q.page - 1) * 20,
+      q.includeUndated === true,
+    );
+    return {
+      ...result,
+      totalAmountCny: result.totalAmountCny ?? undefined,
+      page: q.page,
+      pageSize: 20,
+      columns: spec.columns,
+    };
+  }
+  async findMembershipRefund(
+    orderId: string,
+  ): Promise<MembershipRefund | null> {
+    const rows = await this.executor.$queryRaw<MembershipRefund[]>`
+      SELECT order_id AS "orderId",refund_id AS "refundId",amount,status,reason,reason_code AS "reasonCode",operator,error_code AS "errorCode",
+      to_char(created_at AT TIME ZONE 'UTC','YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') AS "createdAt",
+      to_char(updated_at AT TIME ZONE 'UTC','YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') AS "updatedAt",
+      to_char(completed_at AT TIME ZONE 'UTC','YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') AS "completedAt"
+      FROM membership_refunds WHERE order_id=${orderId}`;
+    return rows[0] || null;
+  }
+  async saveMembershipRefund(r: MembershipRefund): Promise<void> {
+    await this.executor.$queryRaw`
+      INSERT INTO membership_refunds(order_id,refund_id,amount,status,reason,reason_code,operator,error_code,created_at,updated_at,completed_at)
+      VALUES(${r.orderId},${r.refundId},${r.amount},${r.status},${r.reason},${r.reasonCode},${r.operator},${r.errorCode},${r.createdAt}::timestamptz,${r.updatedAt}::timestamptz,${r.completedAt}::timestamptz)
+      ON CONFLICT(order_id) DO UPDATE SET status=EXCLUDED.status,error_code=EXCLUDED.error_code,updated_at=EXCLUDED.updated_at,completed_at=EXCLUDED.completed_at
+      RETURNING order_id`;
+  }
+  async listPendingRefunds(
+    afterId: string,
+    limit: number,
+  ): Promise<MembershipRefund[]> {
+    const ids = await this.executor.$queryRaw<
+      { orderId: string }[]
+    >`SELECT order_id AS "orderId" FROM membership_refunds WHERE status IN ('submitting','processing','unknown') AND order_id>${afterId} ORDER BY order_id LIMIT ${limit}`;
+    const rows = await Promise.all(
+      ids.map((r) => this.findMembershipRefund(r.orderId)),
+    );
+    return rows.filter((r): r is MembershipRefund => r !== null);
+  }
+  async recordUserActivity(userId: string, at: Date): Promise<void> {
+    await this.executor.$queryRaw`
+      INSERT INTO user_daily_activity (user_id,activity_date,first_seen_at,last_seen_at)
+      SELECT id,(${at}::timestamptz AT TIME ZONE 'Asia/Shanghai')::date,${at},${at}
+      FROM app_users WHERE id=${userId}
+      ON CONFLICT(user_id,activity_date) DO UPDATE
+      SET first_seen_at=LEAST(user_daily_activity.first_seen_at,EXCLUDED.first_seen_at),
+          last_seen_at=GREATEST(user_daily_activity.last_seen_at,EXCLUDED.last_seen_at)
+      WHERE user_daily_activity.last_seen_at <= EXCLUDED.last_seen_at - interval '60 seconds'
+         OR user_daily_activity.first_seen_at > EXCLUDED.first_seen_at
+      RETURNING user_id`;
+  }
+  async adminStats(length: number, excludeTest = true): Promise<AdminStats> {
+    const [row] = await this.executor.$queryRawUnsafe<
+      (Pick<
+        AdminStats,
+        'days' | 'cohorts' | 'summary' | 'activity' | 'undatedRefunds'
+      > & {
+        trackingSince: Date | null;
+      })[]
+    >(ADMIN_STATS_SQL, length, excludeTest);
+    return finishStats({
+      ...row,
+      excludeTest,
+      trackingSince: row.trackingSince?.toISOString() || null,
+    });
   }
 
-  async adminRead({ section, page, search }: AdminQuery): Promise<AdminPage> {
+  async adminOverview(excludeTest = true): Promise<AdminOverview> {
+    const [row] = await this.executor.$queryRaw<AdminOverview[]>`
+      WITH eligible AS (SELECT id FROM app_users WHERE NOT ${excludeTest}::boolean OR NOT is_test),
+      payments AS (SELECT COALESCE(SUM(amount),0)::bigint cents FROM membership_orders WHERE user_id IN(SELECT id FROM eligible) AND status IN('paid','refunded') AND paid_at IS NOT NULL AND channel IN('wechat','virtual') AND currency='CNY'),
+      refunds AS (SELECT COALESCE(SUM(r.amount),0)::bigint cents FROM (${Prisma.raw(REFUND_RECEIPTS_SQL)}) r JOIN membership_orders o ON o.id=r.order_id WHERE o.user_id IN(SELECT id FROM eligible) AND o.channel IN('wechat','virtual') AND o.currency='CNY')
+      SELECT (SELECT COUNT(*)::int FROM eligible) users,
+      (SELECT COUNT(*)::int FROM subscriptions WHERE user_id IN(SELECT id FROM eligible) AND deleted_at IS NULL AND NOT is_demo) subscriptions,
+      (SELECT COUNT(*)::int FROM notification_deliveries WHERE user_id IN(SELECT id FROM eligible)) notifications,
+      (SELECT COUNT(*)::int FROM notification_deliveries WHERE user_id IN(SELECT id FROM eligible) AND status IN('failed','unknown')) AS "failedNotifications",
+      (SELECT COUNT(*)::int FROM memberships WHERE user_id IN(SELECT id FROM eligible) AND status='active' AND plan='member' AND source!='simulation') AS "activeMembers",
+      p.cents::double precision/100 AS "paidAmountCny",r.cents::double precision/100 AS "refundAmountCny",(p.cents-r.cents)::double precision/100 AS "netAmountCny"
+      FROM payments p CROSS JOIN refunds r`;
+    const [audit] = await this.executor.$queryRawUnsafe<{ total: bigint }[]>(
+      `SELECT COUNT(*) total FROM (${BILLING_AUDIT_SQL}) audit`,
+    );
+    return {
+      ...row,
+      paymentIssues: Number(audit.total),
+      snapshotAt: new Date().toISOString(),
+    };
+  }
+
+  async adminRead({
+    section,
+    page,
+    search,
+    userId,
+    failedOnly,
+  }: AdminQuery): Promise<AdminPage> {
     const paging = { skip: (page - 1) * 20, take: 20 };
     const contains = { contains: search, mode: 'insensitive' as const };
+    if (section === 'billingIssues') {
+      const filter = ` WHERE (strpos(lower("userId"), lower($1)) > 0 OR strpos(lower(id), lower($1)) > 0 OR strpos(lower("productName"), lower($1)) > 0)`;
+      const [items, counts] = await Promise.all([
+        this.executor.$queryRawUnsafe<Record<string, unknown>[]>(
+          `SELECT * FROM (${BILLING_AUDIT_SQL}) audit${filter} ORDER BY "createdAt" DESC NULLS LAST, id ASC LIMIT 20 OFFSET $2`,
+          search,
+          (page - 1) * 20,
+        ),
+        this.executor.$queryRawUnsafe<{ total: bigint }[]>(
+          `SELECT COUNT(*) AS total FROM (${BILLING_AUDIT_SQL}) audit${filter}`,
+          search,
+        ),
+      ]);
+      return { items, total: Number(counts[0].total), page, pageSize: 20 };
+    }
     if (section === 'memberships') {
       const where = search ? { userId: contains } : {};
       const [items, total] = await Promise.all([
@@ -187,17 +388,40 @@ export class PrismaSubscriptionsRepository
             channel: true,
             status: true,
             paidAt: true,
+            transactionId: true,
+            paymentRequestedAt: true,
+            deliveryConfirmedAt: true,
             createdAt: true,
           },
         }),
         this.executor.membershipOrder.count({ where }),
       ]);
       return {
-        items: rows.map((row) => ({ ...row, amount: row.amount / 100 })),
+        items: await Promise.all(
+          rows.map(async (row) => ({
+            ...row,
+            amount: row.amount / 100,
+            refundStatus:
+              (await this.findMembershipRefund(row.id))?.status || null,
+          })),
+        ),
         total,
         page,
         pageSize: 20,
       };
+    }
+    if (section === 'authEvents') {
+      const [items, counts] = await Promise.all([
+        this.executor.$queryRaw<Record<string, unknown>[]>`
+          SELECT id, user_id AS "userId", action, app_id AS "appId",
+                 client_ip AS "clientIp", peer_ip AS "peerIp",
+                 request_id AS "requestId", created_at AS "createdAt"
+          FROM auth_events WHERE strpos(user_id, ${search}) > 0
+          ORDER BY created_at DESC, id DESC LIMIT 20 OFFSET ${(page - 1) * 20}`,
+        this.executor.$queryRaw<{ total: bigint }[]>`
+          SELECT COUNT(*) AS total FROM auth_events WHERE strpos(user_id, ${search}) > 0`,
+      ]);
+      return { items, total: Number(counts[0].total), page, pageSize: 20 };
     }
     if (section === 'users') {
       const where = search ? { id: contains } : {};
@@ -223,15 +447,18 @@ export class PrismaSubscriptionsRepository
         this.executor.appUser.count({ where }),
       ]);
       return {
-        items: rows.map((row) => ({
-          id: row.id,
-          createdAt: row.createdAt,
-          lastAccessIp: row.lastAccessIp,
-          lastAccessAt: row.lastAccessAt,
-          subscriptions: row._count.subscriptions,
-          notificationEnabled: row.settings?.notificationEnabled ?? false,
-          plan: row.membership?.plan ?? 'free',
-        })),
+        items: await Promise.all(
+          rows.map(async (row) => ({
+            ...(await this.findUserTestFlag(row.id)),
+            id: row.id,
+            createdAt: row.createdAt,
+            lastAccessIp: row.lastAccessIp,
+            lastAccessAt: row.lastAccessAt,
+            subscriptions: row._count.subscriptions,
+            notificationEnabled: row.settings?.notificationEnabled ?? false,
+            plan: row.membership?.plan ?? 'free',
+          })),
+        ),
         total,
         page,
         pageSize: 20,
@@ -240,6 +467,7 @@ export class PrismaSubscriptionsRepository
     if (section === 'subscriptions') {
       const where = {
         isDemo: false,
+        ...(userId ? { userId } : {}),
         ...(search
           ? { OR: [{ name: contains }, { userId: contains }, { id: contains }] }
           : {}),
@@ -273,15 +501,19 @@ export class PrismaSubscriptionsRepository
         pageSize: 20,
       };
     }
-    const where = search
-      ? {
-          OR: [
-            { userId: contains },
-            { subscriptionName: contains },
-            { errorCode: contains },
-          ],
-        }
-      : {};
+    const where = {
+      ...(userId ? { userId } : {}),
+      ...(failedOnly ? { status: { in: ['failed', 'unknown'] } } : {}),
+      ...(search
+        ? {
+            OR: [
+              { userId: contains },
+              { subscriptionName: contains },
+              { errorCode: contains },
+            ],
+          }
+        : {}),
+    };
     const [rows, total] = await Promise.all([
       this.executor.notificationDelivery.findMany({
         where,
@@ -322,6 +554,30 @@ export class PrismaSubscriptionsRepository
         return work(repository);
       });
     return work(this);
+  }
+
+  async recordWechatLogin(
+    identity: WechatIdentity,
+    context: {
+      clientIp: string | null;
+      peerIp: string | null;
+      requestId: string;
+    },
+  ): Promise<void> {
+    await this.locked(identity.userId, async (repository) => {
+      // RETURNING identifies actual creation, even with concurrent ensureUser calls.
+      const created = await repository.executor.$queryRaw<{ id: string }[]>`
+        INSERT INTO app_users (id, created_at, updated_at)
+        VALUES (${identity.userId}, NOW(), NOW())
+        ON CONFLICT (id) DO NOTHING RETURNING id`;
+      await repository.saveWechatIdentity(identity);
+      const action = created.length ? 'register' : 'login';
+      const eventId = randomUUID();
+      await repository.executor.$queryRaw`
+        INSERT INTO auth_events (id, user_id, action, app_id, client_ip, peer_ip, request_id)
+        VALUES (${eventId}::uuid, ${identity.userId}, ${action}, ${identity.appId},
+                ${context.clientIp}, ${context.peerIp}, ${context.requestId}) RETURNING id`;
+    });
   }
 
   async saveWechatIdentity(identity: WechatIdentity): Promise<void> {

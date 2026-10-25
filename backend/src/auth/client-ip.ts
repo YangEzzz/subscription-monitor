@@ -2,6 +2,7 @@ import { BlockList, isIP } from 'node:net';
 import { IncomingHttpHeaders } from 'node:http';
 
 export type AccessRequest = {
+  requestId?: string;
   socket: { remoteAddress?: string };
   headers: IncomingHttpHeaders;
 };

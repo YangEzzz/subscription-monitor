@@ -6,7 +6,12 @@ import {
   Logger,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { createHash, createHmac, timingSafeEqual } from 'node:crypto';
+import {
+  createHash,
+  createHmac,
+  timingSafeEqual,
+  randomUUID,
+} from 'node:crypto';
 import { encryptWechatSession } from './wechat-session';
 import { AccessRequest, ClientIpResolver } from './client-ip';
 import {
@@ -31,6 +36,13 @@ export class AuthService {
   }
 
   async recordAccess(userId: string, request: AccessRequest) {
+    if (this.config.get<boolean>('app.analyticsCollectionEnabled') !== false) {
+      try {
+        await this.repository.recordUserActivity(userId, new Date());
+      } catch {
+        this.logger.warn('Daily activity recording failed');
+      }
+    }
     const ip = this.ipResolver.resolve(request);
     if (!ip) return;
     try {
@@ -109,20 +121,31 @@ export class AuthService {
     const exp =
       Math.floor(Date.now() / 1000) +
       (this.config.get<number>('app.authTokenTtlSeconds') || 604800);
-    await this.repository.saveWechatIdentity({
-      userId: id,
-      appId: appid,
-      openId: result.openid,
-      sessionKeyEncrypted:
-        typeof result.session_key === 'string' && result.session_key
-          ? encryptWechatSession(
-              result.session_key,
-              signingSecret,
-              `${appid}:${id}`,
-            )
-          : null,
-      sessionUpdatedAt: result.session_key ? new Date().toISOString() : null,
-    });
+    await this.repository.recordWechatLogin(
+      {
+        userId: id,
+        appId: appid,
+        openId: result.openid,
+        sessionKeyEncrypted:
+          typeof result.session_key === 'string' && result.session_key
+            ? encryptWechatSession(
+                result.session_key,
+                signingSecret,
+                `${appid}:${id}`,
+              )
+            : null,
+        sessionUpdatedAt: result.session_key ? new Date().toISOString() : null,
+      },
+      {
+        clientIp: request ? this.ipResolver.resolve(request) : null,
+        peerIp: request?.socket.remoteAddress || null,
+        requestId:
+          request?.requestId &&
+          /^[A-Za-z0-9._-]{1,128}$/.test(request.requestId)
+            ? request.requestId
+            : randomUUID(),
+      },
+    );
     if (request) await this.recordAccess(id, request);
     const body = Buffer.from(JSON.stringify({ sub: id, appid, exp })).toString(
       'base64url',

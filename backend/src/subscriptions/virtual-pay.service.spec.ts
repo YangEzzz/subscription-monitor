@@ -38,6 +38,98 @@ describe('virtual payment protocol', () => {
     );
   });
   afterEach(() => jest.restoreAllMocks());
+  it('signs the exact refund body, verifies acceptance, and reads the original refund ID', async () => {
+    const fetchMock = jest
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({ access_token: 'token', expires_in: 7200 }),
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            errcode: 0,
+            refund_order_id: 'rf-test',
+            pay_order_id: 'order',
+            pay_wx_order_id: 'wx-tx',
+          }),
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            errcode: 0,
+            order: {
+              order_id: 'rf-test',
+              env_type: 1,
+              order_type: 1,
+              status: 8,
+              refund_fee: 990,
+            },
+          }),
+        ),
+      );
+    await gateway.refund(
+      { id: 'order', amount: 990, transactionId: 'wx-tx' } as any,
+      'private',
+      'rf-test',
+      990,
+      '3',
+    );
+    const [url, options] = fetchMock.mock.calls[1];
+    const body = String(options!.body);
+    expect(JSON.parse(body)).toMatchObject({
+      openid: 'private',
+      order_id: 'order',
+      refund_order_id: 'rf-test',
+      left_fee: 990,
+      refund_fee: 990,
+      req_from: '1',
+      refund_reason: '3',
+      env: 0,
+    });
+    expect(new URL(String(url)).searchParams.get('pay_sig')).toBe(
+      virtualPaySignature('/xpay/refund_order', body, settings.appKey),
+    );
+    expect(await gateway.queryRefund('rf-test', 'private')).toEqual({
+      status: 8,
+      amount: 990,
+    });
+  });
+  it.each([
+    [5, 'refunding'],
+    [8, 'refunded'],
+    [7, 'refund_failed'],
+  ] as const)(
+    'distinguishes platform refund state %s as %s',
+    async (status, state) => {
+      jest
+        .spyOn(globalThis, 'fetch')
+        .mockResolvedValueOnce(
+          new Response(
+            JSON.stringify({ access_token: 'token', expires_in: 7200 }),
+          ),
+        )
+        .mockResolvedValueOnce(
+          new Response(
+            JSON.stringify({
+              errcode: 0,
+              order: {
+                order_id: 'order',
+                env_type: 1,
+                status,
+                order_fee: 990,
+                refund_fee: 990,
+              },
+            }),
+          ),
+        );
+      expect(
+        (await gateway.query({ id: 'order' } as any, 'private'))?.state,
+      ).toBe(state);
+    },
+  );
   it.each(['token', 'query'] as const)(
     'records safe diagnostics for %s failures without leaking upstream secrets',
     async (stage) => {
