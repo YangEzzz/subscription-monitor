@@ -3,7 +3,7 @@
     class="page detail-loading-page redesign-page redesign-ancillary flow-page"
     :aria-busy="!error"
   >
-    <view class="flow-header"
+    <view v-if="showHeader" class="flow-header"
       ><page-header
         title="订阅详情"
         secondary
@@ -50,6 +50,7 @@ export default {
   components: { PageHeader, UiSkeleton, AsyncStateView },
   emits: ["back", "retry"],
   props: {
+    showHeader: { type: Boolean, default: true },
     error: { type: String, default: "" },
     scrollOffset: { type: Number, default: 0 },
   },

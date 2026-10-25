@@ -3,10 +3,11 @@ Object.defineProperty(exports, Symbol.toStringTag, { value: "Module" });
 const common_vendor = require("./common/vendor.js");
 if (!Math) {
   "./pages/subscription/index.js";
+  "./pages/subscription/editor.js";
 }
 const _sfc_main = {
   onLaunch() {
-    common_vendor.index.__f__("log", "at App.vue:4", "续订清单启动");
+    console.log("续订清单启动");
   }
 };
 function createApp() {
@@ -15,4 +16,3 @@ function createApp() {
 }
 createApp().app.mount("#app");
 exports.createApp = createApp;
-//# sourceMappingURL=../.sourcemap/mp-weixin/app.js.map

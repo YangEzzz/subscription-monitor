@@ -4,6 +4,7 @@ const _sfc_main = {
   name: "EmptyStateView",
   emits: ["action"],
   props: {
+    embedded: { type: Boolean, default: false },
     icon: { type: String, default: "search" },
     title: { type: String, default: "暂无内容" },
     description: { type: String, default: "" },
@@ -32,9 +33,10 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   }, $props.actionLabel ? {
     e: common_vendor.t($props.actionLabel),
     f: common_vendor.n($props.actionClass),
-    g: common_vendor.o(($event) => _ctx.$emit("action"), "a8")
-  } : {});
+    g: common_vendor.o(($event) => _ctx.$emit("action"), "97")
+  } : {}, {
+    h: $props.embedded ? 1 : ""
+  });
 }
 const Component = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render]]);
 wx.createComponent(Component);
-//# sourceMappingURL=../../../.sourcemap/mp-weixin/components/subscription/EmptyStateView.js.map

@@ -6,7 +6,9 @@ import {
   SubscriptionStatus,
 } from '../domain/subscription';
 
-export class UpdateSubscriptionDto extends PartialType(CreateSubscriptionDto) {
+export class UpdateSubscriptionDto extends PartialType(CreateSubscriptionDto, {
+  skipNullProperties: false,
+}) {
   @ApiPropertyOptional({ enum: SUBSCRIPTION_STATUSES })
   @IsOptional()
   @IsEnum(SUBSCRIPTION_STATUSES)

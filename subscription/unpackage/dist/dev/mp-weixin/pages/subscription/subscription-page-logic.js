@@ -1,5 +1,7 @@
 "use strict";
 const common_vendor = require("../../common/vendor.js");
+const pages_subscription_nativeNavigation = require("./native-navigation.js");
+const pages_subscription_subscriptionExport = require("./subscription-export.js");
 const pages_subscription_subscriptionRemote = require("./subscription-remote.js");
 const config_features = require("../../config/features.js");
 const pages_subscription_subscriptionData = require("./subscription-data.js");
@@ -43,6 +45,7 @@ function createSubscriptionPageState() {
     notificationRequestId: 0,
     notificationError: "",
     subscriptionLimit: null,
+    exportBusy: false,
     searchKeyword: "",
     activeCategory: "全部",
     activeStatus: "default",
@@ -152,20 +155,13 @@ const subscriptionComputed = {
   },
   actionableReminders() {
     const list = [];
-    if (!this.notificationReady)
-      list.push({ key: "notification", tone: "warning", icon: "notification", title: "开启微信续费通知", desc: this.notificationDescription, action: "notification" });
     const overdue = this.liveSubscriptions.filter((item) => !["cancelled", "archived", "paused"].includes(item.status) && pages_subscription_subscriptionData.daysUntil(item.nextBillingDate) < 0);
     if (overdue.length)
       list.push({ key: "overdue", tone: "danger", icon: "info-filled", title: `${overdue.length} 项订阅已逾期未确认`, desc: "请确认是否已完成续费", action: "overdue" });
     const pending = this.liveSubscriptions.filter((item) => item.status === "pending" && pages_subscription_subscriptionData.daysUntil(item.nextBillingDate) >= 0);
     if (pending.length)
       list.push({ key: "pending", tone: "warning", icon: "redo", title: `${pending.length} 项等待稍后处理`, desc: "已保留在站内待办中", action: "pending" });
-    const incomplete = this.liveSubscriptions.filter((item) => item.amount === null);
-    if (incomplete.length)
-      list.push({ key: "incomplete", tone: "info", icon: "compose", title: `${incomplete.length} 项金额待补充`, desc: "补充后统计结果会更准确", action: "incomplete" });
-    if (!list.length)
-      list.push({ key: "done", tone: "success", icon: "checkbox-filled", title: "订阅状态良好", desc: "当前没有需要立即处理的事项", action: "none" });
-    return list.slice(0, 3);
+    return list;
   },
   categoryFilters() {
     const counts = this.liveSubscriptions.reduce((map, item) => {
@@ -347,6 +343,8 @@ const subscriptionMethods = {
   navigateToView(view) {
     if (view === this.activeView)
       return;
+    if (pages_subscription_nativeNavigation.nativeNavigation.push(this, view))
+      return;
     if (this.activeView === "detail")
       this.cancelDetailLoad();
     this.viewStack.push(this.activeView);
@@ -357,6 +355,7 @@ const subscriptionMethods = {
     if (this.activeView === "form" && this.formBaseline && JSON.stringify(this.form) !== this.formBaseline) {
       common_vendor.index.showModal({ title: "放弃未保存的修改？", content: "返回后，本次修改不会保存。", confirmText: "放弃修改", cancelText: "继续编辑", success: (result) => {
         if (result.confirm) {
+          pages_subscription_nativeNavigation.nativeNavigation.clearDraft(this);
           this.formBaseline = "";
           this.goBackView(fallback);
         }
@@ -365,11 +364,15 @@ const subscriptionMethods = {
     }
     if (this.activeView === "detail")
       this.cancelDetailLoad();
+    if (pages_subscription_nativeNavigation.nativeNavigation.back(this))
+      return;
     this.activeView = this.viewStack.length ? this.viewStack.pop() : fallback;
     this.formError = "";
     this.scrollToTop();
   },
   switchTab(tab) {
+    if (pages_subscription_nativeNavigation.nativeNavigation.tab(this, tab))
+      return;
     if (this.activeView === "detail")
       this.cancelDetailLoad();
     this.sortSheetVisible = false;
@@ -381,18 +384,11 @@ const subscriptionMethods = {
     this.scrollTop = this.scrollTop === 0 ? 1 : 0;
   },
   handleReminder(item) {
-    if (item.action === "notification")
-      this.enableNotification();
-    else if (item.action === "overdue") {
-      this.activeStatus = "overdue";
-      this.switchTab("all");
-    } else if (item.action === "pending") {
-      this.activeStatus = "pending";
-      this.switchTab("all");
-    } else if (item.action === "incomplete") {
-      this.activeStatus = "incomplete";
-      this.switchTab("all");
-    }
+    if (!["overdue", "pending"].includes(item.action))
+      return;
+    this.resetFilters();
+    this.activeStatus = item.action;
+    this.switchTab("all");
   },
   chooseSort() {
     this.sortSheetVisible = true;
@@ -439,7 +435,7 @@ const subscriptionMethods = {
         this.openMembership();
     } });
   },
-  openForm(date, item) {
+  openForm(date, item, initialValues) {
     if (!item && !this.canCreateSubscription) {
       this.showMembershipLimit();
       return;
@@ -448,7 +444,11 @@ const subscriptionMethods = {
     this.editingId = item ? item.id : null;
     this.originalBillingDate = item ? item.nextBillingDate : null;
     this.form = item ? { ...item, amount: item.amount === null ? "" : String(item.amount), cycleValue: item.cycleValue || "", trial: Boolean(item.trialEndDate), trialEndDate: item.trialEndDate || null, reminders: (item.reminders || []).slice() } : this.createEmptyForm(date);
+    if (initialValues)
+      Object.assign(this.form, initialValues);
     this.formBaseline = JSON.stringify(this.form);
+    if (!initialValues)
+      pages_subscription_nativeNavigation.nativeNavigation.restoreDraft(this);
     this.navigateToView("form");
   },
   applyTemplate(template) {
@@ -485,7 +485,9 @@ const subscriptionMethods = {
       return "请输入服务名称";
     if (this.form.name.length > 30)
       return "服务名称不能超过 30 个字符";
-    if (this.form.amount !== "" && (Number.isNaN(Number(this.form.amount)) || Number(this.form.amount) < 0))
+    if (this.form.amount == null || String(this.form.amount).trim() === "")
+      return "请输入订阅金额";
+    if (Number.isNaN(Number(this.form.amount)) || Number(this.form.amount) < 0)
       return "金额必须是大于或等于 0 的数字";
     if (this.form.amount !== "" && !/^\d+(\.\d{0,2})?$/.test(String(this.form.amount)))
       return "金额最多保留两位小数";
@@ -520,28 +522,48 @@ const subscriptionMethods = {
     if (item.status !== "archived")
       actions.push({ label: "归档订阅", key: "archive" });
     actions.push({ label: "删除订阅", key: "delete" });
-    common_vendor.index.showActionSheet({ itemList: actions.map((action) => action.label), success: (res) => this.handleSubscriptionAction(actions[res.tapIndex].key) });
+    common_vendor.index.showActionSheet({
+      itemList: actions.map((action) => action.label),
+      success: (res) => {
+        const action = actions[res.tapIndex];
+        if (!action)
+          return;
+        setTimeout(() => {
+          if (this.selectedId === item.id && this.activeView === "detail")
+            this.handleSubscriptionAction(action.key);
+        }, 300);
+      }
+    });
   },
   openReminderSettings() {
     this.navigateToView("reminder-settings");
   },
   exportData() {
+    if (this.exportBusy)
+      return;
     if (!this.liveSubscriptions.length)
       return common_vendor.index.showToast({ title: "暂无可导出的订阅", icon: "none" });
-    common_vendor.index.showModal({ title: "导出订阅数据", content: `将导出 ${this.liveSubscriptions.length} 条订阅记录，金额和备注等订阅数据会包含在文件中。`, confirmText: "确认导出", success: (res) => {
+    this.exportBusy = true;
+    common_vendor.index.showModal({ title: "导出 Excel 表格", content: `将导出 ${this.liveSubscriptions.length} 条订阅，包含金额和备注，不含回收站记录。可用 Excel 或 WPS 打开。`, confirmText: "导出表格", success: (res) => {
       if (res.confirm)
         this.performExport();
+      else
+        this.exportBusy = false;
+    }, fail: () => {
+      this.exportBusy = false;
     } });
   },
-  performExport() {
-    const header = "服务名称,套餐,分类,金额,币种,周期,下次扣费日,状态,付款渠道,备注";
-    const rows = this.liveSubscriptions.map((item) => [item.name, item.plan || "", item.category, item.amount === null ? "" : item.amount, item.currency, this.cycleText(item), item.nextBillingDate, this.statusText(item), item.payment, item.note || ""].map((value) => `"${String(value).replace(/"/g, '""')}"`).join(","));
-    const csv = [header].concat(rows).join("\n");
-    common_vendor.index.setClipboardData({ data: csv, success: () => common_vendor.index.showToast({ title: "表格数据已复制", icon: "success" }) });
+  async performExport() {
+    try {
+      await pages_subscription_subscriptionExport.exportSubscriptionFile(this.liveSubscriptions, { date: this.todayKey, cycleText: (item) => this.cycleText(item), statusText: (item) => this.statusText(item) });
+    } catch (error) {
+      common_vendor.index.showModal({ title: "导出失败", content: (error == null ? void 0 : error.message) || "无法生成或保存表格，请检查设备存储空间后重试。", showCancel: false });
+    } finally {
+      this.exportBusy = false;
+    }
   }
 };
 exports.createSubscriptionPageState = createSubscriptionPageState;
 exports.subscriptionComputed = subscriptionComputed;
 exports.subscriptionLifecycle = subscriptionLifecycle;
 exports.subscriptionMethods = subscriptionMethods;
-//# sourceMappingURL=../../../.sourcemap/mp-weixin/pages/subscription/subscription-page-logic.js.map

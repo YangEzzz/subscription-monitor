@@ -52,7 +52,12 @@ test('page and uni.request adapter complete the workflow against real Nest HTTP 
 				.catch(error => options.fail({ errMsg: error.message }))
 		},
 		showToast() {},
-		showModal(options) { options.success({ confirm: true }) }
+		showModal(options) {
+			for (const key of ['confirmText', 'cancelText']) {
+				assert.ok(Array.from(options[key] || '').length <= 4, `${key} exceeds the mini-program limit`)
+			}
+			options.success({ confirm: true })
+		}
 	}
 	try {
 		// Public health remains available; all user resources reject forged demo headers.
@@ -62,6 +67,15 @@ test('page and uni.request adapter complete the workflow against real Nest HTTP 
 		}
 		assert.equal((await fetch(`${API_CONFIG.baseUrl}/auth/wechat`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' })).status, 422)
 		const session = await ensureSession()
+		const amountInput = { name: '金额校验', category: 'other', cycle: 'monthly', nextBillingDate: '2028-01-31' }
+		for (const amount of [undefined, null, '', '   ', -1, 1.234]) {
+			const response = await fetch(API_CONFIG.baseUrl + '/subscriptions', {
+				method: 'POST', headers: { Authorization: `Bearer ${session.accessToken}`, 'Content-Type': 'application/json' },
+				body: JSON.stringify({ ...amountInput, amount })
+			})
+			assert.equal(response.status, 422)
+			assert.ok((await response.json()).errors.amount)
+		}
 		const removedSettings = await fetch(API_CONFIG.baseUrl + '/settings', {
 			method: 'PATCH', headers: { Authorization: 'Bearer ' + session.accessToken, 'Content-Type': 'application/json' },
 			body: JSON.stringify({ weeklySummary: true, notificationAuthorization: ['accept'] })
@@ -105,6 +119,7 @@ test('page and uni.request adapter complete the workflow against real Nest HTTP 
 		await page.refreshStats()
 		assert.equal(page.statsTotal, 20)
 		const id = page.selectedId
+		await assert.rejects(api.update(id, { amount: null }), error => error.status === 422 && Boolean(error.details.amount))
 		page.openForm(null, page.selectedSubscription)
 		page.form.amount = '25'
 		await page.saveSubscription()
@@ -140,11 +155,11 @@ test('page and uni.request adapter complete the workflow against real Nest HTTP 
 		await page.cancelSubscription()
 		assert.equal(page.selectedSubscription.status, 'cancelled')
 		page.openForm('2028-03-01')
-		Object.assign(page.form, { name: '一次性付款', cycle: '一次性', amount: '' })
+		Object.assign(page.form, { name: '一次性付款', cycle: '一次性', amount: '0' })
 		await page.saveSubscription()
 		await page.confirmRenewal()
 		assert.equal(page.selectedSubscription.status, 'archived')
-		assert.equal(page.selectedSubscription.amount, null)
+		assert.equal(page.selectedSubscription.amount, 0)
 		await page.undoRenewal()
 		assert.equal(page.selectedSubscription.status, 'active')
 		const savedId = page.selectedId

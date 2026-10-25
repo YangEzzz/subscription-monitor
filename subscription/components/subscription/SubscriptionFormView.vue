@@ -2,7 +2,7 @@
   <view
     class="page form-page subscription-form-page redesign-page redesign-ancillary flow-page"
   >
-    <view class="flow-header"
+    <view v-if="showHeader" class="flow-header"
       ><page-header
         :title="editingId ? '编辑订阅' : '新增订阅'"
         secondary
@@ -18,7 +18,7 @@
           ><text class="form-intro-title">{{
             editingId ? "更新这项订阅" : "记录一项持续支出"
           }}</text
-          ><text>先确认服务与扣费日期，金额和备注可稍后补充。</text></view
+          ><text>填写服务、金额与扣费日期，备注可选填。</text></view
         ></view
       >
       <view class="live-preview">
@@ -144,7 +144,7 @@
         ><label class="form-row amount-row"
           ><view
             ><text class="form-label">金额</text
-            ><text class="form-hint">可稍后补充</text></view
+            ><text class="form-hint">必填，免费填 0</text></view
           ><view class="money-input amount-input"
             ><picker
               :range="currencies"
@@ -161,8 +161,9 @@
             ><input
               v-model="form.amount"
               aria-label="订阅金额"
+              aria-required="true"
               type="digit"
-              placeholder="选填"
+              placeholder="请输入金额"
               placeholder-class="placeholder" /></view></label
         ><picker
           :range="cycles"
@@ -333,21 +334,6 @@
         formError
       }}</text></view
     >
-    <view class="flow-actionbar form-actionbar"
-      ><button
-        hover-class="is-pressed"
-        role="button"
-        tabindex="0"
-        class="primary-button save-button"
-        :disabled="busy"
-        :aria-busy="busy ? 'true' : 'false'"
-        @tap="$emit('save')"
-      >
-        <uni-icons type="checkmarkempty" size="20" color="var(--surface)" />{{
-          busy ? "正在保存" : editingId ? "保存修改" : "保存订阅"
-        }}
-      </button></view
-    >
   </view>
 </template>
 
@@ -390,9 +376,9 @@ export default {
     "set-trial",
     "trial-date-change",
     "toggle-reminder",
-    "save",
   ],
   props: {
+    showHeader: { type: Boolean, default: true },
     scrollOffset: { type: Number, default: 0 },
     formatMoney: { type: Function, required: true },
     daysText: { type: Function, required: true },

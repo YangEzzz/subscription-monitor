@@ -11,4 +11,3 @@ const UI_COLORS = {
   "cat-music": "#1FA35B"
 };
 exports.UI_COLORS = UI_COLORS;
-//# sourceMappingURL=../../.sourcemap/mp-weixin/styles/ui-palette.js.map

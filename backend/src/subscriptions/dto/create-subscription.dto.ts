@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import {
   ArrayMaxSize,
   IsArray,
@@ -51,12 +51,13 @@ export class CreateSubscriptionDto {
   @MaxLength(16)
   color?: string;
 
-  @ApiPropertyOptional({ example: 108, nullable: true, type: Number })
-  @IsOptional()
-  @Type(() => Number)
+  @ApiProperty({ example: 108, minimum: 0, type: Number })
+  @Transform(({ value }: { value: unknown }) =>
+    typeof value === 'string' && value.trim() !== '' ? Number(value) : value,
+  )
   @IsNumber({ maxDecimalPlaces: 2 })
   @Min(0)
-  amount?: number | null;
+  amount: number;
 
   @ApiPropertyOptional({ example: 'CNY', default: 'CNY' })
   @IsOptional()

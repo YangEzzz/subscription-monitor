@@ -67,9 +67,9 @@ displayStatus 是结合周期、提醒窗口和到期日计算的展示状态；
 
 创建订阅。免费账号限 5 条订阅，会员账号额度由数据库中的会员状态决定。
 
-必填字段：name、category、cycle、nextBillingDate。
+必填字段：name、amount、category、cycle、nextBillingDate。amount 必须为非负数字，最多两位小数；0 表示免费，不接受 null 或空字符串。
 
-可选字段：plan、logo、color、amount、currency、cycleValue、payment、autoRenew、reminders、trialEndDate、note、cancelGuide。
+可选字段：plan、logo、color、currency、cycleValue、payment、autoRenew、reminders、trialEndDate、note、cancelGuide。
 
 支持的周期：weekly、monthly、quarterly、semiannual、yearly、custom_days、one_off。
 

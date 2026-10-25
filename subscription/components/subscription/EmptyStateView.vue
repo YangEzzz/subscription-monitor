@@ -1,5 +1,5 @@
 <template>
-  <view class="empty-state">
+  <view class="empty-state" :class="{ 'empty-state-embedded': embedded }">
     <view class="empty-icon"
       ><uni-icons :type="icon" size="24" color="var(--ink-3)"
     /></view>
@@ -24,6 +24,7 @@ export default {
   name: "EmptyStateView",
   emits: ["action"],
   props: {
+    embedded: { type: Boolean, default: false },
     icon: { type: String, default: "search" },
     title: { type: String, default: "暂无内容" },
     description: { type: String, default: "" },

@@ -28,6 +28,79 @@ export function pageHarness() {
 	return page
 }
 
+test('pull-to-refresh prevents concurrent reads and always stops its indicator', async () => {
+	const page = pageHarness()
+	let finish
+	let reads = 0
+	page.refreshData = () => { reads++; return new Promise(resolve => { finish = resolve }) }
+	const refresh = page.refreshFromGesture()
+	assert.equal(page.refreshing, true)
+	await page.refreshFromGesture()
+	assert.equal(reads, 1)
+	finish(false)
+	await refresh
+	assert.equal(page.refreshing, false)
+	page.refreshData = async () => { throw new Error('offline') }
+	await assert.rejects(page.refreshFromGesture(), /offline/)
+	assert.equal(page.refreshing, false)
+	page.mutating = true
+	await page.refreshFromGesture()
+	assert.equal(page.refreshing, false)
+})
+
+test('homepage has no tasks for notification settings, missing amounts or healthy subscriptions', () => {
+	const page = pageHarness()
+	assert.equal(page.notificationReady, false)
+	assert.deepEqual(page.actionableReminders, [])
+	page.subscriptions = [{ id: 'legacy', amount: null, status: 'active', nextBillingDate: '2099-01-01' }]
+	assert.deepEqual(page.actionableReminders, [])
+})
+
+test('homepage groups only live overdue and later tasks without double counting', () => {
+	const page = pageHarness()
+	page.subscriptions = [
+		{ id: 'overdue', status: 'active', nextBillingDate: '2000-01-01' },
+		{ id: 'pending-overdue', status: 'pending', nextBillingDate: '2000-01-01' },
+		{ id: 'pending', status: 'pending', nextBillingDate: '2099-01-01' },
+		{ id: 'pending-today', status: 'pending', nextBillingDate: page.todayKey },
+		...['cancelled', 'paused', 'archived'].map(status => ({ id: status, status, nextBillingDate: '2000-01-01' })),
+		{ id: 'deleted', status: 'pending', nextBillingDate: '2000-01-01', deletedAt: 1 }
+	]
+	assert.deepEqual(page.actionableReminders.map(item => item.action), ['overdue', 'pending'])
+	assert.match(page.actionableReminders[0].title, /^2 项/)
+	assert.match(page.actionableReminders[1].title, /^2 项/)
+	for (const action of ['overdue', 'pending']) {
+		page.searchKeyword = 'stale search'
+		page.activeCategory = '音乐'
+		page.handleReminder({ action })
+		assert.equal(page.activeView, 'all')
+		assert.equal(page.activeStatus, action)
+		assert.equal(page.searchKeyword, '')
+		assert.equal(page.activeCategory, '全部')
+	}
+})
+
+test('new and edited subscriptions require an amount while zero is valid', async () => {
+	let requests = 0
+	globalThis.uni = mockUni({ showToast() {}, request() { requests++ } })
+	const page = pageHarness()
+	page.dataReady = true
+	page.applyMembership({ status: 'free', quota: { limit: 5, remaining: 5, used: 0 } })
+	for (const editingId of [null, 'existing']) {
+		page.editingId = editingId
+		for (const amount of ['', '   ', null, undefined]) {
+			page.form = { ...page.createEmptyForm(), name: '测试订阅', amount }
+			await page.saveSubscription()
+			assert.equal(page.formError, '请输入订阅金额')
+		}
+	}
+	assert.equal(requests, 0)
+	for (const amount of [0, '0', '12.50']) {
+		page.form = { ...page.createEmptyForm(), name: '测试订阅', amount }
+		assert.equal(page.validateForm(), '')
+	}
+})
+
 test('request encodes query values and does not retry failed writes', async () => {
 	let calls = 0
 	globalThis.uni = mockUni({ request(options) {
@@ -92,6 +165,126 @@ test('listAll follows every page including deleted records', async () => {
 	} })
 	assert.equal((await subscriptionApi.listAll()).length, 3)
 	assert.deepEqual(pages, [1, 2, 3])
+})
+
+test('confirmed deletion passes mini-program modal limits and moves the record to trash once', async () => {
+	const writes = []
+	const messages = []
+	globalThis.uni = mockUni({
+		showModal(options) {
+			if (Array.from(options.confirmText || '').length > 4) {
+				options.fail({ errMsg: 'showModal:fail confirmText length should not larger than 4' })
+				return
+			}
+			assert.match(options.content, /回收站.*恢复/)
+			options.success({ confirm: true })
+		},
+		showToast: options => messages.push(options.title),
+		request(options) {
+			writes.push({ method: options.method, path: new URL(options.url).pathname })
+			options.success({ statusCode: 200, data: { id: 'delete-me', name: '测试订阅', deletedAt: '2026-10-25T00:00:00Z' } })
+		}
+	})
+	const page = pageHarness()
+	page.dataReady = true
+	page.subscriptions = [{ id: 'delete-me', name: '测试订阅' }]
+	page.selectedId = 'delete-me'
+	page.activeView = 'detail'
+	page.viewStack = ['home']
+	let refreshes = 0
+	page.refreshData = async () => { refreshes++; return true }
+	await page.handleSubscriptionAction('delete')
+	assert.deepEqual(writes, [{ method: 'DELETE', path: '/api/v1/subscriptions/delete-me' }])
+	assert.equal(page.liveSubscriptions.length, 0)
+	assert.equal(page.deletedSubscriptions.length, 1)
+	assert.equal(page.selectedId, null)
+	assert.equal(page.activeView, 'all')
+	assert.deepEqual(page.viewStack, [])
+	assert.equal(refreshes, 1)
+	assert.ok(messages.includes('已移入回收站'))
+})
+
+test('manage menu finishes closing before deletion opens a native confirmation modal', async () => {
+	let sheetVisible = false
+	let modalOpened = false
+	let deleted = false
+	globalThis.uni = mockUni({
+		showActionSheet(options) {
+			sheetVisible = true
+			const tapIndex = options.itemList.indexOf('删除订阅')
+			assert.ok(tapIndex >= 0)
+			options.success({ tapIndex })
+			assert.equal(modalOpened, false, 'a modal must not open inside the native menu callback')
+			setTimeout(() => { sheetVisible = false }, 100)
+		},
+		showModal(options) {
+			assert.equal(sheetVisible, false, 'the native menu must finish closing first')
+			modalOpened = true
+			options.success({ confirm: true })
+		},
+		showToast() {},
+		request(options) {
+			assert.equal(options.method, 'DELETE')
+			deleted = true
+			options.success({ statusCode: 200, data: { id: 'delete-me', deletedAt: '2026-10-25T00:00:00Z' } })
+		}
+	})
+	const page = pageHarness()
+	page.dataReady = true
+	page.subscriptions = [{ id: 'delete-me', name: '测试订阅', status: 'active' }]
+	page.selectedId = 'delete-me'
+	page.activeView = 'detail'
+	page.refreshData = async () => true
+	page.showMoreActions()
+	await new Promise(resolve => setTimeout(resolve, 400))
+	assert.equal(modalOpened, true)
+	assert.equal(deleted, true)
+	assert.equal(page.deletedSubscriptions.length, 1)
+	assert.equal(page.activeView, 'all')
+})
+
+test('cancelled or failed deletion confirmation never sends a request or changes the record', async () => {
+	for (const outcome of ['cancel', 'fail']) {
+		let requests = 0
+		globalThis.uni = mockUni({
+			showModal: options => outcome === 'cancel' ? options.success({ confirm: false, cancel: true }) : options.fail({ errMsg: 'showModal:fail' }),
+			showToast() {},
+			request() { requests++ }
+		})
+		const page = pageHarness()
+		page.dataReady = true
+		page.subscriptions = [{ id: 'keep-me', name: '保留订阅' }]
+		page.selectedId = 'keep-me'
+		page.activeView = 'detail'
+		await page.deleteSubscription()
+		assert.equal(requests, 0)
+		assert.equal(page.liveSubscriptions.length, 1)
+		assert.equal(page.deletedSubscriptions.length, 0)
+		assert.equal(page.selectedId, 'keep-me')
+		assert.equal(page.activeView, 'detail')
+	}
+})
+
+test('failed deletion keeps the detail and record available and reports the error', async () => {
+	const messages = []
+	globalThis.uni = mockUni({
+		showModal: options => options.success({ confirm: true }),
+		showToast: options => messages.push(options.title),
+		request: options => options.success({ statusCode: 500, data: { code: 'INTERNAL_SERVER_ERROR' } })
+	})
+	const page = pageHarness()
+	page.dataReady = true
+	page.subscriptions = [{ id: 'keep-me', name: '保留订阅' }]
+	page.selectedId = 'keep-me'
+	page.activeView = 'detail'
+	page.refreshData = async () => assert.fail('failed deletes must not refresh as successful writes')
+	await page.deleteSubscription()
+	assert.equal(page.liveSubscriptions.length, 1)
+	assert.equal(page.deletedSubscriptions.length, 0)
+	assert.equal(page.activeView, 'detail')
+	assert.equal(page.selectedId, 'keep-me')
+	assert.equal(page.mutating, false)
+	assert.ok(messages.includes('服务暂时不可用，请稍后重试'))
 })
 
 test('failed initial load exposes retry and never seeds local records', async () => {

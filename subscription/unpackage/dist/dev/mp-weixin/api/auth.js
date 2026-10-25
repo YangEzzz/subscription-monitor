@@ -66,4 +66,3 @@ function ensureSession({ force = false } = {}) {
 exports.clearSession = clearSession;
 exports.ensureSession = ensureSession;
 exports.getSession = getSession;
-//# sourceMappingURL=../../.sourcemap/mp-weixin/api/auth.js.map

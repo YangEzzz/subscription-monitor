@@ -31,10 +31,10 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       size: "21",
       color: "var(--ink-2)"
     }),
-    b: common_vendor.o(($event) => _ctx.$emit("close"), "5a"),
+    b: common_vendor.o(($event) => _ctx.$emit("close"), "8e"),
     c: common_vendor.f($props.sortOptions, (option, k0, i0) => {
       return common_vendor.e({
-        a: "c186b446-1-" + i0,
+        a: "0e7d40ba-1-" + i0,
         b: common_vendor.p({
           type: option.icon,
           size: "20",
@@ -44,7 +44,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
         d: common_vendor.t(option.desc),
         e: $props.sortMode === option.value
       }, $props.sortMode === option.value ? {
-        f: "c186b446-2-" + i0,
+        f: "0e7d40ba-2-" + i0,
         g: common_vendor.p({
           type: "checkmarkempty",
           size: "15",
@@ -58,12 +58,11 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       });
     }),
     d: common_vendor.o(() => {
-    }, "d9"),
-    e: common_vendor.o(($event) => _ctx.$emit("close"), "06"),
+    }, "8c"),
+    e: common_vendor.o(($event) => _ctx.$emit("close"), "e1"),
     f: common_vendor.o(() => {
-    }, "e6")
+    }, "b8")
   };
 }
 const Component = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render]]);
 wx.createComponent(Component);
-//# sourceMappingURL=../../../.sourcemap/mp-weixin/components/subscription/SubscriptionSortSheet.js.map

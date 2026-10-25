@@ -1,0 +1,1 @@
+<view class="page about-page redesign-page"><page-header wx:if="{{b}}" bindback="{{a}}" u-i="84c5ccaa-0" bind:__l="__l" u-p="{{b}}"/><view class="settings-card card list"><settings-row wx:if="{{d}}" bindactivate="{{c}}" u-i="84c5ccaa-1" bind:__l="__l" u-p="{{d}}"/></view><text class="version-text">续订清单 · 订阅续费管理</text></view>

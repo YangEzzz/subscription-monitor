@@ -1,4 +1,4 @@
-.brand-logo.data-v-a931edbf {
+.brand-logo.data-v-5fdb2501 {
   flex: 0 0 auto;
   width: 84.6154rpx;
   height: 84.6154rpx;
@@ -10,7 +10,7 @@
   background-image: var(--logo-overlay);
   box-shadow: var(--logo-shadow);
 }
-.brand-logo-text.data-v-a931edbf {
+.brand-logo-text.data-v-5fdb2501 {
   font-size: 32.6923rpx;
   font-weight: 800;
 }

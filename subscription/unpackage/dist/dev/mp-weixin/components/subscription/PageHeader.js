@@ -56,7 +56,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       color: "var(--ink)"
     }),
     c: $props.disabled,
-    d: common_vendor.o(($event) => _ctx.$emit("back"), "ca")
+    d: common_vendor.o(($event) => _ctx.$emit("back"), "84")
   } : {}, {
     e: common_vendor.t($props.title),
     f: common_vendor.n($props.secondary ? "navbar-title" : "page-head-title"),
@@ -74,4 +74,3 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
 }
 const Component = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render]]);
 wx.createComponent(Component);
-//# sourceMappingURL=../../../.sourcemap/mp-weixin/components/subscription/PageHeader.js.map

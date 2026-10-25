@@ -215,7 +215,6 @@ page {
   line-height: ui(16);
 }
 .link-pill-label,
-.link-pill-count,
 .link-pill-arrow {
   display: flex;
   align-items: center;
@@ -228,10 +227,8 @@ page {
 .link-pill-arrow {
   width: ui(12);
 }
-.link-pill-count {
-  // DIN's visible digits sit above the Chinese glyph center in this mixed label.
-  position: relative;
-  top: ui(2);
+.link-pill-label {
+  font-family: var(--font);
 }
 .amount {
   font-size: ui(17);
@@ -610,6 +607,13 @@ page {
   border-radius: var(--r-lg);
   background: var(--surface-glass);
   text-align: center;
+}
+.page .empty-state.empty-state-embedded {
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
 }
 .page .empty-icon {
   box-shadow: none;

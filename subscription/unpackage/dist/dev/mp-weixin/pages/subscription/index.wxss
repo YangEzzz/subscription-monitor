@@ -1,4 +1,4 @@
-.api-status.data-v-a355b6de {
+.api-status.data-v-384a1add {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -6,7 +6,7 @@
   color: #61746a;
   font-size: 12px;
 }
-.api-status button.data-v-a355b6de {
+.api-status button.data-v-384a1add {
   margin: 0;
   font-size: 12px;
 }

@@ -1,6 +1,6 @@
 <template>
   <view class="page home-page redesign-page">
-    <page-header title="续订清单" subtitle="近期扣费与待处理事项" online />
+    <page-header title="续订清单" subtitle="近期扣费与续费安排" online />
     <view class="card hero rd-home-hero">
       <view class="rd-hero-top"
         ><text class="rd-eyebrow">未来 30 天预计扣费</text
@@ -96,10 +96,7 @@
         @tap="$emit('switch-all')"
       >
         <view class="link-pill-face"
-          ><text class="link-pill-label">全部</text>
-          <text class="link-pill-count num">{{
-            activeSubscriptions.length
-          }}</text>
+          ><text class="link-pill-label">全部 {{ activeSubscriptions.length }}</text>
           <view class="link-pill-arrow"
             ><uni-icons type="right" size="12" color="var(--ink-3)" /></view
         ></view></button
@@ -127,10 +124,10 @@
       />
       <empty-state-view
         v-if="!next30Subscriptions.length"
+        embedded
         icon="calendar"
         title="未来 30 天暂无扣费"
-        action-label="新增订阅"
-        @action="$emit('open-form')"
+        description="点击底部“＋”添加订阅"
       />
       <button
         role="button"
@@ -143,52 +140,42 @@
         查看全部 <text class="num">{{ next30Subscriptions.length }}</text> 项
       </button>
     </view>
-    <view class="sec-head"
-      ><text class="sec-title">待处理事项</text
-      ><text class="pill orange round num"
-        >{{ actionableReminders.length }} 项</text
-      ></view
-    >
-    <view class="card list"
-      ><settings-row
-        v-for="reminder in actionableReminders"
-        :key="reminder.key"
-        :icon="reminder.icon"
-        :icon-class="
-          reminder.tone === 'danger'
-            ? 'red-bg'
-            : reminder.tone === 'warning'
-              ? 'orange-bg'
-              : reminder.tone === 'success'
-                ? 'green-bg'
-                : 'blue-bg'
-        "
-        :icon-color="
-          reminder.tone === 'danger'
-            ? 'var(--red)'
-            : reminder.tone === 'warning'
-              ? 'var(--orange)'
-              : reminder.tone === 'success'
-                ? 'var(--green)'
-                : 'var(--blue)'
-        "
-        :title="reminder.title"
-        :description="reminder.desc"
-        :action="reminder.action !== 'none'"
-        :disabled="reminder.action === 'notification' && notificationBusy"
-        @activate="$emit('handle-reminder', reminder)"
-    /></view>
-    <view class="rd-home-add"
-      ><button
-        role="button"
-        tabindex="0"
-        class="btn-soft pressable"
-        hover-class="is-pressed"
-        @tap="$emit('open-form')"
+    <view v-if="actionableReminders.length" class="home-tasks">
+      <view class="sec-head"
+        ><text class="sec-title">待处理事项</text
+        ><text class="pill orange round num"
+          >{{ actionableReminders.length }} 类</text
+        ></view
       >
-        新增订阅
-      </button></view
-    >
+      <view class="card list"
+        ><settings-row
+          v-for="reminder in actionableReminders"
+          :key="reminder.key"
+          :icon="reminder.icon"
+          :icon-class="
+            reminder.tone === 'danger'
+              ? 'red-bg'
+              : reminder.tone === 'warning'
+                ? 'orange-bg'
+                : reminder.tone === 'success'
+                  ? 'green-bg'
+                  : 'blue-bg'
+          "
+          :icon-color="
+            reminder.tone === 'danger'
+              ? 'var(--red)'
+              : reminder.tone === 'warning'
+                ? 'var(--orange)'
+                : reminder.tone === 'success'
+                  ? 'var(--green)'
+                  : 'var(--blue)'
+          "
+          :title="reminder.title"
+          :description="reminder.desc"
+          action
+          @activate="$emit('handle-reminder', reminder)"
+      /></view>
+    </view>
   </view>
 </template>
 
@@ -211,16 +198,11 @@ export default {
   emits: [
     "toggle-amount",
     "open-stats",
-    "enable-notification",
     "switch-all",
     "open-detail",
-    "open-form",
     "handle-reminder",
   ],
   props: {
-    notificationReady: { type: Boolean, default: false },
-    notificationDescription: { type: String, default: "" },
-    notificationBusy: { type: Boolean, default: false },
     settings: { type: Object, required: true },
     navigationBarHeight: { type: Number, default: 0 },
     next30TotalText: { type: String, default: "¥0.00" },

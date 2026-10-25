@@ -1,11 +1,20 @@
 "use strict";
 const common_vendor = require("../../common/vendor.js");
+const pages_subscription_nativeNavigation = require("./native-navigation.js");
 const api_subscriptions = require("../../api/subscriptions.js");
 const pages_subscription_subscriptionData = require("./subscription-data.js");
 const api_auth = require("../../api/auth.js");
 const api_notifications = require("../../api/notifications.js");
 const pages_subscription_membershipRemote = require("./membership-remote.js");
-const confirm = (options) => new Promise((resolve) => common_vendor.index.showModal({ ...options, success: (result) => resolve(result.confirm), fail: () => resolve(false) }));
+const confirm = (options) => new Promise((resolve) => common_vendor.index.showModal({
+  ...options,
+  success: (result) => resolve(result.confirm),
+  fail: (error) => {
+    console.error("Confirmation modal failed", error);
+    common_vendor.index.showToast({ title: "确认窗口打开失败，请重试", icon: "none" });
+    resolve(false);
+  }
+}));
 const toast = (title) => common_vendor.index.showToast({ title, icon: "none" });
 const remoteComputed = {
   notificationAuthorized() {
@@ -109,8 +118,8 @@ const remoteMethods = {
     this.formBaseline = "";
     this.formError = "";
     this.dataReady = false;
-    this.activeView = "home";
-    this.viewStack = [];
+    pages_subscription_nativeNavigation.nativeNavigation.clearDrafts();
+    this.switchTab("home");
     this.serviceTemplates = [];
     this.categories = [];
     this.cycles = [];
@@ -188,6 +197,16 @@ const remoteMethods = {
       return false;
     } finally {
       this.loading = false;
+    }
+  },
+  async refreshFromGesture() {
+    if (this.refreshing || this.loading || this.mutating)
+      return;
+    this.refreshing = true;
+    try {
+      await this.refreshData();
+    } finally {
+      this.refreshing = false;
     }
   },
   async refreshNotifications(initialRead) {
@@ -335,7 +354,7 @@ const remoteMethods = {
       (_a = task == null ? void 0 : task.abort) == null ? void 0 : _a.call(task);
     };
     this.navigateToView("detail");
-    const isActive = () => sequence === this.detailRequestId && this.activeView === "detail" && this.selectedId === id && this.currentUserId === userId;
+    const isActive = () => sequence === this.detailRequestId && pages_subscription_nativeNavigation.nativeNavigation.isViewActive(this, "detail") && this.selectedId === id && this.currentUserId === userId;
     const isCurrent = () => {
       var _a;
       return isActive() && (!userId || ((_a = api_auth.getSession()) == null ? void 0 : _a.user.id) === userId);
@@ -398,13 +417,20 @@ const remoteMethods = {
     });
     if (!saved)
       return;
-    if (id && this.viewStack[this.viewStack.length - 1] === "detail")
+    pages_subscription_nativeNavigation.nativeNavigation.clearDraft(this);
+    if (pages_subscription_nativeNavigation.nativeNavigation.isDetached(this))
+      return;
+    const returnToDetail = id && this.viewStack[this.viewStack.length - 1] === "detail";
+    if (returnToDetail)
       this.viewStack.pop();
     this.activeView = "detail";
     this.editingId = null;
     this.originalBillingDate = null;
     this.formError = "";
     this.scrollToTop();
+    if (returnToDetail && pages_subscription_nativeNavigation.nativeNavigation.back(this))
+      return;
+    pages_subscription_nativeNavigation.nativeNavigation.replace(this);
   },
   async confirmRenewal() {
     const item = this.selectedSubscription;
@@ -442,15 +468,13 @@ const remoteMethods = {
     if (action === "copy") {
       if (!this.canCreateSubscription)
         return this.showMembershipLimit();
-      this.openForm();
-      this.form = { ...this.form, ...item, name: `${item.name.slice(0, 27)} 副本`, amount: item.amount === null ? "" : String(item.amount), status: "active", reminders: [...item.reminders] };
+      this.openForm(null, null, { ...item, name: `${item.name.slice(0, 27)} 副本`, amount: item.amount === null ? "" : String(item.amount), status: "active", reminders: [...item.reminders] });
       return;
     }
     if (action === "resume" || action === "restore") {
       if (pages_subscription_subscriptionData.daysUntil(item.nextBillingDate) < 0) {
         if (await confirm({ title: "需要更新日期", content: "原扣费日已过，请选择新的扣费日并保存后恢复。", confirmText: "去修改" })) {
-          this.openForm(null, item);
-          this.form.status = "active";
+          this.openForm(null, item, { status: "active" });
         }
         return;
       }
@@ -471,7 +495,7 @@ const remoteMethods = {
     const item = this.selectedSubscription;
     if (!item)
       return;
-    if (!await confirm({ title: `删除“${item.name}”`, content: "订阅将移入回收站，可在“我的”中恢复。", confirmText: "移入回收站" }))
+    if (!await confirm({ title: `删除“${item.name}”`, content: "订阅将移入回收站，可在“我的”中恢复。", confirmText: "确认删除" }))
       return;
     await this.mutate(() => api_subscriptions.subscriptionApi.remove(item.id), "已移入回收站", (record) => {
       this.upsertSubscription(record);
@@ -583,4 +607,3 @@ ${labels[row.status] || row.status}${row.errorCode ? `（${row.errorCode}）` : 
 };
 exports.remoteComputed = remoteComputed;
 exports.remoteMethods = remoteMethods;
-//# sourceMappingURL=../../../.sourcemap/mp-weixin/pages/subscription/subscription-remote.js.map

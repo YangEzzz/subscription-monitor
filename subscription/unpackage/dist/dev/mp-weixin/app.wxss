@@ -8850,7 +8850,6 @@ page {
   line-height: 30.7692307696rpx;
 }
 .link-pill-label,
-.link-pill-count,
 .link-pill-arrow {
   display: flex;
   align-items: center;
@@ -8863,9 +8862,8 @@ page {
 .link-pill-arrow {
   width: 23.0769230772rpx;
 }
-.link-pill-count {
-  position: relative;
-  top: 3.8461538462rpx;
+.link-pill-label {
+  font-family: var(--font);
 }
 .amount {
   font-size: 32.6923076927rpx;
@@ -9229,6 +9227,13 @@ page {
   border-radius: var(--r-lg);
   background: var(--surface-glass);
   text-align: center;
+}
+.page .empty-state.empty-state-embedded {
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
 }
 .page .empty-icon {
   box-shadow: none;
@@ -11276,6 +11281,24 @@ to {
 .redesign-shell .sort-check.checked {
   background: var(--blue);
 }
+.app-shell.editor-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+.editor-shell .safe-top,
+.editor-shell .editor-header {
+  flex-shrink: 0;
+}
+.editor-shell .page-scroll {
+  flex: 1;
+  height: 0;
+  min-height: 0;
+}
+.editor-shell .page.redesign-ancillary {
+  background: transparent;
+}
 page {
   --flow-nav-fill: linear-gradient(
     180deg,
@@ -11384,7 +11407,8 @@ page {
   padding: 50.0000000006rpx 30.7692307696rpx calc(23.0769230772rpx + env(safe-area-inset-bottom));
   background: var(--flow-action-fill);
 }
-.page.flow-page .flow-actionbar button {
+.page.flow-page .flow-actionbar button,
+.form-actionbar button {
   width: 100%;
   height: 96.153846155rpx;
   min-height: 44px;
@@ -11392,6 +11416,7 @@ page {
   padding: 0 23.0769230772rpx;
   border-radius: var(--flow-r-button);
   font-size: 28.8461538465rpx;
+  font-family: var(--font);
   line-height: 1.2;
 }
 .page.flow-page .form-intro {

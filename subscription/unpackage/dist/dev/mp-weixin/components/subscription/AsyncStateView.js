@@ -35,7 +35,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     e: common_vendor.t($props.busy ? $props.busyLabel : $props.actionLabel),
     f: $props.busy,
     g: $props.busy ? "true" : "false",
-    h: common_vendor.o(($event) => _ctx.$emit("action"), "29")
+    h: common_vendor.o(($event) => _ctx.$emit("action"), "07")
   } : {}, {
     i: common_vendor.n({
       compact: $props.compact
@@ -44,6 +44,5 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     k: $props.tone === "error" ? "alert" : "status"
   });
 }
-const Component = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-551f99ae"]]);
+const Component = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-f4217e12"]]);
 wx.createComponent(Component);
-//# sourceMappingURL=../../../.sourcemap/mp-weixin/components/subscription/AsyncStateView.js.map

@@ -71,4 +71,3 @@ exports.daysUntil = daysUntil;
 exports.formatDate = formatDate;
 exports.parseDate = parseDate;
 exports.toDateKey = toDateKey;
-//# sourceMappingURL=../../../.sourcemap/mp-weixin/pages/subscription/subscription-data.js.map

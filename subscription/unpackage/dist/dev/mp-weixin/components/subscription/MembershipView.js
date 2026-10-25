@@ -116,7 +116,7 @@ if (!Math) {
 function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _A, _B, _C;
   return common_vendor.e({
-    a: common_vendor.o(($event) => _ctx.$emit("back"), "72"),
+    a: common_vendor.o(($event) => _ctx.$emit("back"), "26"),
     b: common_vendor.p({
       title: "会员中心",
       secondary: true,
@@ -164,13 +164,13 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     v: $props.isMember || $props.busy || $props.loading || !!$props.error || !((_b = $props.membership.product) == null ? void 0 : _b.available),
     w: $props.isMember || $props.busy || $props.loading || !!$props.error || !((_c = $props.membership.product) == null ? void 0 : _c.available),
     x: $props.busy ? "true" : "false",
-    y: common_vendor.o(($event) => _ctx.$emit("purchase"), "6a"),
+    y: common_vendor.o(($event) => _ctx.$emit("purchase"), "e8"),
     z: common_vendor.t($props.isMember ? "权益已绑定当前微信账号，无需重复购买。" : !((_d = $props.membership.product) == null ? void 0 : _d.available) ? "当前暂未开放购买，免费功能可正常使用。" : ((_e = $props.membership.product) == null ? void 0 : _e.notice) || "开通结果以订单与会员权益查询为准。"),
     A: !$props.isMember && ((_f = $props.membership.product) == null ? void 0 : _f.available) && ((_g = $props.membership.product) == null ? void 0 : _g.channel) === "virtual" && !((_h = $props.membership.product) == null ? void 0 : _h.iosEnabled)
   }, !$props.isMember && ((_i = $props.membership.product) == null ? void 0 : _i.available) && ((_j = $props.membership.product) == null ? void 0 : _j.channel) === "virtual" && !((_k = $props.membership.product) == null ? void 0 : _k.iosEnabled) ? {} : {}, {
     B: $props.error
   }, $props.error ? {
-    C: common_vendor.o(($event) => _ctx.$emit("refresh"), "76"),
+    C: common_vendor.o(($event) => _ctx.$emit("refresh"), "6d"),
     D: common_vendor.p({
       title: "订单或权益需要重新确认",
       description: $props.error,
@@ -202,13 +202,13 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     Q: common_vendor.t($props.busy ? "正在处理…" : "模拟支付成功"),
     R: $props.busy || $props.loading || !!$props.error || !((_n = $props.membership.product) == null ? void 0 : _n.available),
     S: $props.busy || $props.loading || !!$props.error || !((_o = $props.membership.product) == null ? void 0 : _o.available),
-    T: common_vendor.o(($event) => _ctx.$emit("simulate", "success"), "3c"),
+    T: common_vendor.o(($event) => _ctx.$emit("simulate", "success"), "a3"),
     U: $props.busy || $props.loading || !!$props.error || !((_p = $props.membership.product) == null ? void 0 : _p.available),
     V: $props.busy || $props.loading || !!$props.error || !((_q = $props.membership.product) == null ? void 0 : _q.available),
-    W: common_vendor.o(($event) => _ctx.$emit("simulate", "cancel"), "e5"),
+    W: common_vendor.o(($event) => _ctx.$emit("simulate", "cancel"), "5a"),
     X: $props.busy || $props.loading || !!$props.error || !((_r = $props.membership.product) == null ? void 0 : _r.available),
     Y: $props.busy || $props.loading || !!$props.error || !((_s = $props.membership.product) == null ? void 0 : _s.available),
-    Z: common_vendor.o(($event) => _ctx.$emit("simulate", "failure"), "5c")
+    Z: common_vendor.o(($event) => _ctx.$emit("simulate", "failure"), "2f")
   } : {}, {
     aa: $props.order.status === "pending" && $props.order.channel === "virtual"
   }, $props.order.status === "pending" && $props.order.channel === "virtual" ? {
@@ -216,7 +216,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     ac: $props.busy || $props.loading || !!$props.error || !((_t = $props.membership.product) == null ? void 0 : _t.available) || ((_u = $props.membership.product) == null ? void 0 : _u.channel) !== "virtual",
     ad: $props.busy || $props.loading || !!$props.error || !((_v = $props.membership.product) == null ? void 0 : _v.available) || ((_w = $props.membership.product) == null ? void 0 : _w.channel) !== "virtual",
     ae: $props.busy ? "true" : "false",
-    af: common_vendor.o(($event) => _ctx.$emit("pay"), "79")
+    af: common_vendor.o(($event) => _ctx.$emit("pay"), "a8")
   } : {}) : {}, {
     ag: $props.order && $props.order.status === "paid" && $props.order.channel === "simulation" && ((_x = $props.membership.product) == null ? void 0 : _x.channel) !== "virtual"
   }, $props.order && $props.order.status === "paid" && $props.order.channel === "simulation" && ((_y = $props.membership.product) == null ? void 0 : _y.channel) !== "virtual" ? common_vendor.e({
@@ -224,17 +224,17 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   }, !$data.refundConfirm ? {
     ai: $props.busy || $props.loading || !!$props.error || !((_z = $props.membership.product) == null ? void 0 : _z.available),
     aj: $props.busy || $props.loading || !!$props.error || !((_A = $props.membership.product) == null ? void 0 : _A.available),
-    ak: common_vendor.o(($event) => $data.refundConfirm = true, "44")
+    ak: common_vendor.o(($event) => $data.refundConfirm = true, "45")
   } : {
     al: $props.busy || $props.loading || !!$props.error || !((_B = $props.membership.product) == null ? void 0 : _B.available),
     am: $props.busy || $props.loading || !!$props.error || !((_C = $props.membership.product) == null ? void 0 : _C.available),
     an: common_vendor.o(($event) => {
       _ctx.$emit("refund");
       $data.refundConfirm = false;
-    }, "70"),
+    }, "93"),
     ao: $props.busy,
     ap: $props.busy,
-    aq: common_vendor.o(($event) => $data.refundConfirm = false, "ef")
+    aq: common_vendor.o(($event) => $data.refundConfirm = false, "ea")
   }) : {}, {
     ar: common_vendor.p({
       type: "wallet",
@@ -249,13 +249,13 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     at: $props.busy,
     av: $props.busy,
     aw: $data.showOrders,
-    ax: common_vendor.o(($event) => $data.showOrders = !$data.showOrders, "6b"),
+    ax: common_vendor.o(($event) => $data.showOrders = !$data.showOrders, "02"),
     ay: $data.showOrders
   }, $data.showOrders ? common_vendor.e({
     az: common_vendor.t($props.loading ? "读取中…" : "刷新订单与权益"),
     aA: $props.busy || $props.loading,
     aB: $props.busy || $props.loading,
-    aC: common_vendor.o(($event) => _ctx.$emit("refresh"), "77"),
+    aC: common_vendor.o(($event) => _ctx.$emit("refresh"), "6b"),
     aD: !$props.orders.length && !$props.loading
   }, !$props.orders.length && !$props.loading ? {} : {
     aE: common_vendor.f($props.orders, (item, k0, i0) => {
@@ -277,7 +277,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     aH: common_vendor.f($options.questions, (item, index, i0) => {
       return common_vendor.e({
         a: common_vendor.t(item.title),
-        b: "7124b7df-10-" + i0,
+        b: "25bc3544-10-" + i0,
         c: common_vendor.p({
           type: $data.openQuestion === index ? "minus" : "plus",
           size: "18",
@@ -294,6 +294,5 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     })
   });
 }
-const Component = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-7124b7df"]]);
+const Component = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-25bc3544"]]);
 wx.createComponent(Component);
-//# sourceMappingURL=../../../.sourcemap/mp-weixin/components/subscription/MembershipView.js.map

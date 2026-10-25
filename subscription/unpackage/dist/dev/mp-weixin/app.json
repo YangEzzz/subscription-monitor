@@ -1,6 +1,7 @@
 {
   "pages": [
-    "pages/subscription/index"
+    "pages/subscription/index",
+    "pages/subscription/editor"
   ],
   "window": {
     "pageOrientation": "portrait",
@@ -11,5 +12,6 @@
     "backgroundColorTop": "#ffffff",
     "backgroundColorBottom": "#f4f6fb"
   },
+  "lazyCodeLoading": "requiredComponents",
   "usingComponents": {}
 }

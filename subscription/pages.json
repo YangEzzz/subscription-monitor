@@ -8,6 +8,15 @@
 				"backgroundColor": "#f4f6fb",
 				"enablePullDownRefresh": false
 			}
+		},
+		{
+			"path": "pages/subscription/editor",
+			"style": {
+				"navigationStyle": "custom",
+				"navigationBarTitleText": "新增订阅",
+				"backgroundColor": "#f4f6fb",
+				"enablePullDownRefresh": false
+			}
 		}
 	],
 	"globalStyle": {

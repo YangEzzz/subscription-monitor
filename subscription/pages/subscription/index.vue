@@ -22,6 +22,9 @@
       scroll-y
       :show-scrollbar="true"
       :scroll-top="scrollTop"
+      :refresher-enabled="dataReady && showTabBar && !mutating"
+      :refresher-triggered="refreshing"
+      @refresherrefresh="refreshFromGesture"
       @scroll="uiScrollTop = $event.detail.scrollTop"
     >
       <view
@@ -80,14 +83,6 @@
         <subscription-home-view
           v-if="activeView === 'home'"
           :settings="settings"
-          :notification-ready="notificationReady"
-          :notification-description="notificationDescription"
-          :notification-busy="
-            notificationAuthorizing ||
-            notificationLoading ||
-            loading ||
-            mutating
-          "
           :navigation-bar-height="navigationBarHeight"
           :next30-total-text="next30TotalText"
           :monthly-average-text="monthlyAverageText"
@@ -100,10 +95,8 @@
           :decorate-item="decorateItem"
           @toggle-amount="toggleAmount"
           @open-stats="navigateToView('stats')"
-          @enable-notification="enableNotification"
           @switch-all="switchTab('all')"
           @open-detail="openDetail"
-          @open-form="openForm"
           @handle-reminder="handleReminder"
         />
 
@@ -195,10 +188,9 @@
           :free-quota-text="freeQuotaText"
           :membership-quota-percent="membershipQuotaPercent"
           :membership-entry-enabled="membershipEntryEnabled"
-          :reduced-motion="reducedMotion"
-          @motion-change="reducedMotion = $event"
           :currencies="currencies"
           :deleted-subscriptions="deletedSubscriptions"
+          :export-busy="exportBusy"
           :notification-ready="notificationReady"
           :notification-description="notificationDescription"
           :notification-busy="
@@ -214,8 +206,13 @@
           @default-currency-change="updateDefaultCurrency"
           @export="exportData"
           @trash="openTrash"
+          @open-about="navigateToView('about')"
+        />
+
+        <subscription-about-view
+          v-else-if="activeView === 'about'"
+          @back="goBackView('profile')"
           @privacy="showPrivacy"
-          @refresh="refreshData"
         />
 
         <!-- 会员中心 -->
@@ -308,7 +305,6 @@
           @set-trial="setTrial"
           @trial-date-change="form.trialEndDate = $event"
           @toggle-reminder="toggleReminder"
-          @save="saveSubscription"
         />
 
         <!-- 默认提醒设置 -->
@@ -324,6 +320,13 @@
         <view class="bottom-space"></view>
       </template>
     </scroll-view>
+
+    <subscription-save-bar
+      v-if="dataReady && activeView === 'form'"
+      :editing-id="editingId"
+      :busy="mutating"
+      @save="saveSubscription()"
+    />
 
     <subscription-sort-sheet
       v-if="sortSheetVisible"
@@ -351,9 +354,13 @@ import SubscriptionListView from "@/components/subscription/SubscriptionListView
 import SubscriptionCalendarView from "@/components/subscription/SubscriptionCalendarView.vue";
 import SubscriptionStatsView from "@/components/subscription/SubscriptionStatsView.vue";
 import SubscriptionProfileView from "@/components/subscription/SubscriptionProfileView.vue";
+import SubscriptionAboutView from "@/components/subscription/SubscriptionAboutView.vue";
+import { nativeNavigation } from "./native-navigation.js";
+import { reactive } from "vue";
 import MembershipView from "@/components/subscription/MembershipView.vue";
 import SubscriptionDetailView from "@/components/subscription/SubscriptionDetailView.vue";
 import SubscriptionDetailLoadState from "@/components/subscription/SubscriptionDetailLoadState.vue";
+import SubscriptionSaveBar from "@/components/subscription/SubscriptionSaveBar.vue";
 import SubscriptionFormView from "@/components/subscription/SubscriptionFormView.vue";
 import ReminderSettingsView from "@/components/subscription/ReminderSettingsView.vue";
 import SubscriptionSortSheet from "@/components/subscription/SubscriptionSortSheet.vue";
@@ -385,33 +392,87 @@ export default {
     SubscriptionCalendarView,
     SubscriptionStatsView,
     SubscriptionProfileView,
+    SubscriptionAboutView,
     MembershipView,
     SubscriptionDetailView,
     SubscriptionDetailLoadState,
     SubscriptionFormView,
+    SubscriptionSaveBar,
     ReminderSettingsView,
     SubscriptionSortSheet,
     SubscriptionTabBar,
     AsyncStateView,
   },
   data() {
-    return {
-      ...createSubscriptionPageState(),
-      reducedMotion: false,
-      uiScrollTop: 0,
-    };
+    return nativeNavigation.state(
+      () => ({
+        ...createSubscriptionPageState(),
+        reducedMotion: false,
+        refreshing: false,
+        uiScrollTop: 0,
+      }),
+      reactive,
+    );
   },
   watch: {
     activeView() {
       this.uiScrollTop = 0;
+      nativeNavigation.syncLeaveAlert(this);
+    },
+    form: {
+      deep: true,
+      handler() {
+        nativeNavigation.syncLeaveAlert(this);
+      },
+    },
+    formBaseline() {
+      nativeNavigation.syncLeaveAlert(this);
     },
   },
   computed: subscriptionComputed,
+  mounted() {
+    // #ifdef H5
+    if (typeof window.matchMedia === "function") {
+      this.motionPreferenceQuery = window.matchMedia(
+        "(prefers-reduced-motion: reduce)",
+      );
+      this.motionPreferenceListener = (event) => {
+        this.reducedMotion = event.matches;
+      };
+      this.reducedMotion = this.motionPreferenceQuery.matches;
+      this.motionPreferenceQuery.addEventListener(
+        "change",
+        this.motionPreferenceListener,
+      );
+    }
+    // #endif
+  },
+  beforeUnmount() {
+    // #ifdef H5
+    this.motionPreferenceQuery?.removeEventListener(
+      "change",
+      this.motionPreferenceListener,
+    );
+    // #endif
+  },
   onLoad(options) {
     // #ifdef MP-WEIXIN
     uni.showShareMenu({ menus: ["shareAppMessage", "shareTimeline"] });
     // #endif
+    if (nativeNavigation.enter(this, options)) return;
     subscriptionLifecycle.onLoad.call(this, options);
+  },
+  onShow() {
+    nativeNavigation.show(this);
+  },
+  onReady() {
+    nativeNavigation.ready(this);
+  },
+  onHide() {
+    nativeNavigation.hide(this);
+  },
+  onUnload() {
+    nativeNavigation.leave(this);
   },
   // #ifdef MP-WEIXIN
   onShareAppMessage() {

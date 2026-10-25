@@ -1,4 +1,22 @@
 // Add/edit/detail share one presentation layer, built on the existing UI tokens.
+.app-shell.editor-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+.editor-shell .safe-top,
+.editor-shell .editor-header {
+  flex-shrink: 0;
+}
+.editor-shell .page-scroll {
+  flex: 1;
+  height: 0;
+  min-height: 0;
+}
+.editor-shell .page.redesign-ancillary {
+  background: transparent;
+}
 page {
   --flow-nav-fill: linear-gradient(
     180deg,
@@ -107,7 +125,8 @@ page {
   padding: ui(26) ui(16) calc(#{ui(12)} + env(safe-area-inset-bottom));
   background: var(--flow-action-fill);
 }
-.page.flow-page .flow-actionbar button {
+.page.flow-page .flow-actionbar button,
+.form-actionbar button {
   width: 100%;
   height: ui(50);
   min-height: 44px;
@@ -115,6 +134,7 @@ page {
   padding: 0 ui(12);
   border-radius: var(--flow-r-button);
   font-size: ui(15);
+  font-family: var(--font);
   line-height: 1.2;
 }
 .page.flow-page .form-intro {
@@ -917,7 +937,8 @@ page {
   outline-offset: 2px;
   border-radius: var(--flow-r-control);
 }
-.page.flow-page .save-button[disabled] {
+.page.flow-page .save-button[disabled],
+.form-actionbar .save-button[disabled] {
   opacity: 0.5;
 }
 @media (prefers-reduced-motion: reduce) {

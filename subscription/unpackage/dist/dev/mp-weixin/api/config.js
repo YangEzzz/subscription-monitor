@@ -4,4 +4,3 @@ const API_CONFIG = {
   timeout: 6e4
 };
 exports.API_CONFIG = API_CONFIG;
-//# sourceMappingURL=../../.sourcemap/mp-weixin/api/config.js.map

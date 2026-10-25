@@ -1,0 +1,14 @@
+{
+  "navigationStyle": "custom",
+  "navigationBarTitleText": "新增订阅",
+  "backgroundColor": "#f4f6fb",
+  "enablePullDownRefresh": false,
+  "usingComponents": {
+    "page-header": "../../components/subscription/PageHeader",
+    "subscription-form-view": "../../components/subscription/SubscriptionFormView",
+    "subscription-detail-view": "../../components/subscription/SubscriptionDetailView",
+    "subscription-detail-load-state": "../../components/subscription/SubscriptionDetailLoadState",
+    "subscription-save-bar": "../../components/subscription/SubscriptionSaveBar",
+    "async-state-view": "../../components/subscription/AsyncStateView"
+  }
+}

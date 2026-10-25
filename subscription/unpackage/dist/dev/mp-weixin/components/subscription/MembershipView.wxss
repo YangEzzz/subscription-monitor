@@ -23,7 +23,7 @@
 /* 垂直间距 */
 /* 透明度 */
 /* 文章场景相关 */
-.club-pass.data-v-7124b7df {
+.club-pass.data-v-25bc3544 {
   position: relative;
   margin: 0 30.7692rpx;
   padding: 38.4615rpx 34.6154rpx 0;
@@ -33,34 +33,34 @@
   overflow: hidden;
   box-shadow: var(--shadow-hero);
 }
-.club-pass.data-v-7124b7df::before {
+.club-pass.data-v-25bc3544::before {
   content: "";
   position: absolute;
   inset: 0;
   background: radial-gradient(ellipse at top right, var(--white-highlight), transparent 65%);
   pointer-events: none;
 }
-.club-pass-free.data-v-7124b7df {
+.club-pass-free.data-v-25bc3544 {
   background: var(--member-free-fill);
   color: var(--ink-2);
 }
-.club-pass-top.data-v-7124b7df,
-.club-pass-body.data-v-7124b7df,
-.club-pass-bottom.data-v-7124b7df,
-.club-section-heading.data-v-7124b7df,
-.club-plan-heading.data-v-7124b7df,
-.membership-price-line.data-v-7124b7df {
+.club-pass-top.data-v-25bc3544,
+.club-pass-body.data-v-25bc3544,
+.club-pass-bottom.data-v-25bc3544,
+.club-section-heading.data-v-25bc3544,
+.club-plan-heading.data-v-25bc3544,
+.membership-price-line.data-v-25bc3544 {
   position: relative;
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 15.3846rpx;
 }
-.club-brand.data-v-7124b7df {
+.club-brand.data-v-25bc3544 {
   font-size: 22.1154rpx;
   font-weight: 600;
 }
-.club-status.data-v-7124b7df {
+.club-status.data-v-25bc3544 {
   padding: 7.6923rpx 15.3846rpx;
   border: 1px solid var(--white-highlight);
   border-radius: 1921.1538rpx;
@@ -68,40 +68,40 @@
   font-size: 20.1923rpx;
   white-space: nowrap;
 }
-.club-pass-body.data-v-7124b7df {
+.club-pass-body.data-v-25bc3544 {
   padding: 42.3077rpx 0 38.4615rpx;
   align-items: flex-start;
   min-height: 269.2308rpx;
   box-sizing: border-box;
 }
-.club-pass-copy.data-v-7124b7df {
+.club-pass-copy.data-v-25bc3544 {
   flex: 1;
   min-width: 0;
 }
-.club-eyebrow.data-v-7124b7df {
+.club-eyebrow.data-v-25bc3544 {
   display: block;
   font-size: 23.0769rpx;
   color: var(--member-gold);
   font-weight: 600;
 }
-.club-pass-free .club-eyebrow.data-v-7124b7df {
+.club-pass-free .club-eyebrow.data-v-25bc3544 {
   color: var(--ink-2);
 }
-.club-title.data-v-7124b7df {
+.club-title.data-v-25bc3544 {
   display: block;
   margin-top: 15.3846rpx;
   font-size: 57.6923rpx;
   font-weight: 700;
   line-height: 1.25;
 }
-.club-description.data-v-7124b7df {
+.club-description.data-v-25bc3544 {
   display: block;
   margin-top: 19.2308rpx;
   font-size: 23.0769rpx;
   line-height: 1.7;
   opacity: 0.85;
 }
-.club-emblem.data-v-7124b7df {
+.club-emblem.data-v-25bc3544 {
   position: relative;
   flex: 0 0 180.7692rpx;
   height: 207.6923rpx;
@@ -109,7 +109,7 @@
   align-items: center;
   justify-content: center;
 }
-.club-emblem-face.data-v-7124b7df {
+.club-emblem-face.data-v-25bc3544 {
   width: 142.3077rpx;
   height: 157.6923rpx;
   border: 1px solid var(--white-highlight);
@@ -121,42 +121,42 @@
   justify-content: center;
   box-shadow: var(--shadow-1);
 }
-.club-emblem-ring.data-v-7124b7df {
+.club-emblem-ring.data-v-25bc3544 {
   position: absolute;
   inset: 0;
   border: 1px solid var(--white-highlight);
   border-radius: 50%;
   opacity: 0.6;
 }
-.club-spark.data-v-7124b7df {
+.club-spark.data-v-25bc3544 {
   position: absolute;
   color: var(--member-gold);
   font-size: 34.6154rpx;
 }
-.club-spark-one.data-v-7124b7df {
+.club-spark-one.data-v-25bc3544 {
   top: 0;
   right: 0;
 }
-.club-spark-two.data-v-7124b7df {
+.club-spark-two.data-v-25bc3544 {
   bottom: 15.3846rpx;
   left: 0;
   font-size: 21.1538rpx;
 }
-.club-pass-bottom.data-v-7124b7df {
+.club-pass-bottom.data-v-25bc3544 {
   padding: 26.9231rpx 0;
   border-top: 1px solid var(--white-highlight);
   font-size: 22.1154rpx;
 }
-.club-section-heading.data-v-7124b7df {
+.club-section-heading.data-v-25bc3544 {
   margin: 42.3077rpx 38.4615rpx 23.0769rpx;
   flex-wrap: wrap;
 }
-.club-section-title.data-v-7124b7df {
+.club-section-title.data-v-25bc3544 {
   font-size: 32.6923rpx;
   font-weight: 700;
   color: var(--ink);
 }
-.club-section-caption.data-v-7124b7df {
+.club-section-caption.data-v-25bc3544 {
   font-size: 20.1923rpx;
   padding: 5.7692rpx 13.4615rpx;
   border: 1px solid var(--violet-line);
@@ -164,11 +164,11 @@
   color: var(--violet);
   background: var(--violet-soft);
 }
-.club-benefits.data-v-7124b7df,
-.club-plan.data-v-7124b7df,
-.membership-cashier.data-v-7124b7df,
-.club-order-history.data-v-7124b7df,
-.club-faq.data-v-7124b7df {
+.club-benefits.data-v-25bc3544,
+.club-plan.data-v-25bc3544,
+.membership-cashier.data-v-25bc3544,
+.club-order-history.data-v-25bc3544,
+.club-faq.data-v-25bc3544 {
   margin: 23.0769rpx 30.7692rpx;
   border: 1px solid var(--border);
   border-radius: 38.4615rpx;
@@ -176,15 +176,15 @@
   overflow: hidden;
   box-shadow: var(--shadow-1);
 }
-.club-benefit-main.data-v-7124b7df {
+.club-benefit-main.data-v-25bc3544 {
   display: flex;
   align-items: center;
   gap: 23.0769rpx;
   padding: 34.6154rpx 30.7692rpx;
   background: var(--violet-soft);
 }
-.club-benefit-icon.data-v-7124b7df,
-.club-service-icon.data-v-7124b7df {
+.club-benefit-icon.data-v-25bc3544,
+.club-service-icon.data-v-25bc3544 {
   display: flex;
   flex-shrink: 0;
   align-items: center;
@@ -195,46 +195,46 @@
   border-radius: 21.1538rpx;
   background: var(--violet-soft);
 }
-.club-benefit-copy.data-v-7124b7df {
+.club-benefit-copy.data-v-25bc3544 {
   flex: 1;
   min-width: 0;
 }
-.club-benefit-title.data-v-7124b7df {
+.club-benefit-title.data-v-25bc3544 {
   display: block;
   font-size: 28.8462rpx;
   font-weight: 600;
   color: var(--ink);
 }
-.club-benefit-description.data-v-7124b7df {
+.club-benefit-description.data-v-25bc3544 {
   display: block;
   font-size: 23.0769rpx;
   color: var(--ink-3);
   line-height: 1.5;
   margin-top: 9.6154rpx;
 }
-.club-infinity.data-v-7124b7df {
+.club-infinity.data-v-25bc3544 {
   font-family: var(--font-num);
   font-variant-numeric: tabular-nums;
   font-size: 57.6923rpx;
   color: var(--violet);
 }
-.club-benefit-pair.data-v-7124b7df {
+.club-benefit-pair.data-v-25bc3544 {
   display: flex;
   border-top: 1px solid var(--hair);
 }
-.club-benefit-small.data-v-7124b7df {
+.club-benefit-small.data-v-25bc3544 {
   flex: 1;
   min-width: 0;
   padding: 30.7692rpx;
 }
-.club-benefit-small + .club-benefit-small.data-v-7124b7df {
+.club-benefit-small + .club-benefit-small.data-v-25bc3544 {
   border-left: 1px solid var(--hair);
 }
-.club-benefit-small .club-benefit-title.data-v-7124b7df {
+.club-benefit-small .club-benefit-title.data-v-25bc3544 {
   font-size: 24.0385rpx;
   margin-top: 19.2308rpx;
 }
-.club-basic-note.data-v-7124b7df {
+.club-basic-note.data-v-25bc3544 {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -243,17 +243,17 @@
   color: var(--ink-3);
   font-size: 22.1154rpx;
 }
-.club-plan.data-v-7124b7df,
-.membership-cashier.data-v-7124b7df,
-.club-order-history.data-v-7124b7df,
-.club-faq.data-v-7124b7df {
+.club-plan.data-v-25bc3544,
+.membership-cashier.data-v-25bc3544,
+.club-order-history.data-v-25bc3544,
+.club-faq.data-v-25bc3544 {
   padding: 30.7692rpx;
   box-sizing: border-box;
 }
-.club-plan-heading.data-v-7124b7df {
+.club-plan-heading.data-v-25bc3544 {
   margin-bottom: 38.4615rpx;
 }
-.club-plan-tag.data-v-7124b7df {
+.club-plan-tag.data-v-25bc3544 {
   font-size: 20.1923rpx;
   padding: 5.7692rpx 13.4615rpx;
   border: 1px solid var(--gold-line);
@@ -261,27 +261,27 @@
   background: var(--gold-soft);
   color: var(--gold);
 }
-.club-plan-name.data-v-7124b7df {
+.club-plan-name.data-v-25bc3544 {
   display: block;
   font-size: 30.7692rpx;
   font-weight: 700;
 }
-.club-plan-description.data-v-7124b7df {
+.club-plan-description.data-v-25bc3544 {
   display: block;
   margin-top: 9.6154rpx;
   font-size: 23.0769rpx;
   color: var(--ink-3);
 }
-.membership-price.data-v-7124b7df {
+.membership-price.data-v-25bc3544 {
   font-family: var(--font-num);
   font-variant-numeric: tabular-nums;
   font-size: 69.2308rpx;
   font-weight: 700;
   color: var(--violet);
 }
-.membership-page .membership-primary.data-v-7124b7df,
-.membership-secondary.data-v-7124b7df,
-.membership-refresh.data-v-7124b7df {
+.membership-page .membership-primary.data-v-25bc3544,
+.membership-secondary.data-v-25bc3544,
+.membership-refresh.data-v-25bc3544 {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -299,56 +299,56 @@
   box-shadow: var(--shadow-primary);
   transition: transform var(--dur-1), opacity var(--dur-2);
 }
-.membership-page .membership-owned.data-v-7124b7df {
+.membership-page .membership-owned.data-v-25bc3544 {
   border-color: var(--violet-line);
   background: var(--violet-soft);
   color: var(--violet);
   box-shadow: none;
   opacity: 1;
 }
-.membership-owned.data-v-7124b7df::before {
+.membership-owned.data-v-25bc3544::before {
   content: "✓";
   margin-right: 11.5385rpx;
 }
-.membership-secondary.data-v-7124b7df,
-.membership-refresh.data-v-7124b7df {
+.membership-secondary.data-v-25bc3544,
+.membership-refresh.data-v-25bc3544 {
   border-color: var(--border);
   background: var(--white-glass);
   color: var(--ink-2);
   box-shadow: none;
 }
-.membership-refresh.data-v-7124b7df {
+.membership-refresh.data-v-25bc3544 {
   width: auto;
   font-size: 23.0769rpx;
   margin: 0;
 }
-.membership-primary.data-v-7124b7df::after,
-.membership-secondary.data-v-7124b7df::after,
-.membership-refresh.data-v-7124b7df::after,
-.club-service-row.data-v-7124b7df::after,
-.club-question.data-v-7124b7df::after,
-.membership-order.data-v-7124b7df::after {
+.membership-primary.data-v-25bc3544::after,
+.membership-secondary.data-v-25bc3544::after,
+.membership-refresh.data-v-25bc3544::after,
+.club-service-row.data-v-25bc3544::after,
+.club-question.data-v-25bc3544::after,
+.membership-order.data-v-25bc3544::after {
   border: 0;
 }
-.membership-notice.data-v-7124b7df,
-.club-platform-note.data-v-7124b7df,
-.club-test-note.data-v-7124b7df,
-.membership-footnote.data-v-7124b7df {
+.membership-notice.data-v-25bc3544,
+.club-platform-note.data-v-25bc3544,
+.club-test-note.data-v-25bc3544,
+.membership-footnote.data-v-25bc3544 {
   display: block;
   margin: 19.2308rpx 0 0;
   color: var(--ink-3);
   font-size: 22.1154rpx;
   line-height: 1.6;
 }
-.club-test-note.data-v-7124b7df {
+.club-test-note.data-v-25bc3544 {
   margin: 23.0769rpx 38.4615rpx;
   color: var(--orange);
 }
-.membership-footnote.data-v-7124b7df {
+.membership-footnote.data-v-25bc3544 {
   margin: 38.4615rpx;
   text-align: center;
 }
-.club-service-row.data-v-7124b7df {
+.club-service-row.data-v-25bc3544 {
   display: flex;
   align-items: center;
   gap: 23.0769rpx;
@@ -363,32 +363,32 @@
   text-align: left;
   line-height: 1.4;
 }
-.club-service-copy.data-v-7124b7df {
+.club-service-copy.data-v-25bc3544 {
   flex: 1;
   min-width: 0;
 }
-.club-service-copy .club-service-title.data-v-7124b7df,
-.club-service-copy .club-service-description.data-v-7124b7df {
+.club-service-copy .club-service-title.data-v-25bc3544,
+.club-service-copy .club-service-description.data-v-25bc3544 {
   display: block;
 }
-.club-service-title.data-v-7124b7df {
+.club-service-title.data-v-25bc3544 {
   font-size: 28.8462rpx;
   font-weight: 600;
   color: var(--ink);
 }
-.club-service-description.data-v-7124b7df {
+.club-service-description.data-v-25bc3544 {
   font-size: 23.0769rpx;
   color: var(--ink-3);
   margin-top: 5.7692rpx;
 }
-.membership-orders-heading.data-v-7124b7df,
-.membership-order-top.data-v-7124b7df {
+.membership-orders-heading.data-v-25bc3544,
+.membership-order-top.data-v-25bc3544 {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 15.3846rpx;
 }
-.membership-order.data-v-7124b7df {
+.membership-order.data-v-25bc3544 {
   width: 100%;
   box-sizing: border-box;
   margin: 23.0769rpx 0 0;
@@ -400,14 +400,14 @@
   line-height: 1.4;
   font-size: 25rpx;
 }
-.membership-order-id.data-v-7124b7df {
+.membership-order-id.data-v-25bc3544 {
   display: block;
   overflow-wrap: anywhere;
   color: var(--ink-3);
   font-size: 22.1154rpx;
   margin-top: 11.5385rpx;
 }
-.membership-order-time.data-v-7124b7df {
+.membership-order-time.data-v-25bc3544 {
   display: block;
   font-family: var(--font-num);
   font-variant-numeric: tabular-nums;
@@ -415,13 +415,13 @@
   color: var(--ink-3);
   margin-top: 11.5385rpx;
 }
-.membership-order-line.data-v-7124b7df {
+.membership-order-line.data-v-25bc3544 {
   display: block;
   font-size: 25rpx;
   color: var(--ink-2);
   line-height: 1.6;
 }
-.membership-feedback.data-v-7124b7df {
+.membership-feedback.data-v-25bc3544 {
   margin: 23.0769rpx 30.7692rpx;
   padding: 23.0769rpx;
   border: 1px solid var(--blue-line);
@@ -430,7 +430,7 @@
   font-size: 25rpx;
   color: var(--blue);
 }
-.membership-empty.data-v-7124b7df {
+.membership-empty.data-v-25bc3544 {
   display: flex;
   flex-direction: column;
   gap: 15.3846rpx;
@@ -438,15 +438,15 @@
   color: var(--ink-3);
   font-size: 25rpx;
 }
-.membership-cashier-actions.data-v-7124b7df {
+.membership-cashier-actions.data-v-25bc3544 {
   display: flex;
   flex-direction: column;
   gap: 7.6923rpx;
 }
-.club-faq-item + .club-faq-item.data-v-7124b7df {
+.club-faq-item + .club-faq-item.data-v-25bc3544 {
   border-top: 1px solid var(--hair);
 }
-.club-question.data-v-7124b7df {
+.club-question.data-v-25bc3544 {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -463,7 +463,7 @@
   color: var(--ink);
   line-height: 1.5;
 }
-.club-answer.data-v-7124b7df {
+.club-answer.data-v-25bc3544 {
   display: block;
   padding: 0 0 26.9231rpx;
   font-size: 23.0769rpx;

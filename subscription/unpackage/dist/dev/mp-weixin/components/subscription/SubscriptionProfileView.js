@@ -13,12 +13,10 @@ const _sfc_main = {
     "default-currency-change",
     "export",
     "trash",
-    "privacy",
-    "refresh",
-    "motion-change"
+    "open-about"
   ],
   props: {
-    reducedMotion: { type: Boolean, default: false },
+    exportBusy: { type: Boolean, default: false },
     membershipEntryEnabled: { type: Boolean, default: false },
     notificationReady: { type: Boolean, default: false },
     notificationDescription: { type: String, default: "" },
@@ -148,16 +146,17 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     }),
     D: $props.currencies,
     E: common_vendor.o((...args) => $options.changeDefaultCurrency && $options.changeDefaultCurrency(...args), "c4"),
-    F: common_vendor.o(($event) => _ctx.$emit("export"), "da"),
+    F: common_vendor.o(($event) => _ctx.$emit("export"), "2a"),
     G: common_vendor.p({
       icon: "download",
       ["icon-class"]: "green-bg",
       ["icon-color"]: "var(--blue)",
       title: "导出订阅数据",
-      description: "生成 CSV 或复制表格数据",
+      description: $props.exportBusy ? "正在导出…" : "导出 Excel 表格，可用 Excel / WPS 打开",
+      disabled: $props.exportBusy,
       action: true
     }),
-    H: common_vendor.o(($event) => _ctx.$emit("trash"), "39"),
+    H: common_vendor.o(($event) => _ctx.$emit("trash"), "89"),
     I: common_vendor.p({
       icon: "trash",
       ["icon-class"]: "orange-bg",
@@ -166,33 +165,15 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       description: $props.deletedSubscriptions.length ? `${$props.deletedSubscriptions.length} 条可恢复订阅` : "暂无已删除订阅",
       action: true
     }),
-    J: common_vendor.o(($event) => _ctx.$emit("privacy"), "8a"),
+    J: common_vendor.o(($event) => _ctx.$emit("open-about"), "18"),
     K: common_vendor.p({
-      icon: "locked",
+      icon: "info",
       ["icon-class"]: "blue-bg",
       ["icon-color"]: "var(--blue)",
-      title: "隐私与数据说明",
-      description: "了解账号登录与数据保存",
-      action: true
-    }),
-    L: common_vendor.o(($event) => _ctx.$emit("motion-change", $event), "eb"),
-    M: common_vendor.p({
-      icon: "loop",
-      title: "减少动态效果",
-      switchable: true,
-      checked: $props.reducedMotion
-    }),
-    N: common_vendor.o(($event) => _ctx.$emit("refresh"), "53"),
-    O: common_vendor.p({
-      icon: "refresh",
-      ["icon-class"]: "red-bg",
-      ["icon-color"]: "var(--red)",
-      title: "重新加载数据",
-      description: "从服务端刷新订阅与设置",
+      title: "关于续订清单",
       action: true
     })
   });
 }
 const Component = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render]]);
 wx.createComponent(Component);
-//# sourceMappingURL=../../../.sourcemap/mp-weixin/components/subscription/SubscriptionProfileView.js.map

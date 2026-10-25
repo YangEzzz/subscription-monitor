@@ -8,6 +8,7 @@ const _sfc_main = {
   components: { PageHeader, UiSkeleton, AsyncStateView },
   emits: ["back", "retry"],
   props: {
+    showHeader: { type: Boolean, default: true },
     error: { type: String, default: "" },
     scrollOffset: { type: Number, default: 0 }
   }
@@ -20,43 +21,45 @@ if (!Array) {
 }
 function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   return common_vendor.e({
-    a: common_vendor.o(($event) => _ctx.$emit("back"), "6c"),
-    b: common_vendor.p({
+    a: $props.showHeader
+  }, $props.showHeader ? {
+    b: common_vendor.o(($event) => _ctx.$emit("back"), "3e"),
+    c: common_vendor.p({
       title: "订阅详情",
       secondary: true,
       pinned: true,
       scrolled: $props.scrollOffset > 8
-    }),
-    c: $props.error
+    })
+  } : {}, {
+    d: $props.error
   }, $props.error ? {
-    d: common_vendor.o(($event) => _ctx.$emit("retry"), "4d"),
-    e: common_vendor.p({
+    e: common_vendor.o(($event) => _ctx.$emit("retry"), "fe"),
+    f: common_vendor.p({
       title: "订阅详情加载失败",
       description: $props.error,
       ["action-label"]: "重新加载"
     })
   } : {
-    f: common_vendor.p({
+    g: common_vendor.p({
       variant: "hero",
       label: "正在加载订阅详情"
     }),
-    g: common_vendor.f(4, (index, k0, i0) => {
+    h: common_vendor.f(4, (index, k0, i0) => {
       return {
         a: index
       };
     }),
-    h: common_vendor.p({
+    i: common_vendor.p({
       rows: 1,
       label: "正在加载提醒计划"
     }),
-    i: common_vendor.p({
+    j: common_vendor.p({
       rows: 1,
       label: "正在加载本期处理信息"
     })
   }, {
-    j: !$props.error
+    k: !$props.error
   });
 }
 const Component = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render]]);
 wx.createComponent(Component);
-//# sourceMappingURL=../../../.sourcemap/mp-weixin/components/subscription/SubscriptionDetailLoadState.js.map

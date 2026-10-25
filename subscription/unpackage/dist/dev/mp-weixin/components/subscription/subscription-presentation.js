@@ -49,4 +49,3 @@ function cycleProgress(subscription, today = pages_subscription_subscriptionData
 exports.cycleProgress = cycleProgress;
 exports.dueTone = dueTone;
 exports.logoPaint = logoPaint;
-//# sourceMappingURL=../../../.sourcemap/mp-weixin/components/subscription/subscription-presentation.js.map

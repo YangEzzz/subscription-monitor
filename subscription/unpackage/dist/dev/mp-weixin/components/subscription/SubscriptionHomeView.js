@@ -17,16 +17,11 @@ const _sfc_main = {
   emits: [
     "toggle-amount",
     "open-stats",
-    "enable-notification",
     "switch-all",
     "open-detail",
-    "open-form",
     "handle-reminder"
   ],
   props: {
-    notificationReady: { type: Boolean, default: false },
-    notificationDescription: { type: String, default: "" },
-    notificationBusy: { type: Boolean, default: false },
     settings: { type: Object, required: true },
     navigationBarHeight: { type: Number, default: 0 },
     next30TotalText: { type: String, default: "¥0.00" },
@@ -57,17 +52,17 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   return common_vendor.e({
     a: common_vendor.p({
       title: "续订清单",
-      subtitle: "近期扣费与待处理事项",
+      subtitle: "近期扣费与续费安排",
       online: true
     }),
-    b: common_vendor.o(($event) => _ctx.$emit("open-stats"), "8b"),
+    b: common_vendor.o(($event) => _ctx.$emit("open-stats"), "67"),
     c: common_vendor.p({
       type: $props.settings.amountVisible ? "eye" : "eye-slash",
       size: "18",
       color: "var(--ink-3)"
     }),
     d: $props.settings.amountVisible ? "隐藏金额" : "显示金额",
-    e: common_vendor.o(($event) => _ctx.$emit("toggle-amount"), "46"),
+    e: common_vendor.o(($event) => _ctx.$emit("toggle-amount"), "7f"),
     f: common_vendor.p({
       value: $props.settings.amountVisible ? $props.next30TotalText : "••••"
     }),
@@ -101,7 +96,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       size: "12",
       color: "var(--ink-3)"
     }),
-    p: common_vendor.o(($event) => _ctx.$emit("switch-all"), "28"),
+    p: common_vendor.o(($event) => _ctx.$emit("switch-all"), "63"),
     q: $props.upcoming7.length
   }, $props.upcoming7.length ? {
     r: common_vendor.t($props.upcoming7.length)
@@ -110,7 +105,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       return {
         a: item.id,
         b: common_vendor.o(($event) => _ctx.$emit("open-detail", item), item.id),
-        c: "e09cc250-6-" + i0,
+        c: "40b3b45b-6-" + i0,
         d: common_vendor.p({
           item: $props.decorateItem(item)
         })
@@ -124,7 +119,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       return {
         a: item.id,
         b: common_vendor.o(($event) => _ctx.$emit("open-detail", item), item.id),
-        c: "e09cc250-7-" + i0,
+        c: "40b3b45b-7-" + i0,
         d: common_vendor.p({
           item: $props.decorateItem(item)
         })
@@ -132,38 +127,37 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     }),
     x: !$props.next30Subscriptions.length
   }, !$props.next30Subscriptions.length ? {
-    y: common_vendor.o(($event) => _ctx.$emit("open-form"), "da"),
-    z: common_vendor.p({
+    y: common_vendor.p({
+      embedded: true,
       icon: "calendar",
       title: "未来 30 天暂无扣费",
-      ["action-label"]: "新增订阅"
+      description: "点击底部“＋”添加订阅"
     })
   } : {}, {
-    A: $props.next30Subscriptions.length > 4
+    z: $props.next30Subscriptions.length > 4
   }, $props.next30Subscriptions.length > 4 ? {
-    B: common_vendor.t($props.next30Subscriptions.length),
-    C: common_vendor.o(($event) => _ctx.$emit("switch-all"), "f2")
+    A: common_vendor.t($props.next30Subscriptions.length),
+    B: common_vendor.o(($event) => _ctx.$emit("switch-all"), "43")
   } : {}, {
+    C: $props.actionableReminders.length
+  }, $props.actionableReminders.length ? {
     D: common_vendor.t($props.actionableReminders.length),
     E: common_vendor.f($props.actionableReminders, (reminder, k0, i0) => {
       return {
         a: reminder.key,
         b: common_vendor.o(($event) => _ctx.$emit("handle-reminder", reminder), reminder.key),
-        c: "e09cc250-9-" + i0,
+        c: "40b3b45b-9-" + i0,
         d: common_vendor.p({
           icon: reminder.icon,
           ["icon-class"]: reminder.tone === "danger" ? "red-bg" : reminder.tone === "warning" ? "orange-bg" : reminder.tone === "success" ? "green-bg" : "blue-bg",
           ["icon-color"]: reminder.tone === "danger" ? "var(--red)" : reminder.tone === "warning" ? "var(--orange)" : reminder.tone === "success" ? "var(--green)" : "var(--blue)",
           title: reminder.title,
           description: reminder.desc,
-          action: reminder.action !== "none",
-          disabled: reminder.action === "notification" && $props.notificationBusy
+          action: true
         })
       };
-    }),
-    F: common_vendor.o(($event) => _ctx.$emit("open-form"), "f3")
-  });
+    })
+  } : {});
 }
 const Component = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render]]);
 wx.createComponent(Component);
-//# sourceMappingURL=../../../.sourcemap/mp-weixin/components/subscription/SubscriptionHomeView.js.map

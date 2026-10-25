@@ -1,10 +1,19 @@
+import { nativeNavigation } from './native-navigation.js'
 import { subscriptionApi as api, toSubscription, CATEGORIES, CYCLES, PAYMENTS } from '../../api/subscriptions.js'
 import { CATEGORY_COLORS, createDefaultSettings, daysUntil, formatDate } from './subscription-data.js'
 import { ensureSession, clearSession, getSession } from '../../api/auth.js'
 import { notificationApi, requestNotificationAuthorization, syncPendingAuthorization } from '../../api/notifications.js'
 import { membershipMethods } from './membership-remote.js'
 
-const confirm = options => new Promise(resolve => uni.showModal({ ...options, success: result => resolve(result.confirm), fail: () => resolve(false) }))
+const confirm = options => new Promise(resolve => uni.showModal({
+	...options,
+	success: result => resolve(result.confirm),
+	fail: error => {
+		console.error('Confirmation modal failed', error)
+		uni.showToast({ title: '确认窗口打开失败，请重试', icon: 'none' })
+		resolve(false)
+	}
+}))
 const toast = title => uni.showToast({ title, icon: 'none' })
 
 export const remoteComputed = {
@@ -86,8 +95,8 @@ export const remoteMethods = {
 		this.formBaseline = ''
 		this.formError = ''
 		this.dataReady = false
-		this.activeView = 'home'
-		this.viewStack = []
+		nativeNavigation.clearDrafts()
+		this.switchTab('home')
 		this.serviceTemplates = []
 		this.categories = []; this.cycles = []; this.payments = []; this.currencies = []
 		this.resetFilters()
@@ -156,6 +165,12 @@ export const remoteMethods = {
 			this.loadErrorRequestId = error.requestId || ''
 			return false
 		} finally { this.loading = false }
+	},
+	async refreshFromGesture() {
+		if (this.refreshing || this.loading || this.mutating) return
+		this.refreshing = true
+		try { await this.refreshData() }
+		finally { this.refreshing = false }
 	},
 	async refreshNotifications(initialRead) {
 		const sequence = ++this.notificationRequestId
@@ -264,7 +279,7 @@ export const remoteMethods = {
 		let cancelled = false, task
 		this.detailRequestCancel = () => { cancelled = true; task?.abort?.() }
 		this.navigateToView('detail')
-		const isActive = () => sequence === this.detailRequestId && this.activeView === 'detail' && this.selectedId === id && this.currentUserId === userId
+		const isActive = () => sequence === this.detailRequestId && nativeNavigation.isViewActive(this, 'detail') && this.selectedId === id && this.currentUserId === userId
 		const isCurrent = () => isActive() && (!userId || getSession()?.user.id === userId)
 		try {
 			const detail = await api.detail(id, {
@@ -300,12 +315,17 @@ export const remoteMethods = {
 			this.selectedId = item.id
 		})
 		if (!saved) return
-		if (id && this.viewStack[this.viewStack.length - 1] === 'detail') this.viewStack.pop()
+		nativeNavigation.clearDraft(this)
+		if (nativeNavigation.isDetached(this)) return
+		const returnToDetail = id && this.viewStack[this.viewStack.length - 1] === 'detail'
+		if (returnToDetail) this.viewStack.pop()
 		this.activeView = 'detail'
 		this.editingId = null
 		this.originalBillingDate = null
 		this.formError = ''
 		this.scrollToTop()
+		if (returnToDetail && nativeNavigation.back(this)) return
+		nativeNavigation.replace(this)
 	},
 	async confirmRenewal() {
 		const item = this.selectedSubscription
@@ -333,15 +353,13 @@ export const remoteMethods = {
 		if (action === 'delete') return this.deleteSubscription()
 		if (action === 'copy') {
 			if (!this.canCreateSubscription) return this.showMembershipLimit()
-			this.openForm()
-			this.form = { ...this.form, ...item, name: `${item.name.slice(0, 27)} 副本`, amount: item.amount === null ? '' : String(item.amount), status: 'active', reminders: [...item.reminders] }
+			this.openForm(null, null, { ...item, name: `${item.name.slice(0, 27)} 副本`, amount: item.amount === null ? '' : String(item.amount), status: 'active', reminders: [...item.reminders] })
 			return
 		}
 		if (action === 'resume' || action === 'restore') {
 			if (daysUntil(item.nextBillingDate) < 0) {
 				if (await confirm({ title: '需要更新日期', content: '原扣费日已过，请选择新的扣费日并保存后恢复。', confirmText: '去修改' })) {
-					this.openForm(null, item)
-					this.form.status = 'active'
+					this.openForm(null, item, { status: 'active' })
 				}
 				return
 			}
@@ -358,7 +376,7 @@ export const remoteMethods = {
 	async deleteSubscription() {
 		const item = this.selectedSubscription
 		if (!item) return
-		if (!await confirm({ title: `删除“${item.name}”`, content: '订阅将移入回收站，可在“我的”中恢复。', confirmText: '移入回收站' })) return
+		if (!await confirm({ title: `删除“${item.name}”`, content: '订阅将移入回收站，可在“我的”中恢复。', confirmText: '确认删除' })) return
 		await this.mutate(() => api.remove(item.id), '已移入回收站', record => { this.upsertSubscription(record); this.selectedId = null; this.switchTab('all') })
 	},
 	openTrash() {

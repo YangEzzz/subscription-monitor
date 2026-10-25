@@ -210,4 +210,3 @@ const membershipMethods = {
   }
 };
 exports.membershipMethods = membershipMethods;
-//# sourceMappingURL=../../../.sourcemap/mp-weixin/pages/subscription/membership-remote.js.map

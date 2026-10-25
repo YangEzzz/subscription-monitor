@@ -101,13 +101,13 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
         b: $data.adding ? 1 : "",
         c: common_vendor.o((...args) => $options.create && $options.create(...args), tab.key)
       } : {}, {
-        d: "1ea05cf2-0-" + i0,
+        d: "711ff735-0-" + i0,
         e: common_vendor.p({
           type: tab.icon,
           size: "24",
           color: "var(--ink-3)"
         }),
-        f: "1ea05cf2-1-" + i0,
+        f: "711ff735-1-" + i0,
         g: common_vendor.p({
           type: tab.activeIcon,
           size: "24",
@@ -125,4 +125,3 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
 }
 const Component = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render]]);
 wx.createComponent(Component);
-//# sourceMappingURL=../../../.sourcemap/mp-weixin/components/subscription/SubscriptionTabBar.js.map

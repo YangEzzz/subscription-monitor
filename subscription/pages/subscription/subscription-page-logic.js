@@ -1,3 +1,5 @@
+import { nativeNavigation } from './native-navigation.js'
+import { exportSubscriptionFile } from './subscription-export.js'
 import { remoteMethods, remoteComputed } from './subscription-remote.js'
 import { MEMBERSHIP_ENTRY_ENABLED } from '../../config/features.js'
 import {
@@ -32,7 +34,7 @@ export function createSubscriptionPageState() {
 					authStatus: 'pending', currentUserId: '', loading: false, mutating: false, dataReady: false, loadError: '', loadErrorCode: '', loadErrorRequestId: '',
 					serverStats: {}, serverReminders: [], statsRequestId: 0, statsLoading: false, statsError: '', statsErrorCode: '', statsErrorRequestId: '', trashPage: 0,
 					notifications: { configured: false, schedulerEnabled: false, credits: 0, recentDeliveries: [] }, notificationAuthorizing: false, notificationLoading: false, notificationRequestId: 0, notificationError: '',
-				subscriptionLimit: null,
+					subscriptionLimit: null, exportBusy: false,
 				searchKeyword: '', activeCategory: '全部', activeStatus: 'default', sortMode: 'date', sortSheetVisible: false,
 				sortOptions: [
 					{ value: 'date', label: '按扣费日期', desc: '即将扣费的订阅排在前面', icon: 'calendar' },
@@ -82,15 +84,11 @@ export const subscriptionComputed = {
 			monthlyAverageText() { return this.formatCurrencyTotals(this.liveSubscriptions, item => (item.monthlyEquivalent)) },
 			actionableReminders() {
 				const list = []
-				if (!this.notificationReady) list.push({ key: 'notification', tone: 'warning', icon: 'notification', title: '开启微信续费通知', desc: this.notificationDescription, action: 'notification' })
 				const overdue = this.liveSubscriptions.filter(item => !['cancelled','archived','paused'].includes(item.status) && daysUntil(item.nextBillingDate) < 0)
 				if (overdue.length) list.push({ key: 'overdue', tone: 'danger', icon: 'info-filled', title: `${overdue.length} 项订阅已逾期未确认`, desc: '请确认是否已完成续费', action: 'overdue' })
 				const pending = this.liveSubscriptions.filter(item => item.status === 'pending' && daysUntil(item.nextBillingDate) >= 0)
 				if (pending.length) list.push({ key: 'pending', tone: 'warning', icon: 'redo', title: `${pending.length} 项等待稍后处理`, desc: '已保留在站内待办中', action: 'pending' })
-				const incomplete = this.liveSubscriptions.filter(item => item.amount === null)
-				if (incomplete.length) list.push({ key: 'incomplete', tone: 'info', icon: 'compose', title: `${incomplete.length} 项金额待补充`, desc: '补充后统计结果会更准确', action: 'incomplete' })
-				if (!list.length) list.push({ key: 'done', tone: 'success', icon: 'checkbox-filled', title: '订阅状态良好', desc: '当前没有需要立即处理的事项', action: 'none' })
-				return list.slice(0, 3)
+				return list
 			},
 			categoryFilters() {
 				const counts = this.liveSubscriptions.reduce((map, item) => { map[item.category] = (map[item.category] || 0) + 1; return map }, {})
@@ -194,15 +192,15 @@ export const subscriptionMethods = {
 			statusText(item) { return STATUS_LABELS[this.getStatus(item)] || '逾期未确认' },
 			decorateItem(item) { return { ...item, shortDate: formatDate(item.nextBillingDate, false), days: daysUntil(item.nextBillingDate), amountText: item.amount === null ? '待补充' : this.formatMoney(item.amount, item.currency), displayStatus: this.statusText(item) } },
 			daysText(item) { const days = daysUntil(item.nextBillingDate); return days < 0 ? `已逾期 ${Math.abs(days)} 天` : days === 0 ? '今天扣费' : `${days} 天后` },
-			navigateToView(view) { if (view === this.activeView) return; if (this.activeView === 'detail') this.cancelDetailLoad(); this.viewStack.push(this.activeView); this.activeView = view; this.scrollToTop() },
+			navigateToView(view) { if (view === this.activeView) return; if (nativeNavigation.push(this, view)) return; if (this.activeView === 'detail') this.cancelDetailLoad(); this.viewStack.push(this.activeView); this.activeView = view; this.scrollToTop() },
 			goBackView(fallback = 'home') {
  if (this.activeView === 'form' && this.formBaseline && JSON.stringify(this.form) !== this.formBaseline) {
-   uni.showModal({ title: '放弃未保存的修改？', content: '返回后，本次修改不会保存。', confirmText: '放弃修改', cancelText: '继续编辑', success: result => { if (result.confirm) { this.formBaseline = ''; this.goBackView(fallback) } } }); return
+   uni.showModal({ title: '放弃未保存的修改？', content: '返回后，本次修改不会保存。', confirmText: '放弃修改', cancelText: '继续编辑', success: result => { if (result.confirm) { nativeNavigation.clearDraft(this); this.formBaseline = ''; this.goBackView(fallback) } } }); return
  }
- if (this.activeView === 'detail') this.cancelDetailLoad(); this.activeView = this.viewStack.length ? this.viewStack.pop() : fallback; this.formError = ''; this.scrollToTop() },
-			switchTab(tab) { if (this.activeView === 'detail') this.cancelDetailLoad(); this.sortSheetVisible = false; this.viewStack = []; this.activeView = tab; this.scrollToTop() },
+ if (this.activeView === 'detail') this.cancelDetailLoad(); if (nativeNavigation.back(this)) return; this.activeView = this.viewStack.length ? this.viewStack.pop() : fallback; this.formError = ''; this.scrollToTop() },
+			switchTab(tab) { if (nativeNavigation.tab(this, tab)) return; if (this.activeView === 'detail') this.cancelDetailLoad(); this.sortSheetVisible = false; this.viewStack = []; this.activeView = tab; this.scrollToTop() },
 			scrollToTop() { this.scrollTop = this.scrollTop === 0 ? 1 : 0 },
-			handleReminder(item) { if (item.action === 'notification') this.enableNotification(); else if (item.action === 'overdue') { this.activeStatus = 'overdue'; this.switchTab('all') } else if (item.action === 'pending') { this.activeStatus = 'pending'; this.switchTab('all') } else if (item.action === 'incomplete') { this.activeStatus = 'incomplete'; this.switchTab('all') } },
+			handleReminder(item) { if (!['overdue', 'pending'].includes(item.action)) return; this.resetFilters(); this.activeStatus = item.action; this.switchTab('all') },
 			chooseSort() { this.sortSheetVisible = true },
 			closeSortSheet() { this.sortSheetVisible = false },
 			selectSort(value) { this.sortMode = value; this.sortSheetVisible = false },
@@ -213,12 +211,12 @@ export const subscriptionMethods = {
 			createEmptyForm(date) { const nextBillingDate = date || addDays(this.todayKey, 7); return { name: '', plan: '', logo: '订', color: '#16834d', amount: '', currency: this.settings.defaultCurrency, cycle: '每月', cycleValue: '', nextBillingDate, anchorDay: parseDate(nextBillingDate).getDate(), payment: '微信支付', category: '其他', status: 'active', autoRenew: true, trial: false, trialEndDate: null, reminders: this.settings.defaultReminders.slice(), note: '', cancelGuide: '' } },
 			openMembership() { if (!MEMBERSHIP_ENTRY_ENABLED) return; this.navigateToView('membership'); void this.loadMembershipOrders() },
 			showMembershipLimit() { uni.showModal({ title: '免费额度已用完', content: `当前账号最多保存 ${this.subscriptionLimit} 条订阅。可删除不再需要的记录后继续新增。`, showCancel: MEMBERSHIP_ENTRY_ENABLED, confirmText: MEMBERSHIP_ENTRY_ENABLED ? '查看额度' : '知道了', success: res => { if (MEMBERSHIP_ENTRY_ENABLED && res.confirm) this.openMembership() } }) },
-			openForm(date, item) { if (!item && !this.canCreateSubscription) { this.showMembershipLimit(); return } this.formError = ''; this.editingId = item ? item.id : null; this.originalBillingDate = item ? item.nextBillingDate : null; this.form = item ? { ...item, amount: item.amount === null ? '' : String(item.amount), cycleValue: item.cycleValue || '', trial: Boolean(item.trialEndDate), trialEndDate: item.trialEndDate || null, reminders: (item.reminders || []).slice() } : this.createEmptyForm(date); this.formBaseline = JSON.stringify(this.form); this.navigateToView('form') },
+			openForm(date, item, initialValues) { if (!item && !this.canCreateSubscription) { this.showMembershipLimit(); return } this.formError = ''; this.editingId = item ? item.id : null; this.originalBillingDate = item ? item.nextBillingDate : null; this.form = item ? { ...item, amount: item.amount === null ? '' : String(item.amount), cycleValue: item.cycleValue || '', trial: Boolean(item.trialEndDate), trialEndDate: item.trialEndDate || null, reminders: (item.reminders || []).slice() } : this.createEmptyForm(date); if (initialValues) Object.assign(this.form, initialValues); this.formBaseline = JSON.stringify(this.form); if (!initialValues) nativeNavigation.restoreDraft(this); this.navigateToView('form') },
 			applyTemplate(template) { Object.assign(this.form, { ...template, amount: template.amount == null ? '' : String(template.amount) }); uni.showToast({ title: `已选择${template.short}`, icon: 'none' }) },
 			toggleReminder(value) { const index = this.form.reminders.indexOf(value); if (index >= 0) this.form.reminders.splice(index, 1); else this.form.reminders.push(value); this.form.reminders.sort((a, b) => b - a) },
 			changeCycle(value) { this.form.cycle = value; if (value !== '自定义天数') this.form.cycleValue = ''; if (value === '一次性') { this.form.autoRenew = false; this.form.trial = false; this.form.trialEndDate = null } },
 			setTrial(value) { this.form.trial = Boolean(value); if (!this.form.trial) this.form.trialEndDate = null; else if (!this.form.trialEndDate) this.form.trialEndDate = this.form.nextBillingDate },
-			validateForm() { if (!this.form.name) return '请输入服务名称'; if (this.form.name.length > 30) return '服务名称不能超过 30 个字符'; if (this.form.amount !== '' && (Number.isNaN(Number(this.form.amount)) || Number(this.form.amount) < 0)) return '金额必须是大于或等于 0 的数字'; if (this.form.amount !== '' && !/^\d+(\.\d{0,2})?$/.test(String(this.form.amount))) return '金额最多保留两位小数'; if (this.form.cycle === '自定义天数' && (!/^\d+$/.test(String(this.form.cycleValue)) || Number(this.form.cycleValue) < 1 || Number(this.form.cycleValue) > 365)) return '自定义周期请输入1–365天'; if (!this.form.nextBillingDate || daysUntil(this.form.nextBillingDate) < 0) return `下次${this.form.autoRenew ? '扣费' : '到期'}日不能早于今天`; if (this.form.trial && (!this.form.trialEndDate || daysUntil(this.form.trialEndDate) < 0)) return '试用截止日不能早于今天'; if (this.form.trial && this.form.trialEndDate > this.form.nextBillingDate) return '试用截止日不能晚于下次扣费日'; if (!this.form.reminders.length) return '请至少选择一个提醒节点'; return '' },
+			validateForm() { if (!this.form.name) return '请输入服务名称'; if (this.form.name.length > 30) return '服务名称不能超过 30 个字符'; if (this.form.amount == null || String(this.form.amount).trim() === '') return '请输入订阅金额'; if (Number.isNaN(Number(this.form.amount)) || Number(this.form.amount) < 0) return '金额必须是大于或等于 0 的数字'; if (this.form.amount !== '' && !/^\d+(\.\d{0,2})?$/.test(String(this.form.amount))) return '金额最多保留两位小数'; if (this.form.cycle === '自定义天数' && (!/^\d+$/.test(String(this.form.cycleValue)) || Number(this.form.cycleValue) < 1 || Number(this.form.cycleValue) > 365)) return '自定义周期请输入1–365天'; if (!this.form.nextBillingDate || daysUntil(this.form.nextBillingDate) < 0) return `下次${this.form.autoRenew ? '扣费' : '到期'}日不能早于今天`; if (this.form.trial && (!this.form.trialEndDate || daysUntil(this.form.trialEndDate) < 0)) return '试用截止日不能早于今天'; if (this.form.trial && this.form.trialEndDate > this.form.nextBillingDate) return '试用截止日不能晚于下次扣费日'; if (!this.form.reminders.length) return '请至少选择一个提醒节点'; return '' },
 			processTitle(item) {
 				if (item.status === 'pending') return '等待你处理'
 				const days = daysUntil(item.nextBillingDate), subject = item.cycle === '一次性' ? '付款' : (item.autoRenew ? '扣费' : '到期')
@@ -233,19 +231,30 @@ export const subscriptionMethods = {
 				actions.push({ label: '复制订阅', key: 'copy' })
 				if (item.status !== 'archived') actions.push({ label: '归档订阅', key: 'archive' })
 				actions.push({ label: '删除订阅', key: 'delete' })
-				uni.showActionSheet({ itemList: actions.map(action => action.label), success: res => this.handleSubscriptionAction(actions[res.tapIndex].key) })
+				uni.showActionSheet({
+					itemList: actions.map(action => action.label),
+					success: res => {
+						const action = actions[res.tapIndex]
+						if (!action) return
+						// 等原生操作菜单收起后再弹确认框，避免两个原生弹层重叠。
+						setTimeout(() => {
+							if (this.selectedId === item.id && this.activeView === 'detail') this.handleSubscriptionAction(action.key)
+						}, 300)
+					}
+				})
 			},
 			openReminderSettings() { this.navigateToView('reminder-settings') },
 			exportData() {
+				if (this.exportBusy) return
 				if (!this.liveSubscriptions.length) return uni.showToast({ title: '暂无可导出的订阅', icon: 'none' })
-				uni.showModal({ title: '导出订阅数据', content: `将导出 ${this.liveSubscriptions.length} 条订阅记录，金额和备注等订阅数据会包含在文件中。`, confirmText: '确认导出', success: res => { if (res.confirm) this.performExport() } })
+				this.exportBusy = true
+				uni.showModal({ title: '导出 Excel 表格', content: `将导出 ${this.liveSubscriptions.length} 条订阅，包含金额和备注，不含回收站记录。可用 Excel 或 WPS 打开。`, confirmText: '导出表格', success: res => { if (res.confirm) this.performExport(); else this.exportBusy = false }, fail: () => { this.exportBusy = false } })
 			},
-			performExport() { const header = '服务名称,套餐,分类,金额,币种,周期,下次扣费日,状态,付款渠道,备注'; const rows = this.liveSubscriptions.map(item => [item.name, item.plan || '', item.category, item.amount === null ? '' : item.amount, item.currency, this.cycleText(item), item.nextBillingDate, this.statusText(item), item.payment, item.note || ''].map(value => `"${String(value).replace(/"/g, '""')}"`).join(',')); const csv = [header].concat(rows).join('\n');
-				// #ifdef H5
-				const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' }); const link = document.createElement('a'); const url = URL.createObjectURL(blob); link.href = url; link.download = `续订清单-${this.todayKey}.csv`; link.style.display = 'none'; document.body.appendChild(link); link.click(); link.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000); uni.showToast({ title: 'CSV 已导出', icon: 'success' })
-				// #endif
-				// #ifndef H5
-				uni.setClipboardData({ data: csv, success: () => uni.showToast({ title: '表格数据已复制', icon: 'success' }) })
-				// #endif
+			async performExport() {
+				try {
+					await exportSubscriptionFile(this.liveSubscriptions, { date: this.todayKey, cycleText: item => this.cycleText(item), statusText: item => this.statusText(item) })
+				} catch (error) {
+					uni.showModal({ title: '导出失败', content: error?.message || '无法生成或保存表格，请检查设备存储空间后重试。', showCancel: false })
+				} finally { this.exportBusy = false }
 			},
 }

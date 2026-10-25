@@ -139,7 +139,12 @@
             icon-class="green-bg"
             icon-color="var(--blue)"
             title="导出订阅数据"
-            description="生成 CSV 或复制表格数据"
+            :description="
+              exportBusy
+                ? '正在导出…'
+                : '导出 Excel 表格，可用 Excel / WPS 打开'
+            "
+            :disabled="exportBusy"
             action
             @activate="$emit('export')"
           />
@@ -157,29 +162,12 @@
             @activate="$emit('trash')"
           />
           <settings-row
-            icon="locked"
+            icon="info"
             icon-class="blue-bg"
             icon-color="var(--blue)"
-            title="隐私与数据说明"
-            description="了解账号登录与数据保存"
+            title="关于续订清单"
             action
-            @activate="$emit('privacy')"
-          />
-          <settings-row
-            icon="loop"
-            title="减少动态效果"
-            switchable
-            :checked="reducedMotion"
-            @checked-change="$emit('motion-change', $event)"
-          />
-          <settings-row
-            icon="refresh"
-            icon-class="red-bg"
-            icon-color="var(--red)"
-            title="重新加载数据"
-            description="从服务端刷新订阅与设置"
-            action
-            @activate="$emit('refresh')"
+            @activate="$emit('open-about')"
           />
         </view>
       </view>
@@ -203,12 +191,10 @@ export default {
     "default-currency-change",
     "export",
     "trash",
-    "privacy",
-    "refresh",
-    "motion-change",
+    "open-about",
   ],
   props: {
-    reducedMotion: { type: Boolean, default: false },
+    exportBusy: { type: Boolean, default: false },
     membershipEntryEnabled: { type: Boolean, default: false },
     notificationReady: { type: Boolean, default: false },
     notificationDescription: { type: String, default: "" },

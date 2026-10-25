@@ -1,6 +1,6 @@
 <template>
   <view class="page detail-page redesign-page redesign-ancillary flow-page">
-    <view class="flow-header"
+    <view v-if="showHeader" class="flow-header"
       ><page-header
         title="订阅详情"
         secondary
@@ -382,6 +382,7 @@ export default {
     "edit",
   ],
   props: {
+    showHeader: { type: Boolean, default: true },
     scrollOffset: { type: Number, default: 0 },
     subscription: { type: Object, required: true },
     notificationEnabled: { type: Boolean, default: false },

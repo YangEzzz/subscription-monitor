@@ -73,7 +73,7 @@ global.fetch = (url, options) =>
         body: JSON.stringify({
           name,
           logo: name.slice(0, 2),
-          amount: i === 2 ? null : [28, 18, 15, 68, 0, 298][i],
+          amount: [28, 18, 15, 68, 0, 298][i],
           category: [
             "video",
             "cloud",
@@ -167,6 +167,40 @@ global.fetch = (url, options) =>
     page.on("pageerror", (e) => errors.push(e.message));
     await page.goto(base);
     await expect(page.locator(".home-page")).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "新增订阅", exact: true }),
+    ).toHaveCount(1);
+    await expect(page.locator(".home-tasks")).toHaveCount(0);
+    await expect(
+      page.getByText("开启微信续费通知", { exact: true }),
+    ).toHaveCount(0);
+    const subscriptions = await realFetch(api + "/subscriptions", {
+      headers: { Authorization: "Bearer " + session.accessToken },
+    }).then((response) => response.json());
+    const taskId = subscriptions.data[0].id;
+    const setTaskStatus = async (status) => {
+      const response = await realFetch(api + "/subscriptions/" + taskId, {
+        method: "PATCH",
+        headers: {
+          Authorization: "Bearer " + session.accessToken,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ status }),
+      });
+      assert.equal(response.status, 200);
+    };
+    await setTaskStatus("pending");
+    await page.reload();
+    await expect(page.locator(".home-tasks .setting-row")).toHaveCount(1);
+    await expect(page.locator(".home-tasks .setting-title")).toHaveText(
+      "1 项等待稍后处理",
+    );
+    await page.locator(".home-tasks .setting-row").click();
+    await expect(page.locator(".list-page")).toBeVisible();
+    await expect(page.locator(".rd-subscriptions .srow")).toHaveCount(1);
+    await setTaskStatus("active");
+    await page.reload();
+    await expect(page.locator(".home-tasks")).toHaveCount(0);
     await expect(page.locator(".renewal-row")).toHaveCount(4); // 3 within week + up to 3 later
     await page.screenshot({
       path: resolve(__dirname, "../.preview/redesign-home-mobile.png"),
@@ -214,7 +248,7 @@ global.fetch = (url, options) =>
     await expect(page.locator(".rd-subscriptions .srow")).toHaveCount(4);
     await noOverflow();
     await shot("list-320");
-    await expect(page.locator(".amount.todo")).toHaveText("金额待补充");
+    await expect(page.locator(".amount.todo")).toHaveCount(0);
     await page.setViewportSize({ width: 390, height: 844 });
     await noOverflow();
     await shot("list-mobile");
@@ -274,6 +308,40 @@ global.fetch = (url, options) =>
     await page.locator(".edit-button").click();
     await expect(page.locator(".form-page")).toBeVisible();
     await shot("form-320");
+    await expect(page.locator(".page-scroll .form-actionbar")).toHaveCount(0);
+    const formBar = page.locator(".form-actionbar");
+    const barBeforeScroll = await formBar.boundingBox();
+    assert.ok(
+      Math.abs(
+        barBeforeScroll.y + barBeforeScroll.height - page.viewportSize().height,
+      ) < 2,
+    );
+    const scrollFormTo = async (value) =>
+      page.locator(".page-scroll").evaluate((root, value) => {
+        const scrollable = [...root.querySelectorAll("*")].find(
+          (node) =>
+            node.scrollHeight > node.clientHeight &&
+            ["auto", "scroll"].includes(getComputedStyle(node).overflowY),
+        );
+        if (!scrollable) throw new Error("form scroll container was not found");
+        scrollable.scrollTop =
+          value === "bottom" ? scrollable.scrollHeight : value;
+        return scrollable.scrollTop;
+      }, value);
+    assert.ok((await scrollFormTo(500)) > 200);
+    const barAfterScroll = await formBar.boundingBox();
+    assert.ok(Math.abs(barBeforeScroll.y - barAfterScroll.y) < 2);
+    await shot("form-save-scrolled-320");
+    await scrollFormTo("bottom");
+    const finalField = await page
+      .locator(".supplement-form-section .textarea-row")
+      .last()
+      .boundingBox();
+    assert.ok(
+      finalField.y + finalField.height <= barAfterScroll.y + 2,
+      "the save bar must not cover the final form field",
+    );
+    await scrollFormTo(0);
     await noOverflow();
     const name = page.locator(".form-input input").first();
     await expect(name).toHaveValue("家庭影音订阅");
@@ -329,6 +397,38 @@ global.fetch = (url, options) =>
       .filter({ visible: true })
       .click();
     await tab("我的");
+    await expect(page.locator(".profile-head")).toBeVisible();
+    await page.getByText("导出订阅数据", { exact: true }).click();
+    await expect(page.locator(".uni-modal__bd")).toContainText(
+      "不含回收站记录",
+    );
+    const exportedFile = page.waitForEvent("download");
+    await page
+      .getByText("导出表格", { exact: true })
+      .filter({ visible: true })
+      .click();
+    const downloaded = await exportedFile;
+    assert.match(
+      downloaded.suggestedFilename(),
+      /^续订清单-\d{4}-\d{2}-\d{2}\.xlsx$/,
+    );
+    const workbookBytes = await readFile(await downloaded.path());
+    assert.equal(workbookBytes.subarray(0, 2).toString(), "PK");
+    await downloaded.saveAs(
+      resolve(__dirname, "../.preview/export-ui-verified.xlsx"),
+    );
+    for (const label of ["减少动态效果", "重新加载数据", "隐私与数据说明"]) {
+      await expect(page.getByText(label, { exact: true })).toHaveCount(0);
+    }
+    await page.getByText("关于续订清单", { exact: true }).click();
+    await expect(page.locator(".about-page")).toBeVisible();
+    await page.getByText("隐私与数据说明", { exact: true }).click();
+    await expect(page.locator(".uni-modal__bd")).toContainText("微信登录");
+    await page
+      .getByText("确定", { exact: true })
+      .filter({ visible: true })
+      .click();
+    await page.locator(".navbar-back").click();
     await expect(page.locator(".profile-head")).toBeVisible();
     await noOverflow();
     await shot("profile-320");
@@ -393,13 +493,16 @@ global.fetch = (url, options) =>
     await page.locator(".save-button").click();
     await expect(page.locator(".form-error")).toBeVisible();
     await page.locator(".form-input input").first().fill("界面验收订阅");
+    await page.locator(".save-button").click();
+    await expect(page.locator(".form-error")).toHaveText("请输入订阅金额");
+    await expect(page.locator(".form-page")).toBeVisible();
     await page.locator(".money-input input").first().fill("12.50");
     await page.locator(".save-button").click();
     await expect(page.locator(".detail-name")).toHaveText("界面验收订阅");
     await page.locator(".manage-button").click();
     await page.getByText("删除订阅", { exact: true }).click();
     await page
-      .getByText("移入回收站", { exact: true })
+      .getByText("确认删除", { exact: true })
       .filter({ visible: true })
       .click();
     await expect(page.locator(".list-page")).toBeVisible();
@@ -416,12 +519,18 @@ global.fetch = (url, options) =>
     offline = true;
     await context.setOffline(true);
     await tab("我的");
-    await page.getByText("重新加载数据", { exact: true }).click();
+    await page.locator(".page-scroll").evaluate((element) => {
+      element.__vueParentComponent.emit("refresherrefresh");
+    });
     await expect(page.locator(".async-state")).toBeVisible();
     offline = false;
     await context.setOffline(false);
     await page.locator(".state-action").first().click();
     await expect(page.locator(".async-state")).toHaveCount(0);
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await expect(page.locator(".app-shell")).toHaveClass(/reduce-motion/);
+    await page.emulateMedia({ reducedMotion: "no-preference" });
+    await expect(page.locator(".app-shell")).not.toHaveClass(/reduce-motion/);
     await page.emulateMedia({ reducedMotion: "reduce" });
     await page.setViewportSize({ width: 1280, height: 900 });
     await tab("首页");
@@ -473,6 +582,16 @@ global.fetch = (url, options) =>
     await expect(page.locator(".empty-state")).toContainText(
       "未来 30 天暂无扣费",
     );
+    await expect(
+      page.getByRole("button", { name: "新增订阅", exact: true }),
+    ).toHaveCount(1);
+    await expect(page.locator(".rd-home-add")).toHaveCount(0);
+    const homeEmptyState = page.locator(".home-page .empty-state");
+    await expect(homeEmptyState).toHaveCSS("border-top-width", "0px");
+    await expect(homeEmptyState).toHaveCSS("border-radius", "0px");
+    await expect(homeEmptyState).toHaveCSS("margin-top", "0px");
+    await noOverflow();
+    await shot("home-empty");
     await tab("订阅");
     await expect(page.locator(".empty-title")).toHaveText("还没有添加订阅");
     await shot("empty");
