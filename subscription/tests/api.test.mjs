@@ -4,6 +4,24 @@ import { request } from '../api/request.js'
 import { subscriptionApi, fromSubscription, toSubscription } from '../api/subscriptions.js'
 import { createSubscriptionPageState, subscriptionComputed, subscriptionMethods, subscriptionLifecycle } from '../pages/subscription/subscription-page-logic.js'
 
+test('home and calendar convert mixed currencies to the global currency', () => {
+	const page = pageHarness()
+	page.serverStats = { month: { exchangeRates: { base: 'CNY', date: new Date().toISOString().slice(0, 10), rates: { CNY: 1, USD: 0.125, HKD: 1, JPY: 20 } } } }
+	const items = [{ amount: 10, currency: 'CNY' }, { amount: 2, currency: 'USD' }, { amount: 1000, currency: 'JPY' }]
+	assert.equal(page.formatCurrencyTotals(items, item => item.amount), '≈ ¥76.00')
+	assert.equal(page.formatCompactTotals(items), '≈¥76')
+	page.settings.defaultCurrency = 'USD'
+	assert.equal(page.formatCurrencyTotals(items, item => item.amount), '≈ $9.50')
+	assert.equal(page.formatMoney(items[2].amount, items[2].currency), 'JP¥1000.00')
+	page.serverStats = {}
+	assert.equal(page.formatCurrencyTotals(items, item => item.amount), '汇率待更新')
+	page.statsError = 'offline'
+	assert.equal(page.formatCurrencyTotals(items, item => item.amount), '汇率暂不可用')
+	assert.equal(page.formatCompactTotals(items), '待换算')
+	assert.equal(page.formatCurrencyTotals([{ amount: 2, currency: 'USD' }], item => item.amount), '$2.00')
+	assert.equal(page.formatCurrencyTotals([], item => item.amount), '$0.00')
+})
+
 test('sharing always opens the homepage with a static cover and no private subscription data', () => {
     const page = { activeView: 'detail', selectedId: 'private-subscription', subscriptions: [{ name: '私人订阅', amount: 123 }], settings: { accessToken: 'private-token' } }
     const message = subscriptionLifecycle.onShareAppMessage.call(page)
@@ -11,7 +29,7 @@ test('sharing always opens the homepage with a static cover and no private subsc
     assert.equal(message.path, '/pages/subscription/index')
     assert.equal(timeline.query, '')
     for (const card of [message, timeline]) {
-        assert.equal(card.imageUrl, '/static/share-card.png')
+        assert.equal(card.imageUrl, '/static/share-card-blue.png')
         assert.match(card.title, /续订清单/)
         assert.doesNotMatch(JSON.stringify(card), /private|私人订阅|123/)
     }

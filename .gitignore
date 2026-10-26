@@ -20,3 +20,8 @@ admin/.runtime/
 /backups/
 
 **/.env.admin-initial
+
+/.preview/
+backend/node-compile-cache/
+.DS_Store
+__MACOSX/

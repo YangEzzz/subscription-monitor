@@ -16,7 +16,7 @@
     ><display-amount :value="formatMoney(statsTotal, statsCurrency)" /><text
       class="rd-stats-compare"
       >基于 <text class="num">{{ statsSubscriptionCount }}</text> 项
-      {{ statsCurrency }} 有效订阅 · 不自动换汇</text
+      有效订阅 · 已统一折算为 {{ statsCurrency }}</text
     ><ui-selection
       :options="statPeriods"
       :model-value="statsPeriod"

@@ -7,7 +7,7 @@ if (!Math) {
 }
 const _sfc_main = {
   onLaunch() {
-    console.log("续订清单启动");
+    common_vendor.index.__f__("log", "at App.vue:4", "续订清单启动");
   }
 };
 function createApp() {
@@ -16,3 +16,4 @@ function createApp() {
 }
 createApp().app.mount("#app");
 exports.createApp = createApp;
+//# sourceMappingURL=../.sourcemap/mp-weixin/app.js.map

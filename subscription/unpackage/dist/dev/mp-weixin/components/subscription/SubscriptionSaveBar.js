@@ -26,8 +26,9 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     b: common_vendor.t($props.busy ? "正在保存" : $props.editingId ? "保存修改" : "保存订阅"),
     c: $props.busy,
     d: $props.busy ? "true" : "false",
-    e: common_vendor.o(($event) => _ctx.$emit("save"), "a4")
+    e: common_vendor.o(($event) => _ctx.$emit("save"), "e7")
   };
 }
 const Component = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render]]);
 wx.createComponent(Component);
+//# sourceMappingURL=../../../.sourcemap/mp-weixin/components/subscription/SubscriptionSaveBar.js.map

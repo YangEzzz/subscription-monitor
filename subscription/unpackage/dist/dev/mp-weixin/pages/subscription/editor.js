@@ -89,7 +89,7 @@ if (!Array) {
 function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   return common_vendor.e({
     a: _ctx.statusBarHeight + "px",
-    b: common_vendor.o(($event) => _ctx.goBackView(_ctx.activeView === "form" ? _ctx.editingId ? "detail" : "home" : "all"), "19"),
+    b: common_vendor.o(($event) => _ctx.goBackView(_ctx.activeView === "form" ? _ctx.editingId ? "detail" : "home" : "all"), "7c"),
     c: common_vendor.p({
       title: _ctx.activeView === "form" ? _ctx.editingId ? "编辑订阅" : "新增订阅" : "订阅详情",
       secondary: true,
@@ -98,7 +98,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     }),
     d: _ctx.loadError
   }, _ctx.loadError ? {
-    e: common_vendor.o(_ctx.refreshData, "b7"),
+    e: common_vendor.o(_ctx.refreshData, "a7"),
     f: common_vendor.p({
       compact: true,
       title: _ctx.loadErrorTitle,
@@ -111,17 +111,17 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   }, _ctx.editorContentReady && _ctx.dataReady ? common_vendor.e({
     h: _ctx.activeView === "form"
   }, _ctx.activeView === "form" ? {
-    i: common_vendor.o(($event) => _ctx.goBackView(_ctx.editingId ? "detail" : "home"), "8b"),
-    j: common_vendor.o(_ctx.applyTemplate, "31"),
-    k: common_vendor.o(($event) => _ctx.form.category = $event, "e6"),
-    l: common_vendor.o(($event) => _ctx.form.currency = $event, "a1"),
-    m: common_vendor.o(_ctx.changeCycle, "5d"),
-    n: common_vendor.o(($event) => _ctx.form.payment = $event, "b4"),
-    o: common_vendor.o(($event) => _ctx.form.nextBillingDate = $event, "10"),
-    p: common_vendor.o(($event) => _ctx.form.autoRenew = $event, "a1"),
-    q: common_vendor.o(_ctx.setTrial, "cf"),
-    r: common_vendor.o(($event) => _ctx.form.trialEndDate = $event, "19"),
-    s: common_vendor.o(_ctx.toggleReminder, "e5"),
+    i: common_vendor.o(($event) => _ctx.goBackView(_ctx.editingId ? "detail" : "home"), "eb"),
+    j: common_vendor.o(_ctx.applyTemplate, "ef"),
+    k: common_vendor.o(($event) => _ctx.form.category = $event, "57"),
+    l: common_vendor.o(($event) => _ctx.form.currency = $event, "0a"),
+    m: common_vendor.o(_ctx.changeCycle, "54"),
+    n: common_vendor.o(($event) => _ctx.form.payment = $event, "2f"),
+    o: common_vendor.o(($event) => _ctx.form.nextBillingDate = $event, "7d"),
+    p: common_vendor.o(($event) => _ctx.form.autoRenew = $event, "6e"),
+    q: common_vendor.o(_ctx.setTrial, "77"),
+    r: common_vendor.o(($event) => _ctx.form.trialEndDate = $event, "ff"),
+    s: common_vendor.o(_ctx.toggleReminder, "6d"),
     t: common_vendor.p({
       ["show-header"]: false,
       ["editing-id"]: _ctx.editingId,
@@ -146,23 +146,23 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   } : {}, {
     v: _ctx.activeView === "detail" && (_ctx.detailLoading || _ctx.detailError || !_ctx.selectedSubscription)
   }, _ctx.activeView === "detail" && (_ctx.detailLoading || _ctx.detailError || !_ctx.selectedSubscription) ? {
-    w: common_vendor.o(($event) => _ctx.goBackView("all"), "ea"),
+    w: common_vendor.o(($event) => _ctx.goBackView("all"), "50"),
     x: common_vendor.o(($event) => _ctx.openDetail({
       id: _ctx.selectedId
-    }), "c0"),
+    }), "ce"),
     y: common_vendor.p({
       ["show-header"]: false,
       error: _ctx.detailError,
       ["scroll-offset"]: _ctx.uiScrollTop
     })
   } : _ctx.activeView === "detail" && _ctx.selectedSubscription ? {
-    A: common_vendor.o(($event) => _ctx.goBackView("all"), "94"),
-    B: common_vendor.o(_ctx.confirmRenewal, "b5"),
-    C: common_vendor.o(_ctx.undoRenewal, "d8"),
-    D: common_vendor.o(_ctx.snoozeSubscription, "30"),
-    E: common_vendor.o(_ctx.cancelSubscription, "e3"),
-    F: common_vendor.o(_ctx.showMoreActions, "44"),
-    G: common_vendor.o(($event) => _ctx.openForm(null, _ctx.selectedSubscription), "25"),
+    A: common_vendor.o(($event) => _ctx.goBackView("all"), "03"),
+    B: common_vendor.o(_ctx.confirmRenewal, "4c"),
+    C: common_vendor.o(_ctx.undoRenewal, "a6"),
+    D: common_vendor.o(_ctx.snoozeSubscription, "58"),
+    E: common_vendor.o(_ctx.cancelSubscription, "59"),
+    F: common_vendor.o(_ctx.showMoreActions, "d7"),
+    G: common_vendor.o(($event) => _ctx.openForm(null, _ctx.selectedSubscription), "63"),
     H: common_vendor.p({
       ["show-header"]: false,
       subscription: _ctx.selectedSubscription,
@@ -184,10 +184,10 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     z: _ctx.activeView === "detail" && _ctx.selectedSubscription
   }) : {}, {
     I: _ctx.scrollTop,
-    J: common_vendor.o(($event) => _ctx.uiScrollTop = $event.detail.scrollTop, "02"),
+    J: common_vendor.o(($event) => _ctx.uiScrollTop = $event.detail.scrollTop, "31"),
     K: _ctx.editorContentReady && _ctx.dataReady && _ctx.activeView === "form"
   }, _ctx.editorContentReady && _ctx.dataReady && _ctx.activeView === "form" ? {
-    L: common_vendor.o(($event) => _ctx.saveSubscription(), "60"),
+    L: common_vendor.o(($event) => _ctx.saveSubscription(), "19"),
     M: common_vendor.p({
       ["editing-id"]: _ctx.editingId,
       busy: _ctx.mutating
@@ -195,9 +195,10 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   } : {}, {
     N: _ctx.reducedMotion ? 1 : "",
     O: _ctx.statusBarHeight + "px",
-    P: common_vendor.o((...args) => _ctx.handleKeyboardAction && _ctx.handleKeyboardAction(...args), "1f")
+    P: common_vendor.o((...args) => _ctx.handleKeyboardAction && _ctx.handleKeyboardAction(...args), "c2")
   });
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render]]);
 _sfc_main.__runtimeHooks = 6;
 wx.createPage(MiniProgramPage);
+//# sourceMappingURL=../../../.sourcemap/mp-weixin/pages/subscription/editor.js.map

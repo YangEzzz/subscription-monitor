@@ -14,3 +14,4 @@ const membershipApi = {
   simulate: (id, outcome) => api_request.request(orderPath(id) + "/simulate", { method: "POST", data: { outcome } })
 };
 exports.membershipApi = membershipApi;
+//# sourceMappingURL=../../.sourcemap/mp-weixin/api/membership.js.map

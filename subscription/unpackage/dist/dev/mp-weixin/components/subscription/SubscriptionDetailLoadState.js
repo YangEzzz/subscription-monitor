@@ -23,7 +23,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   return common_vendor.e({
     a: $props.showHeader
   }, $props.showHeader ? {
-    b: common_vendor.o(($event) => _ctx.$emit("back"), "3e"),
+    b: common_vendor.o(($event) => _ctx.$emit("back"), "85"),
     c: common_vendor.p({
       title: "订阅详情",
       secondary: true,
@@ -33,7 +33,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   } : {}, {
     d: $props.error
   }, $props.error ? {
-    e: common_vendor.o(($event) => _ctx.$emit("retry"), "fe"),
+    e: common_vendor.o(($event) => _ctx.$emit("retry"), "f0"),
     f: common_vendor.p({
       title: "订阅详情加载失败",
       description: $props.error,
@@ -63,3 +63,4 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
 }
 const Component = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render]]);
 wx.createComponent(Component);
+//# sourceMappingURL=../../../.sourcemap/mp-weixin/components/subscription/SubscriptionDetailLoadState.js.map

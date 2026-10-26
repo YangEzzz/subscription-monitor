@@ -93,9 +93,9 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     })
   } : {}, {
     q: $props.isMember ? 1 : "",
-    r: common_vendor.o(($event) => _ctx.$emit("open-membership"), "c2")
+    r: common_vendor.o(($event) => _ctx.$emit("open-membership"), "db")
   }) : {}, {
-    s: common_vendor.o(($event) => _ctx.$emit("notification-change", true), "5a"),
+    s: common_vendor.o(($event) => _ctx.$emit("notification-change", true), "86"),
     t: common_vendor.p({
       icon: "notification",
       ["icon-class"]: "blue-bg",
@@ -107,7 +107,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     }),
     v: $props.settings.notificationEnabled
   }, $props.settings.notificationEnabled ? {
-    w: common_vendor.o(($event) => _ctx.$emit("notification-change", false), "f3"),
+    w: common_vendor.o(($event) => _ctx.$emit("notification-change", false), "cf"),
     x: common_vendor.p({
       icon: "notification",
       ["icon-class"]: "gray-bg",
@@ -118,7 +118,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       disabled: $props.notificationBusy
     })
   } : {}, {
-    y: common_vendor.o(($event) => _ctx.$emit("notification-history"), "4a"),
+    y: common_vendor.o(($event) => _ctx.$emit("notification-history"), "ec"),
     z: common_vendor.p({
       icon: "list",
       ["icon-class"]: "violet-bg",
@@ -127,7 +127,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       description: "查看最近的发送结果",
       action: true
     }),
-    A: common_vendor.o(($event) => _ctx.$emit("open-reminder-settings"), "bd"),
+    A: common_vendor.o(($event) => _ctx.$emit("open-reminder-settings"), "b2"),
     B: common_vendor.p({
       icon: "calendar",
       ["icon-class"]: "orange-bg",
@@ -145,8 +145,8 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       action: true
     }),
     D: $props.currencies,
-    E: common_vendor.o((...args) => $options.changeDefaultCurrency && $options.changeDefaultCurrency(...args), "c4"),
-    F: common_vendor.o(($event) => _ctx.$emit("export"), "2a"),
+    E: common_vendor.o((...args) => $options.changeDefaultCurrency && $options.changeDefaultCurrency(...args), "3a"),
+    F: common_vendor.o(($event) => _ctx.$emit("export"), "d9"),
     G: common_vendor.p({
       icon: "download",
       ["icon-class"]: "green-bg",
@@ -156,7 +156,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       disabled: $props.exportBusy,
       action: true
     }),
-    H: common_vendor.o(($event) => _ctx.$emit("trash"), "89"),
+    H: common_vendor.o(($event) => _ctx.$emit("trash"), "11"),
     I: common_vendor.p({
       icon: "trash",
       ["icon-class"]: "orange-bg",
@@ -165,7 +165,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       description: $props.deletedSubscriptions.length ? `${$props.deletedSubscriptions.length} 条可恢复订阅` : "暂无已删除订阅",
       action: true
     }),
-    J: common_vendor.o(($event) => _ctx.$emit("open-about"), "18"),
+    J: common_vendor.o(($event) => _ctx.$emit("open-about"), "3e"),
     K: common_vendor.p({
       icon: "info",
       ["icon-class"]: "blue-bg",
@@ -177,3 +177,4 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
 }
 const Component = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render]]);
 wx.createComponent(Component);
+//# sourceMappingURL=../../../.sourcemap/mp-weixin/components/subscription/SubscriptionProfileView.js.map

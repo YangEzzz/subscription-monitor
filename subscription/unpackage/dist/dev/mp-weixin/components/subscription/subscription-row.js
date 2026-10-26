@@ -61,8 +61,9 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     o: $props.item.days >= 0 && $props.item.days <= 7 ? 1 : "",
     p: $props.item.days < 0 ? 1 : "",
     q: `${$props.item.name}，${$props.item.shortDate}，${$props.item.amount === null ? "金额待补充" : $props.item.amountText}，${$props.item.displayStatus || "待续费"}`,
-    r: common_vendor.o(($event) => _ctx.$emit("activate"), "3f")
+    r: common_vendor.o(($event) => _ctx.$emit("activate"), "38")
   });
 }
 const Component = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render]]);
 wx.createComponent(Component);
+//# sourceMappingURL=../../../.sourcemap/mp-weixin/components/subscription/subscription-row.js.map

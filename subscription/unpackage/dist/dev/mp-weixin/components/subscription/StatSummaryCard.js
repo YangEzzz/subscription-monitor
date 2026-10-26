@@ -34,13 +34,13 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     b: common_vendor.t($props.statsCurrency),
     c: $props.currencies,
     d: $props.currencies.indexOf($props.statsCurrency),
-    e: common_vendor.o((...args) => $options.changeCurrency && $options.changeCurrency(...args), "75"),
+    e: common_vendor.o((...args) => $options.changeCurrency && $options.changeCurrency(...args), "81"),
     f: common_vendor.p({
       value: $props.formatMoney($props.statsTotal, $props.statsCurrency)
     }),
     g: common_vendor.t($props.statsSubscriptionCount),
     h: common_vendor.t($props.statsCurrency),
-    i: common_vendor.o(($event) => _ctx.$emit("period-change", $event), "d1"),
+    i: common_vendor.o(($event) => _ctx.$emit("period-change", $event), "6d"),
     j: common_vendor.p({
       options: $props.statPeriods,
       ["model-value"]: $props.statsPeriod,
@@ -51,3 +51,4 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
 }
 const Component = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render]]);
 wx.createComponent(Component);
+//# sourceMappingURL=../../../.sourcemap/mp-weixin/components/subscription/StatSummaryCard.js.map

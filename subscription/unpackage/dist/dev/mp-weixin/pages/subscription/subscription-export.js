@@ -113,3 +113,4 @@ async function exportSubscriptionFile(records, options) {
   });
 }
 exports.exportSubscriptionFile = exportSubscriptionFile;
+//# sourceMappingURL=../../../.sourcemap/mp-weixin/pages/subscription/subscription-export.js.map

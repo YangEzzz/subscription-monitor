@@ -10,7 +10,7 @@ const confirm = (options) => new Promise((resolve) => common_vendor.index.showMo
   ...options,
   success: (result) => resolve(result.confirm),
   fail: (error) => {
-    console.error("Confirmation modal failed", error);
+    common_vendor.index.__f__("error", "at pages/subscription/subscription-remote.js:12", "Confirmation modal failed", error);
     common_vendor.index.showToast({ title: "确认窗口打开失败，请重试", icon: "none" });
     resolve(false);
   }
@@ -66,6 +66,11 @@ const remoteComputed = {
   },
   statsTotal() {
     return this.currentStats ? this.currentStats.total : 0;
+  },
+  exchangeRateNote() {
+    var _a;
+    const snapshot = (_a = this.currentStats) == null ? void 0 : _a.exchangeRates;
+    return snapshot ? `参考汇率：${snapshot.source} · ${snapshot.date}` : "";
   },
   currentStats() {
     return this.serverStats[this.statsPeriod === "next" ? "next30" : this.statsPeriod] || null;
@@ -171,12 +176,12 @@ const remoteMethods = {
         throw Object.assign(new Error("账号已切换，请重新加载"), { code: "AUTH_ACCOUNT_CHANGED" });
       }
       this.subscriptions = subscriptions;
+      if (!this.dataReady || this.settings.defaultCurrency !== settings.defaultCurrency)
+        this.statsCurrency = settings.defaultCurrency;
       this.settings = { ...pages_subscription_subscriptionData.createDefaultSettings(), ...settings };
       this.applyMembership(membership);
       this.applyCatalog(catalog);
       this.serverReminders = reminders.data;
-      if (!this.dataReady)
-        this.statsCurrency = settings.defaultCurrency;
       this.dataReady = true;
       if (this.selectedId && !this.selectedSubscription && !this.detailLoading && !this.detailError) {
         this.selectedId = null;
@@ -607,3 +612,4 @@ ${labels[row.status] || row.status}${row.errorCode ? `（${row.errorCode}）` : 
 };
 exports.remoteComputed = remoteComputed;
 exports.remoteMethods = remoteMethods;
+//# sourceMappingURL=../../../.sourcemap/mp-weixin/pages/subscription/subscription-remote.js.map

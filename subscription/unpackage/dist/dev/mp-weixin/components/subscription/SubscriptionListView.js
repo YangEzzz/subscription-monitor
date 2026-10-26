@@ -119,17 +119,17 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       size: "18",
       color: "var(--ink-4)"
     }),
-    h: common_vendor.o((...args) => $options.clearSearch && $options.clearSearch(...args), "7a")
+    h: common_vendor.o((...args) => $options.clearSearch && $options.clearSearch(...args), "a6")
   } : {}, {
-    i: common_vendor.o(($event) => _ctx.$emit("open-form"), "3c"),
-    j: common_vendor.o(($event) => _ctx.$emit("category", $event), "91"),
+    i: common_vendor.o(($event) => _ctx.$emit("open-form"), "60"),
+    j: common_vendor.o(($event) => _ctx.$emit("category", $event), "60"),
     k: common_vendor.p({
       options: $options.categoryOptions,
       ["model-value"]: $props.activeCategory,
       variant: "chips",
       label: "按服务分类筛选，可左右滑动"
     }),
-    l: common_vendor.o(($event) => _ctx.$emit("status", $event), "90"),
+    l: common_vendor.o(($event) => _ctx.$emit("status", $event), "d2"),
     m: common_vendor.p({
       options: $props.statusFilters,
       ["model-value"]: $props.activeStatus,
@@ -139,7 +139,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     n: common_vendor.t($props.sortLabel),
     o: common_vendor.t($props.activeStatusLabel),
     p: common_vendor.t($props.visibleSubscriptions.length),
-    q: common_vendor.o(($event) => _ctx.$emit("choose-sort"), "b9"),
+    q: common_vendor.o(($event) => _ctx.$emit("choose-sort"), "60"),
     r: $props.visibleSubscriptions.length
   }, $props.visibleSubscriptions.length ? {
     s: common_vendor.f($props.visibleSubscriptions.slice(0, $data.displayLimit), (item, index, i0) => {
@@ -147,7 +147,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
         a: item.id,
         b: Math.min(index, 10) * 30 + "ms",
         c: common_vendor.o(($event) => _ctx.$emit("open-detail", item), item.id),
-        d: "4bd9411a-5-" + i0,
+        d: "ca51a8d2-5-" + i0,
         e: common_vendor.p({
           item: {
             ...$props.decorateItem(item),
@@ -164,11 +164,11 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   }, $props.visibleSubscriptions.length > $data.displayLimit ? {
     v: common_vendor.t($data.displayLimit),
     w: common_vendor.t($props.visibleSubscriptions.length),
-    x: common_vendor.o(($event) => $data.displayLimit += 20, "60")
+    x: common_vendor.o(($event) => $data.displayLimit += 20, "cb")
   } : {}, {
     y: !$props.visibleSubscriptions.length && $props.liveSubscriptions.length
   }, !$props.visibleSubscriptions.length && $props.liveSubscriptions.length ? {
-    z: common_vendor.o(($event) => _ctx.$emit("reset-filters"), "2b"),
+    z: common_vendor.o(($event) => _ctx.$emit("reset-filters"), "d2"),
     A: common_vendor.p({
       icon: "search",
       title: "没有匹配的订阅",
@@ -176,7 +176,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       ["action-label"]: "重置筛选"
     })
   } : !$props.liveSubscriptions.length ? {
-    C: common_vendor.o(($event) => _ctx.$emit("open-form"), "d5"),
+    C: common_vendor.o(($event) => _ctx.$emit("open-form"), "9b"),
     D: common_vendor.p({
       icon: "plus",
       title: "还没有添加订阅",
@@ -189,3 +189,4 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
 }
 const Component = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render]]);
 wx.createComponent(Component);
+//# sourceMappingURL=../../../.sourcemap/mp-weixin/components/subscription/SubscriptionListView.js.map

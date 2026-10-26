@@ -49,6 +49,7 @@ export const remoteComputed = {
 		return `${this.statsError}${this.statsErrorRequestId ? ` 参考编号：${this.statsErrorRequestId}` : ''}`
 	},
 	statsTotal() { return this.currentStats ? this.currentStats.total : 0 },
+	exchangeRateNote() { const snapshot = this.currentStats?.exchangeRates; return snapshot ? `参考汇率：${snapshot.source} · ${snapshot.date}` : '' },
 	currentStats() { return this.serverStats[this.statsPeriod === 'next' ? 'next30' : this.statsPeriod] || null },
 	statsSubscriptionCount() { return this.currentStats ? this.currentStats.subscriptionCount : 0 },
 	categoryStats() {
@@ -143,11 +144,11 @@ export const remoteMethods = {
 				throw Object.assign(new Error('账号已切换，请重新加载'), { code: 'AUTH_ACCOUNT_CHANGED' })
 			}
 			this.subscriptions = subscriptions
+			if (!this.dataReady || this.settings.defaultCurrency !== settings.defaultCurrency) this.statsCurrency = settings.defaultCurrency
 			this.settings = { ...createDefaultSettings(), ...settings }
 			this.applyMembership(membership)
 			this.applyCatalog(catalog)
 			this.serverReminders = reminders.data
-			if (!this.dataReady) this.statsCurrency = settings.defaultCurrency
 			this.dataReady = true
 			if (this.selectedId && !this.selectedSubscription && !this.detailLoading && !this.detailError) { this.selectedId = null; this.switchTab('all') }
 			// Secondary panels must not delay the subscription list or detail navigation.

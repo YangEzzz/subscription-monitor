@@ -84,7 +84,8 @@
         ><uni-icons type="info-filled" size="20" color="var(--blue)" /><view
           ><text class="rd-insight-title">先确认金额，再看估算</text
           ><text class="rd-insight-copy"
-            >金额按记录币种分别统计，未填写金额的订阅不计入估算，可在详情中补充。</text
+            >不同币种按参考汇率统一折算，结果仅供支出估算。未填写金额的订阅不计入，可在详情中补充。</text
+          ><text v-if="exchangeRateNote" class="rd-insight-copy">{{ exchangeRateNote }}</text
           ></view
         ></view
       ></template
@@ -146,6 +147,7 @@ export default {
     navigationBarHeight: { type: Number, default: 0 },
     currencies: { type: Array, default: () => [] },
     statsCurrency: { type: String, default: "CNY" },
+    exchangeRateNote: { type: String, default: "" },
     statsLabel: { type: String, default: "本月预计支出" },
     statPeriods: { type: Array, default: () => [] },
     statsPeriod: { type: String, default: "month" },

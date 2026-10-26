@@ -21,7 +21,7 @@ if (!Math) {
 }
 function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   return {
-    a: common_vendor.o(($event) => _ctx.$emit("back"), "c5"),
+    a: common_vendor.o(($event) => _ctx.$emit("back"), "02"),
     b: common_vendor.p({
       title: "默认提醒规则",
       secondary: true
@@ -37,7 +37,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
         b: common_vendor.t(option.desc),
         c: $props.settings.defaultReminders.includes(option.value)
       }, $props.settings.defaultReminders.includes(option.value) ? {
-        d: "7f3fee74-2-" + i0,
+        d: "63844e1e-2-" + i0,
         e: common_vendor.p({
           type: "checkmarkempty",
           size: "16",
@@ -61,9 +61,10 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     i: common_vendor.o(($event) => _ctx.$emit("update-setting", {
       key: "reminderTime",
       value: $event.detail.value
-    }), "41"),
-    j: common_vendor.o(($event) => _ctx.$emit("back"), "de")
+    }), "b8"),
+    j: common_vendor.o(($event) => _ctx.$emit("back"), "99")
   };
 }
 const Component = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render]]);
 wx.createComponent(Component);
+//# sourceMappingURL=../../../.sourcemap/mp-weixin/components/subscription/ReminderSettingsView.js.map

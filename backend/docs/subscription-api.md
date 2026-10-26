@@ -110,6 +110,9 @@ displayStatus 是结合周期、提醒窗口和到期日计算的展示状态；
 
 响应包含 total、subscriptionCount、categoryStats、未来六个月的 trend。
 
+所有有效订阅先换算再汇总，`currency` 默认为设置中的 `defaultCurrency`；不再按原币种过滤。分类与趋势使用同一口径，原记录金额不变。跨币种响应附带 `exchangeRates: { base: 'CNY', rates, date, source }`，rates 表示 1 CNY 对应的外币金额，换算为 `amount / rates[from] * rates[to]`，汇总完成后保留两位小数。
+参考汇率来自 Frankfurter v2，每 6 小时刷新，合并并发请求，5 秒超时；拒绝缺失、异常及超过 7 天的汇率。无法换算返回 503，不返回漏算的总额。同币种汇总不依赖外部汇率服务。
+
 ### GET /reminders?days=30
 
 返回未来指定天数内的到期项和已逾期项，支持 1–90 天。每项包含 urgency、daysUntilBilling、nextReminderInDays。

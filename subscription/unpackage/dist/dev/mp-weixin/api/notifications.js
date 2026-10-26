@@ -59,3 +59,4 @@ function requestNotificationAuthorization(templateId, userId) {
 exports.notificationApi = notificationApi;
 exports.requestNotificationAuthorization = requestNotificationAuthorization;
 exports.syncPendingAuthorization = syncPendingAuthorization;
+//# sourceMappingURL=../../.sourcemap/mp-weixin/api/notifications.js.map

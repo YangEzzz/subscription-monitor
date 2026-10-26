@@ -8,6 +8,10 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
+import {
+  ExchangeRatesService,
+  convertCurrency,
+} from './exchange-rates.service';
 import { CreateSubscriptionDto } from './dto/create-subscription.dto';
 import { QuerySubscriptionDto } from './dto/query-subscription.dto';
 import { StatsQueryDto } from './dto/stats-query.dto';
@@ -187,6 +191,7 @@ export class SubscriptionsService {
   constructor(
     @Inject(SUBSCRIPTIONS_REPOSITORY)
     private readonly repository: SubscriptionsRepository,
+    private readonly exchangeRates: ExchangeRatesService = new ExchangeRatesService(),
   ) {}
 
   private normalizeUserId(userId?: string): string {
@@ -616,10 +621,19 @@ export class SubscriptionsService {
     const records = (await this.ownedRecords(normalizedUserId)).filter(
       (record) =>
         !record.deletedAt &&
-        record.currency === currency &&
         !['cancelled', 'archived', 'paused'].includes(record.status) &&
         record.amount !== null,
     );
+    const exchangeRates = records.some(
+      (record) =>
+        (record.currency !== currency ||
+          record.currency !== settings.defaultCurrency) &&
+        record.amount !== 0,
+    )
+      ? await this.exchangeRates.snapshot()
+      : null;
+    const converted = (record: SubscriptionRecord, value: number) =>
+      convertCurrency(value, record.currency, currency, exchangeRates);
     const relevant =
       period === 'next30'
         ? records.filter((record) => {
@@ -628,9 +642,9 @@ export class SubscriptionsService {
           })
         : records;
     const valueFor = (record: SubscriptionRecord): number => {
-      if (period === 'next30') return record.amount ?? 0;
+      if (period === 'next30') return converted(record, record.amount ?? 0);
       const monthly = monthlyEquivalent(record);
-      return period === 'year' ? monthly * 12 : monthly;
+      return converted(record, period === 'year' ? monthly * 12 : monthly);
     };
     const total = roundMoney(
       relevant.reduce((sum, record) => sum + valueFor(record), 0),
@@ -667,7 +681,10 @@ export class SubscriptionsService {
         value: roundMoney(
           records.reduce(
             (sum, record) =>
-              sum + (period === 'next30' ? 0 : monthlyEquivalent(record)),
+              sum +
+              (period === 'next30'
+                ? 0
+                : converted(record, monthlyEquivalent(record))),
             0,
           ),
         ),
@@ -677,6 +694,7 @@ export class SubscriptionsService {
     return {
       period,
       currency,
+      exchangeRates,
       total,
       subscriptionCount: relevant.length,
       categoryStats,

@@ -14,12 +14,12 @@ if (!Array) {
 }
 function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   return {
-    a: common_vendor.o(($event) => _ctx.$emit("back"), "a0"),
+    a: common_vendor.o(($event) => _ctx.$emit("back"), "df"),
     b: common_vendor.p({
       title: "关于续订清单",
       secondary: true
     }),
-    c: common_vendor.o(($event) => _ctx.$emit("privacy"), "80"),
+    c: common_vendor.o(($event) => _ctx.$emit("privacy"), "4e"),
     d: common_vendor.p({
       icon: "locked",
       ["icon-class"]: "blue-bg",
@@ -32,3 +32,4 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
 }
 const Component = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render]]);
 wx.createComponent(Component);
+//# sourceMappingURL=../../../.sourcemap/mp-weixin/components/subscription/SubscriptionAboutView.js.map

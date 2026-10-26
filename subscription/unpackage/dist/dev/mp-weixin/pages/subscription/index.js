@@ -149,7 +149,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   } : {}, {
     i: _ctx.activeView === "stats" && _ctx.statsError
   }, _ctx.activeView === "stats" && _ctx.statsError ? {
-    j: common_vendor.o(($event) => _ctx.goBackView("home"), "3d"),
+    j: common_vendor.o(($event) => _ctx.goBackView("home"), "4b"),
     k: common_vendor.p({
       title: "统计",
       secondary: true
@@ -163,7 +163,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   } : {}, {
     n: _ctx.loadError
   }, _ctx.loadError ? {
-    o: common_vendor.o(_ctx.refreshData, "ca"),
+    o: common_vendor.o(_ctx.refreshData, "ee"),
     p: common_vendor.p({
       compact: _ctx.dataReady,
       title: _ctx.loadErrorTitle,
@@ -174,7 +174,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   } : {}, {
     q: _ctx.statsError && (_ctx.activeView === "stats" || _ctx.activeView === "home")
   }, _ctx.statsError && (_ctx.activeView === "stats" || _ctx.activeView === "home") ? {
-    r: common_vendor.o(_ctx.refreshStats, "d3"),
+    r: common_vendor.o(_ctx.refreshStats, "af"),
     s: common_vendor.p({
       compact: true,
       title: "统计暂时不可用",
@@ -185,7 +185,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   } : {}, {
     t: _ctx.notificationError && _ctx.dataReady
   }, _ctx.notificationError && _ctx.dataReady ? {
-    v: common_vendor.o(_ctx.refreshData, "8b"),
+    v: common_vendor.o(_ctx.refreshData, "7b"),
     w: common_vendor.p({
       compact: true,
       title: "通知状态暂不可用",
@@ -196,7 +196,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   } : {}, {
     x: _ctx.statsLoading && _ctx.activeView === "stats"
   }, _ctx.statsLoading && _ctx.activeView === "stats" ? {
-    y: common_vendor.o(($event) => _ctx.goBackView("home"), "05"),
+    y: common_vendor.o(($event) => _ctx.goBackView("home"), "70"),
     z: common_vendor.p({
       title: "统计",
       secondary: true
@@ -212,11 +212,11 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   }, _ctx.dataReady ? common_vendor.e({
     D: _ctx.activeView === "home"
   }, _ctx.activeView === "home" ? {
-    E: common_vendor.o(_ctx.toggleAmount, "c6"),
-    F: common_vendor.o(($event) => _ctx.navigateToView("stats"), "0b"),
-    G: common_vendor.o(($event) => _ctx.switchTab("all"), "c7"),
-    H: common_vendor.o(_ctx.openDetail, "d8"),
-    I: common_vendor.o(_ctx.handleReminder, "b4"),
+    E: common_vendor.o(_ctx.toggleAmount, "fc"),
+    F: common_vendor.o(($event) => _ctx.navigateToView("stats"), "04"),
+    G: common_vendor.o(($event) => _ctx.switchTab("all"), "a1"),
+    H: common_vendor.o(_ctx.openDetail, "89"),
+    I: common_vendor.o(_ctx.handleReminder, "a6"),
     J: common_vendor.p({
       settings: _ctx.settings,
       ["navigation-bar-height"]: _ctx.navigationBarHeight,
@@ -231,14 +231,14 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       ["decorate-item"]: _ctx.decorateItem
     })
   } : _ctx.activeView === "all" ? {
-    L: common_vendor.o(($event) => _ctx.searchKeyword = $event, "e5"),
-    M: common_vendor.o(($event) => _ctx.searchKeyword = "", "29"),
-    N: common_vendor.o(($event) => _ctx.activeCategory = $event, "95"),
-    O: common_vendor.o(($event) => _ctx.activeStatus = $event, "35"),
-    P: common_vendor.o(_ctx.chooseSort, "ca"),
-    Q: common_vendor.o(_ctx.openDetail, "d2"),
-    R: common_vendor.o(_ctx.resetFilters, "af"),
-    S: common_vendor.o(_ctx.openForm, "cd"),
+    L: common_vendor.o(($event) => _ctx.searchKeyword = $event, "47"),
+    M: common_vendor.o(($event) => _ctx.searchKeyword = "", "77"),
+    N: common_vendor.o(($event) => _ctx.activeCategory = $event, "a5"),
+    O: common_vendor.o(($event) => _ctx.activeStatus = $event, "8d"),
+    P: common_vendor.o(_ctx.chooseSort, "09"),
+    Q: common_vendor.o(_ctx.openDetail, "db"),
+    R: common_vendor.o(_ctx.resetFilters, "b4"),
+    S: common_vendor.o(_ctx.openForm, "58"),
     T: common_vendor.p({
       ["navigation-bar-height"]: _ctx.navigationBarHeight,
       ["search-keyword"]: _ctx.searchKeyword,
@@ -259,11 +259,11 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       ["status-text"]: _ctx.statusText
     })
   } : _ctx.activeView === "calendar" ? {
-    V: common_vendor.o(_ctx.changeMonth, "2b"),
-    W: common_vendor.o(_ctx.goToday, "52"),
-    X: common_vendor.o(_ctx.selectDate, "1d"),
-    Y: common_vendor.o(_ctx.openDetail, "32"),
-    Z: common_vendor.o(_ctx.openForm, "2d"),
+    V: common_vendor.o(_ctx.changeMonth, "d6"),
+    W: common_vendor.o(_ctx.goToday, "74"),
+    X: common_vendor.o(_ctx.selectDate, "e6"),
+    Y: common_vendor.o(_ctx.openDetail, "e8"),
+    Z: common_vendor.o(_ctx.openForm, "8d"),
     aa: common_vendor.p({
       ["navigation-bar-height"]: _ctx.navigationBarHeight,
       ["calendar-title"]: _ctx.calendarTitle,
@@ -281,14 +281,15 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       ["cycle-text"]: _ctx.cycleText
     })
   } : _ctx.activeView === "stats" && !_ctx.statsLoading && !_ctx.statsError ? {
-    ac: common_vendor.o(($event) => _ctx.goBackView("home"), "da"),
-    ad: common_vendor.o(_ctx.changeStatsCurrency, "12"),
-    ae: common_vendor.o(($event) => _ctx.statsPeriod = $event, "41"),
-    af: common_vendor.o(_ctx.openForm, "0a"),
+    ac: common_vendor.o(($event) => _ctx.goBackView("home"), "7a"),
+    ad: common_vendor.o(_ctx.changeStatsCurrency, "a7"),
+    ae: common_vendor.o(($event) => _ctx.statsPeriod = $event, "71"),
+    af: common_vendor.o(_ctx.openForm, "1f"),
     ag: common_vendor.p({
       ["navigation-bar-height"]: _ctx.navigationBarHeight,
       currencies: _ctx.currencies,
       ["stats-currency"]: _ctx.statsCurrency,
+      ["exchange-rate-note"]: _ctx.exchangeRateNote,
       ["stats-label"]: _ctx.statsLabel,
       ["stat-periods"]: _ctx.statPeriods,
       ["stats-period"]: _ctx.statsPeriod,
@@ -302,14 +303,14 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       ["compact-amount"]: _ctx.compactAmount
     })
   } : _ctx.activeView === "profile" ? {
-    ai: common_vendor.o(_ctx.openMembership, "1d"),
-    aj: common_vendor.o(_ctx.handleNotificationSwitch, "2b"),
-    ak: common_vendor.o(_ctx.showNotificationHistory, "84"),
-    al: common_vendor.o(_ctx.openReminderSettings, "9b"),
-    am: common_vendor.o(_ctx.updateDefaultCurrency, "d1"),
-    an: common_vendor.o(_ctx.exportData, "ea"),
-    ao: common_vendor.o(_ctx.openTrash, "19"),
-    ap: common_vendor.o(($event) => _ctx.navigateToView("about"), "6b"),
+    ai: common_vendor.o(_ctx.openMembership, "0e"),
+    aj: common_vendor.o(_ctx.handleNotificationSwitch, "8a"),
+    ak: common_vendor.o(_ctx.showNotificationHistory, "6e"),
+    al: common_vendor.o(_ctx.openReminderSettings, "27"),
+    am: common_vendor.o(_ctx.updateDefaultCurrency, "b9"),
+    an: common_vendor.o(_ctx.exportData, "6e"),
+    ao: common_vendor.o(_ctx.openTrash, "c4"),
+    ap: common_vendor.o(($event) => _ctx.navigateToView("about"), "7f"),
     aq: common_vendor.p({
       ["navigation-bar-height"]: _ctx.navigationBarHeight,
       ["live-subscriptions"]: _ctx.liveSubscriptions,
@@ -327,16 +328,16 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       ["notification-busy"]: _ctx.notificationAuthorizing || _ctx.notificationLoading || _ctx.loading || _ctx.mutating
     })
   } : _ctx.activeView === "about" ? {
-    as: common_vendor.o(($event) => _ctx.goBackView("profile"), "97"),
-    at: common_vendor.o(_ctx.showPrivacy, "de")
+    as: common_vendor.o(($event) => _ctx.goBackView("profile"), "c7"),
+    at: common_vendor.o(_ctx.showPrivacy, "eb")
   } : _ctx.activeView === "membership" && _ctx.membershipEntryEnabled ? {
-    aw: common_vendor.o(_ctx.beginMembershipPurchase, "b9"),
-    ax: common_vendor.o(_ctx.payMembershipOrder, "bb"),
-    ay: common_vendor.o(_ctx.simulateMembershipPayment, "88"),
-    az: common_vendor.o(_ctx.refundMembershipOrder, "ba"),
-    aA: common_vendor.o(_ctx.loadMembershipOrders, "77"),
-    aB: common_vendor.o(_ctx.selectMembershipOrder, "14"),
-    aC: common_vendor.o(($event) => _ctx.goBackView("profile"), "7a"),
+    aw: common_vendor.o(_ctx.beginMembershipPurchase, "95"),
+    ax: common_vendor.o(_ctx.payMembershipOrder, "be"),
+    ay: common_vendor.o(_ctx.simulateMembershipPayment, "ac"),
+    az: common_vendor.o(_ctx.refundMembershipOrder, "4e"),
+    aA: common_vendor.o(_ctx.loadMembershipOrders, "39"),
+    aB: common_vendor.o(_ctx.selectMembershipOrder, "69"),
+    aC: common_vendor.o(($event) => _ctx.goBackView("profile"), "af"),
     aD: common_vendor.p({
       ["is-member"]: _ctx.isMember,
       ["free-quota-value"]: _ctx.freeQuotaValue,
@@ -350,22 +351,22 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       message: _ctx.membershipMessage
     })
   } : _ctx.activeView === "detail" && (_ctx.detailLoading || _ctx.detailError || !_ctx.selectedSubscription) ? {
-    aF: common_vendor.o(($event) => _ctx.goBackView("all"), "78"),
+    aF: common_vendor.o(($event) => _ctx.goBackView("all"), "6a"),
     aG: common_vendor.o(($event) => _ctx.openDetail({
       id: _ctx.selectedId
-    }), "1d"),
+    }), "72"),
     aH: common_vendor.p({
       error: _ctx.detailError,
       ["scroll-offset"]: _ctx.uiScrollTop
     })
   } : _ctx.activeView === "detail" && _ctx.selectedSubscription ? {
-    aJ: common_vendor.o(($event) => _ctx.goBackView("all"), "0d"),
-    aK: common_vendor.o(_ctx.confirmRenewal, "93"),
-    aL: common_vendor.o(_ctx.undoRenewal, "15"),
-    aM: common_vendor.o(_ctx.snoozeSubscription, "ef"),
-    aN: common_vendor.o(_ctx.cancelSubscription, "86"),
-    aO: common_vendor.o(_ctx.showMoreActions, "e6"),
-    aP: common_vendor.o(($event) => _ctx.openForm(null, _ctx.selectedSubscription), "51"),
+    aJ: common_vendor.o(($event) => _ctx.goBackView("all"), "fa"),
+    aK: common_vendor.o(_ctx.confirmRenewal, "bf"),
+    aL: common_vendor.o(_ctx.undoRenewal, "2e"),
+    aM: common_vendor.o(_ctx.snoozeSubscription, "96"),
+    aN: common_vendor.o(_ctx.cancelSubscription, "48"),
+    aO: common_vendor.o(_ctx.showMoreActions, "f0"),
+    aP: common_vendor.o(($event) => _ctx.openForm(null, _ctx.selectedSubscription), "7a"),
     aQ: common_vendor.p({
       subscription: _ctx.selectedSubscription,
       ["scroll-offset"]: _ctx.uiScrollTop,
@@ -383,17 +384,17 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       ["process-title"]: _ctx.processTitle
     })
   } : _ctx.activeView === "form" ? {
-    aS: common_vendor.o(($event) => _ctx.goBackView(_ctx.editingId ? "detail" : "home"), "e9"),
-    aT: common_vendor.o(_ctx.applyTemplate, "3b"),
-    aU: common_vendor.o(($event) => _ctx.form.category = $event, "62"),
-    aV: common_vendor.o(($event) => _ctx.form.currency = $event, "81"),
-    aW: common_vendor.o(_ctx.changeCycle, "94"),
-    aX: common_vendor.o(($event) => _ctx.form.payment = $event, "2c"),
-    aY: common_vendor.o(($event) => _ctx.form.nextBillingDate = $event, "b1"),
-    aZ: common_vendor.o(($event) => _ctx.form.autoRenew = $event, "b1"),
-    ba: common_vendor.o(_ctx.setTrial, "2a"),
-    bb: common_vendor.o(($event) => _ctx.form.trialEndDate = $event, "01"),
-    bc: common_vendor.o(_ctx.toggleReminder, "0f"),
+    aS: common_vendor.o(($event) => _ctx.goBackView(_ctx.editingId ? "detail" : "home"), "8f"),
+    aT: common_vendor.o(_ctx.applyTemplate, "ef"),
+    aU: common_vendor.o(($event) => _ctx.form.category = $event, "af"),
+    aV: common_vendor.o(($event) => _ctx.form.currency = $event, "52"),
+    aW: common_vendor.o(_ctx.changeCycle, "54"),
+    aX: common_vendor.o(($event) => _ctx.form.payment = $event, "3b"),
+    aY: common_vendor.o(($event) => _ctx.form.nextBillingDate = $event, "0e"),
+    aZ: common_vendor.o(($event) => _ctx.form.autoRenew = $event, "4c"),
+    ba: common_vendor.o(_ctx.setTrial, "78"),
+    bb: common_vendor.o(($event) => _ctx.form.trialEndDate = $event, "47"),
+    bc: common_vendor.o(_ctx.toggleReminder, "2a"),
     bd: common_vendor.p({
       ["editing-id"]: _ctx.editingId,
       ["scroll-offset"]: _ctx.uiScrollTop,
@@ -415,9 +416,9 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       ["days-text"]: _ctx.daysText
     })
   } : _ctx.activeView === "reminder-settings" ? {
-    bf: common_vendor.o(($event) => _ctx.goBackView("profile"), "4e"),
-    bg: common_vendor.o(_ctx.toggleDefaultReminder, "e7"),
-    bh: common_vendor.o(($event) => _ctx.updateSetting($event.key, $event.value), "50"),
+    bf: common_vendor.o(($event) => _ctx.goBackView("profile"), "d6"),
+    bg: common_vendor.o(_ctx.toggleDefaultReminder, "e1"),
+    bh: common_vendor.o(($event) => _ctx.updateSetting($event.key, $event.value), "51"),
     bi: common_vendor.p({
       ["reminder-options"]: _ctx.reminderOptions,
       settings: _ctx.settings
@@ -438,11 +439,11 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     bk: _ctx.scrollTop,
     bl: _ctx.dataReady && _ctx.showTabBar && !_ctx.mutating,
     bm: _ctx.refreshing,
-    bn: common_vendor.o((...args) => _ctx.refreshFromGesture && _ctx.refreshFromGesture(...args), "8b"),
-    bo: common_vendor.o(($event) => _ctx.uiScrollTop = $event.detail.scrollTop, "56"),
+    bn: common_vendor.o((...args) => _ctx.refreshFromGesture && _ctx.refreshFromGesture(...args), "3e"),
+    bo: common_vendor.o(($event) => _ctx.uiScrollTop = $event.detail.scrollTop, "15"),
     bp: _ctx.dataReady && _ctx.activeView === "form"
   }, _ctx.dataReady && _ctx.activeView === "form" ? {
-    bq: common_vendor.o(($event) => _ctx.saveSubscription(), "30"),
+    bq: common_vendor.o(($event) => _ctx.saveSubscription(), "81"),
     br: common_vendor.p({
       ["editing-id"]: _ctx.editingId,
       busy: _ctx.mutating
@@ -450,8 +451,8 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   } : {}, {
     bs: _ctx.sortSheetVisible
   }, _ctx.sortSheetVisible ? {
-    bt: common_vendor.o(_ctx.closeSortSheet, "69"),
-    bv: common_vendor.o(_ctx.selectSort, "4f"),
+    bt: common_vendor.o(_ctx.closeSortSheet, "f7"),
+    bv: common_vendor.o(_ctx.selectSort, "da"),
     bw: common_vendor.p({
       ["sort-options"]: _ctx.sortOptions,
       ["sort-mode"]: _ctx.sortMode
@@ -459,8 +460,8 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   } : {}, {
     bx: _ctx.showTabBar && _ctx.dataReady
   }, _ctx.showTabBar && _ctx.dataReady ? {
-    by: common_vendor.o(_ctx.switchTab, "25"),
-    bz: common_vendor.o(($event) => _ctx.openForm(), "4c"),
+    by: common_vendor.o(_ctx.switchTab, "ca"),
+    bz: common_vendor.o(($event) => _ctx.openForm(), "95"),
     bA: common_vendor.p({
       tabs: _ctx.tabs,
       ["active-view"]: _ctx.activeView
@@ -469,9 +470,10 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     bB: !_ctx.showTabBar ? 1 : "",
     bC: _ctx.reducedMotion ? 1 : "",
     bD: _ctx.statusBarHeight + "px",
-    bE: common_vendor.o((...args) => _ctx.handleKeyboardAction && _ctx.handleKeyboardAction(...args), "6d")
+    bE: common_vendor.o((...args) => _ctx.handleKeyboardAction && _ctx.handleKeyboardAction(...args), "8b")
   });
 }
-const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-384a1add"]]);
+const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-a355b6de"]]);
 _sfc_main.__runtimeHooks = 6;
 wx.createPage(MiniProgramPage);
+//# sourceMappingURL=../../../.sourcemap/mp-weixin/pages/subscription/index.js.map

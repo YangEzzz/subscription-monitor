@@ -58,7 +58,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     i: $data.switchRevision,
     j: $props.checked,
     k: $props.disabled,
-    l: common_vendor.o((...args) => $options.changeSwitch && $options.changeSwitch(...args), "9c")
+    l: common_vendor.o((...args) => $options.changeSwitch && $options.changeSwitch(...args), "60")
   } : $props.action ? {
     n: common_vendor.p({
       type: "right",
@@ -73,8 +73,9 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     r: $props.disabled,
     s: $props.disabled ? 1 : "",
     t: $props.action && !$props.disabled ? "row-pressed" : "none",
-    v: common_vendor.o(($event) => !$props.disabled && _ctx.$emit("activate"), "c4")
+    v: common_vendor.o(($event) => !$props.disabled && _ctx.$emit("activate"), "b2")
   });
 }
 const Component = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render]]);
 wx.createComponent(Component);
+//# sourceMappingURL=../../../.sourcemap/mp-weixin/components/subscription/SettingsRow.js.map

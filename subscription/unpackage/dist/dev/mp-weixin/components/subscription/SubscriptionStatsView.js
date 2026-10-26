@@ -47,6 +47,7 @@ const _sfc_main = {
     navigationBarHeight: { type: Number, default: 0 },
     currencies: { type: Array, default: () => [] },
     statsCurrency: { type: String, default: "CNY" },
+    exchangeRateNote: { type: String, default: "" },
     statsLabel: { type: String, default: "本月预计支出" },
     statPeriods: { type: Array, default: () => [] },
     statsPeriod: { type: String, default: "month" },
@@ -73,13 +74,13 @@ if (!Math) {
 }
 function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   return common_vendor.e({
-    a: common_vendor.o(($event) => _ctx.$emit("back"), "b6"),
+    a: common_vendor.o(($event) => _ctx.$emit("back"), "3e"),
     b: common_vendor.p({
       title: "统计",
       secondary: true
     }),
-    c: common_vendor.o(($event) => _ctx.$emit("currency-change", $event), "f4"),
-    d: common_vendor.o(($event) => _ctx.$emit("period-change", $event), "47"),
+    c: common_vendor.o(($event) => _ctx.$emit("currency-change", $event), "11"),
+    d: common_vendor.o(($event) => _ctx.$emit("period-change", $event), "89"),
     e: common_vendor.p({
       currencies: $props.currencies,
       ["stats-currency"]: $props.statsCurrency,
@@ -92,7 +93,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     }),
     f: $props.statsSubscriptionCount === 0
   }, $props.statsSubscriptionCount === 0 ? {
-    g: common_vendor.o(($event) => _ctx.$emit("open-form"), "06"),
+    g: common_vendor.o(($event) => _ctx.$emit("open-form"), "78"),
     h: common_vendor.p({
       icon: "wallet",
       title: "暂无可统计的订阅",
@@ -101,7 +102,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     })
   } : {}, {
     i: $props.statsSubscriptionCount > 0
-  }, $props.statsSubscriptionCount > 0 ? {
+  }, $props.statsSubscriptionCount > 0 ? common_vendor.e({
     j: common_vendor.t($options.periodLabel),
     k: common_vendor.p({
       segments: $options.chartCategories,
@@ -131,8 +132,12 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       type: "info-filled",
       size: "20",
       color: "var(--blue)"
-    })
-  } : {});
+    }),
+    p: $props.exchangeRateNote
+  }, $props.exchangeRateNote ? {
+    q: common_vendor.t($props.exchangeRateNote)
+  } : {}) : {});
 }
 const Component = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render]]);
 wx.createComponent(Component);
+//# sourceMappingURL=../../../.sourcemap/mp-weixin/components/subscription/SubscriptionStatsView.js.map

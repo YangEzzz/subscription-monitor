@@ -1,5 +1,6 @@
 import { MemorySubscriptionsRepository } from './repositories/memory-subscriptions.repository';
 import { SubscriptionsService } from './subscriptions.service';
+import { ExchangeRatesService } from './exchange-rates.service';
 
 function createService(): SubscriptionsService {
   return new SubscriptionsService(new MemorySubscriptionsRepository());
@@ -25,6 +26,65 @@ function createInput(index: number) {
 }
 
 describe('SubscriptionsService', () => {
+  it('converts mixed currencies before totals, categories and trends using the global currency', async () => {
+    const fx = new ExchangeRatesService();
+    jest
+      .spyOn(fx, 'snapshot')
+      .mockResolvedValue({
+        base: 'CNY',
+        rates: { CNY: 1, USD: 0.125, HKD: 1, JPY: 20 },
+        date: new Date().toISOString().slice(0, 10),
+        source: 'test',
+      });
+    const service = new SubscriptionsService(
+      new MemorySubscriptionsRepository(),
+      fx,
+    );
+    await service.create('user', { ...createInput(0), amount: 10 });
+    await service.create('user', {
+      ...createInput(1),
+      amount: 24,
+      currency: 'USD',
+      cycle: 'yearly',
+    });
+    await service.create('user', {
+      ...createInput(2),
+      amount: 1000,
+      currency: 'JPY',
+    });
+    const paused = await service.create('user', {
+      ...createInput(3),
+      amount: 999,
+      currency: 'USD',
+    });
+    await service.update('user', String(paused.id), { status: 'paused' });
+    const monthly = await service.stats('user', { period: 'month' });
+    expect(monthly.total).toBe(76);
+    expect(monthly.subscriptionCount).toBe(3);
+    expect(monthly.categoryStats[0].value).toBe(76);
+    expect(monthly.trend.every((item) => item.value === 76)).toBe(true);
+    expect((await service.stats('user', { period: 'year' })).total).toBe(912);
+    expect((await service.stats('user', { period: 'next30' })).total).toBe(252);
+    expect((await service.stats('user', { currency: 'USD' })).total).toBe(9.5);
+    await service.updateSettings('user', { defaultCurrency: 'JPY' });
+    expect((await service.stats('user', {})).total).toBe(1520);
+  });
+
+  it('does not fetch rates for same-currency records or return partial totals on rate failure', async () => {
+    const fx = new ExchangeRatesService();
+    const read = jest
+      .spyOn(fx, 'snapshot')
+      .mockRejectedValue(new Error('汇率暂不可用'));
+    const service = new SubscriptionsService(
+      new MemorySubscriptionsRepository(),
+      fx,
+    );
+    await service.create('user', { ...createInput(0), amount: 10 });
+    expect((await service.stats('user', {})).total).toBe(10);
+    expect(read).not.toHaveBeenCalled();
+    await service.create('user', { ...createInput(1), currency: 'USD' });
+    await expect(service.stats('user', {})).rejects.toThrow('汇率暂不可用');
+  });
   it('hides legacy demo records from account reads, quota and statistics', async () => {
     const repository = new MemorySubscriptionsRepository();
     const service = new SubscriptionsService(repository);

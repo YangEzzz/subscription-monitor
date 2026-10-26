@@ -113,3 +113,4 @@ async function request(path, options = {}) {
 }
 exports.ApiError = ApiError;
 exports.request = request;
+//# sourceMappingURL=../../.sourcemap/mp-weixin/api/request.js.map

@@ -13,6 +13,7 @@ import { RemindersController } from './reminders.controller';
 import { SettingsController } from './settings.controller';
 import { SubscriptionsController } from './subscriptions.controller';
 import { SubscriptionsService } from './subscriptions.service';
+import { ExchangeRatesService } from './exchange-rates.service';
 import { MemorySubscriptionsRepository } from './repositories/memory-subscriptions.repository';
 import { PrismaSubscriptionsRepository } from './repositories/prisma-subscriptions.repository';
 import {
@@ -59,6 +60,7 @@ export function createSubscriptionsRepository(
         ),
     },
     SubscriptionsService,
+    ExchangeRatesService,
     MembershipPaymentsService,
     VirtualPayService,
   ],

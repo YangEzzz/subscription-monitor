@@ -160,6 +160,7 @@
           :navigation-bar-height="navigationBarHeight"
           :currencies="currencies"
           :stats-currency="statsCurrency"
+          :exchange-rate-note="exchangeRateNote"
           :stats-label="statsLabel"
           :stat-periods="statPeriods"
           :stats-period="statsPeriod"

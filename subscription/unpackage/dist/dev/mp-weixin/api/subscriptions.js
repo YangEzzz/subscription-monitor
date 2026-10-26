@@ -91,3 +91,4 @@ exports.CYCLES = CYCLES;
 exports.PAYMENTS = PAYMENTS;
 exports.subscriptionApi = subscriptionApi;
 exports.toSubscription = toSubscription;
+//# sourceMappingURL=../../.sourcemap/mp-weixin/api/subscriptions.js.map

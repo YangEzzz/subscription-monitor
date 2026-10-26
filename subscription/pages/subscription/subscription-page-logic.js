@@ -81,7 +81,7 @@ export const subscriptionComputed = {
 			upcoming7() { return this.next30Subscriptions.filter(item => daysUntil(item.nextBillingDate) <= 7) },
 			upcoming30Later() { return this.next30Subscriptions.filter(item => daysUntil(item.nextBillingDate) > 7) },
 			next30TotalText() { return this.formatCurrencyTotals(this.next30Subscriptions, item => Number(item.amount || 0)) },
-			monthlyAverageText() { return this.formatCurrencyTotals(this.liveSubscriptions, item => (item.monthlyEquivalent)) },
+			monthlyAverageText() { return this.formatCurrencyTotals(this.activeSubscriptions, item => (item.monthlyEquivalent)) },
 			actionableReminders() {
 				const list = []
 				const overdue = this.liveSubscriptions.filter(item => !['cancelled','archived','paused'].includes(item.status) && daysUntil(item.nextBillingDate) < 0)
@@ -124,10 +124,10 @@ export const subscriptionComputed = {
 export const subscriptionLifecycle = {
         // 分享固定介绍卡片，避免使用当前页面截图或携带用户订阅参数。
         onShareAppMessage() {
-            return { title: '续订清单｜记录订阅，及时提醒续费', path: '/pages/subscription/index', imageUrl: '/static/share-card.png' }
+            return { title: '续订清单｜记录订阅，及时提醒续费', path: '/pages/subscription/index', imageUrl: '/static/share-card-blue.png' }
         },
         onShareTimeline() {
-            return { title: '续订清单｜记录订阅，及时提醒续费', query: '', imageUrl: '/static/share-card.png' }
+            return { title: '续订清单｜记录订阅，及时提醒续费', query: '', imageUrl: '/static/share-card-blue.png' }
         },
 		async onLoad(options = {}) {
 			this.initNavigationLayout()
@@ -167,16 +167,31 @@ export const subscriptionMethods = {
 			},
 			formatMoney(value, currency = 'CNY') { if (value === null || value === '' || Number.isNaN(Number(value))) return '金额待补充'; return `${CURRENCY_SYMBOLS[currency] || currency + ' '}${Number(value).toFixed(2)}` },
 			formatCurrencyTotals(items, valueGetter) {
-				const totals = items.reduce((map, item) => { const value = Number(valueGetter(item) || 0); if (value) map[item.currency || 'CNY'] = (map[item.currency || 'CNY'] || 0) + value; return map }, {})
-				const entries = Object.keys(totals).map(currency => this.formatMoney(totals[currency], currency))
-				return entries.length ? entries.join(' + ') : this.formatMoney(0, this.settings.defaultCurrency)
+				const result = this.convertedTotal(items, valueGetter)
+				if (!result) return this.statsError ? '汇率暂不可用' : '汇率待更新'
+				return `${result.converted ? '≈ ' : ''}${this.formatMoney(result.total, this.settings.defaultCurrency)}`
+			},
+			convertedTotal(items, valueGetter) {
+				const currency = this.settings.defaultCurrency
+				const snapshot = this.serverStats.month?.exchangeRates
+				const rates = snapshot && Date.now() - Date.parse(snapshot.date) <= 7 * 86400000 ? snapshot.rates : null
+				let total = 0, converted = false
+				for (const item of items) {
+					const value = Number(valueGetter(item) || 0), source = item.currency || 'CNY'
+					if (!Number.isFinite(value) || !value) continue
+					if (source === currency) { total += value; continue }
+					if (!(rates?.[source] > 0) || !(rates?.[currency] > 0)) return null
+					total += value / rates[source] * rates[currency]
+					converted = true
+				}
+				return { total, converted }
 			},
 			formatCompactTotals(items) {
-				const currencies = [...new Set(items.filter(item => item.amount !== null).map(item => item.currency || 'CNY'))]
-				if (!currencies.length) return ''
-				if (currencies.length > 1) return '多币种'
-				const currency = currencies[0], total = items.filter(item => (item.currency || 'CNY') === currency).reduce((sum, item) => sum + Number(item.amount || 0), 0)
-				return `${CURRENCY_SYMBOLS[currency] || currency}${this.compactAmount(total)}`
+				if (!items.some(item => item.amount !== null && item.amount !== undefined && item.amount !== '')) return ''
+				const result = this.convertedTotal(items, item => item.amount)
+				if (!result) return '待换算'
+				const currency = this.settings.defaultCurrency
+				return `${result.converted ? '≈' : ''}${CURRENCY_SYMBOLS[currency] || currency}${this.compactAmount(result.total)}`
 			},
 			compactAmount(value) { const number = Number(value || 0); return number >= 1000 ? `${(number / 1000).toFixed(1)}k` : Math.round(number) },
 			handleKeyboardAction(event) {

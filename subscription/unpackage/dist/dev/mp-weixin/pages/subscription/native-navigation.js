@@ -289,3 +289,4 @@ const nativeNavigation = createNativeNavigation({
   }
 });
 exports.nativeNavigation = nativeNavigation;
+//# sourceMappingURL=../../../.sourcemap/mp-weixin/pages/subscription/native-navigation.js.map
