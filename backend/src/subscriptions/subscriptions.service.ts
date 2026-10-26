@@ -15,6 +15,8 @@ import {
 import { CreateSubscriptionDto } from './dto/create-subscription.dto';
 import { QuerySubscriptionDto } from './dto/query-subscription.dto';
 import { StatsQueryDto } from './dto/stats-query.dto';
+import { HistoryQueryDto } from './dto/history-query.dto';
+import { spendingHistory } from './domain/spending-history';
 import { UpdateSettingsDto } from './dto/update-settings.dto';
 import { UpdateSubscriptionDto } from './dto/update-subscription.dto';
 import {
@@ -611,6 +613,25 @@ export class SubscriptionsService {
       await repository.saveSubscription(record);
       return this.toPublic(record);
     });
+  }
+
+  async history(userId: string | undefined, query: HistoryQueryDto) {
+    const owner = this.normalizeUserId(userId);
+    const settings = await this.getSettingsRecord(owner);
+    const parts = new Intl.DateTimeFormat('en', {
+      timeZone: settings.timezone,
+      year: 'numeric',
+      month: '2-digit',
+    }).formatToParts(new Date());
+    const month =
+      query.month ??
+      `${parts.find((part) => part.type === 'year')!.value}-${parts.find((part) => part.type === 'month')!.value}`;
+    return spendingHistory(
+      await this.ownedRecords(owner),
+      month,
+      (query.currency ?? settings.defaultCurrency).toUpperCase(),
+      query.page ?? 1,
+    );
   }
 
   async stats(userId: string | undefined, query: StatsQueryDto) {

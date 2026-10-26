@@ -5,10 +5,32 @@ const PageHeader = () => "./PageHeader.js";
 const DonutChart = () => "./DonutChart.js";
 const StatSummaryCard = () => "./StatSummaryCard.js";
 const EmptyStateView = () => "./EmptyStateView.js";
+const SpendingHistoryView = () => "./SpendingHistoryView.js";
+const UiSelection = () => "./UiSelection.js";
+const AsyncStateView = () => "./AsyncStateView.js";
+const UiSkeleton = () => "./UiSkeleton.js";
 const _sfc_main = {
   name: "SubscriptionStatsView",
-  components: { StatSummaryCard, EmptyStateView, PageHeader, DonutChart },
-  emits: ["currency-change", "period-change", "open-form", "back"],
+  components: {
+    StatSummaryCard,
+    EmptyStateView,
+    PageHeader,
+    DonutChart,
+    SpendingHistoryView,
+    UiSelection,
+    AsyncStateView,
+    UiSkeleton
+  },
+  emits: [
+    "currency-change",
+    "period-change",
+    "open-form",
+    "back",
+    "mode-change",
+    "month-change",
+    "open-detail",
+    "retry-estimates"
+  ],
   computed: {
     chartTrend() {
       const max = Math.max(
@@ -43,6 +65,11 @@ const _sfc_main = {
     }
   },
   props: {
+    mode: { type: String, default: "history" },
+    historyMonth: { type: String, required: true },
+    historyRevision: { type: Array, default: () => [] },
+    loading: { type: Boolean, default: false },
+    loadingError: { type: String, default: "" },
     categoryOrder: { type: Array, default: () => [] },
     navigationBarHeight: { type: Number, default: 0 },
     currencies: { type: Array, default: () => [] },
@@ -62,11 +89,15 @@ const _sfc_main = {
 };
 if (!Array) {
   const _component_page_header = common_vendor.resolveComponent("page-header");
+  const _component_ui_selection = common_vendor.resolveComponent("ui-selection");
+  const _component_spending_history_view = common_vendor.resolveComponent("spending-history-view");
+  const _component_async_state_view = common_vendor.resolveComponent("async-state-view");
+  const _component_ui_skeleton = common_vendor.resolveComponent("ui-skeleton");
   const _component_stat_summary_card = common_vendor.resolveComponent("stat-summary-card");
   const _component_empty_state_view = common_vendor.resolveComponent("empty-state-view");
   const _component_donut_chart = common_vendor.resolveComponent("donut-chart");
   const _easycom_uni_icons2 = common_vendor.resolveComponent("uni-icons");
-  (_component_page_header + _component_stat_summary_card + _component_empty_state_view + _component_donut_chart + _easycom_uni_icons2)();
+  (_component_page_header + _component_ui_selection + _component_spending_history_view + _component_async_state_view + _component_ui_skeleton + _component_stat_summary_card + _component_empty_state_view + _component_donut_chart + _easycom_uni_icons2)();
 }
 const _easycom_uni_icons = () => "../../uni_modules/uni-icons/components/uni-icons/uni-icons.js";
 if (!Math) {
@@ -74,14 +105,61 @@ if (!Math) {
 }
 function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   return common_vendor.e({
-    a: common_vendor.o(($event) => _ctx.$emit("back"), "3e"),
+    a: common_vendor.o(($event) => _ctx.$emit("back"), "8a"),
     b: common_vendor.p({
       title: "统计",
       secondary: true
     }),
-    c: common_vendor.o(($event) => _ctx.$emit("currency-change", $event), "11"),
-    d: common_vendor.o(($event) => _ctx.$emit("period-change", $event), "89"),
-    e: common_vendor.p({
+    c: common_vendor.o(($event) => _ctx.$emit("mode-change", $event), "9d"),
+    d: common_vendor.p({
+      options: [{
+        value: "history",
+        label: "历史支出"
+      }, {
+        value: "estimate",
+        label: "支出估算"
+      }],
+      ["model-value"]: $props.mode,
+      variant: "segmented",
+      label: "统计类型"
+    }),
+    e: $props.mode === "history"
+  }, $props.mode === "history" ? {
+    f: common_vendor.o(($event) => _ctx.$emit("month-change", $event), "4e"),
+    g: common_vendor.o(($event) => _ctx.$emit("currency-change", $event), "26"),
+    h: common_vendor.o(($event) => _ctx.$emit("open-detail", $event), "cf"),
+    i: common_vendor.p({
+      month: $props.historyMonth,
+      currency: $props.statsCurrency,
+      currencies: $props.currencies,
+      revision: $props.historyRevision,
+      ["format-money"]: $props.formatMoney,
+      ["compact-amount"]: $props.compactAmount
+    })
+  } : common_vendor.e({
+    j: $props.loadingError
+  }, $props.loadingError ? {
+    k: common_vendor.o(($event) => _ctx.$emit("retry-estimates"), "39"),
+    l: common_vendor.p({
+      compact: true,
+      title: "统计暂时不可用",
+      description: $props.loadingError,
+      busy: $props.loading,
+      ["action-label"]: "重试统计"
+    })
+  } : {}, {
+    m: $props.loading
+  }, $props.loading ? {
+    n: common_vendor.p({
+      variant: "hero"
+    }),
+    o: common_vendor.p({
+      variant: "chart"
+    })
+  } : !$props.loadingError ? common_vendor.e({
+    q: common_vendor.o(($event) => _ctx.$emit("currency-change", $event), "ee"),
+    r: common_vendor.o(($event) => _ctx.$emit("period-change", $event), "d7"),
+    s: common_vendor.p({
       currencies: $props.currencies,
       ["stats-currency"]: $props.statsCurrency,
       ["stats-label"]: $props.statsLabel,
@@ -91,24 +169,24 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       ["stats-subscription-count"]: $props.statsSubscriptionCount,
       ["format-money"]: $props.formatMoney
     }),
-    f: $props.statsSubscriptionCount === 0
+    t: $props.statsSubscriptionCount === 0
   }, $props.statsSubscriptionCount === 0 ? {
-    g: common_vendor.o(($event) => _ctx.$emit("open-form"), "78"),
-    h: common_vendor.p({
+    v: common_vendor.o(($event) => _ctx.$emit("open-form"), "aa"),
+    w: common_vendor.p({
       icon: "wallet",
       title: "暂无可统计的订阅",
       description: "添加包含金额的有效订阅后，这里会显示分类和趋势",
       ["action-label"]: "新增订阅"
     })
   } : {}, {
-    i: $props.statsSubscriptionCount > 0
+    x: $props.statsSubscriptionCount > 0
   }, $props.statsSubscriptionCount > 0 ? common_vendor.e({
-    j: common_vendor.t($options.periodLabel),
-    k: common_vendor.p({
+    y: common_vendor.t($options.periodLabel),
+    z: common_vendor.p({
       segments: $options.chartCategories,
       title: $options.periodLabel
     }),
-    l: common_vendor.f($options.chartCategories, (item, k0, i0) => {
+    A: common_vendor.f($options.chartCategories, (item, k0, i0) => {
       return {
         a: item.color,
         b: common_vendor.t(item.name),
@@ -119,8 +197,8 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
         g: item.name
       };
     }),
-    m: common_vendor.t($props.statsCurrency),
-    n: common_vendor.f($options.chartTrend, (bar, k0, i0) => {
+    B: common_vendor.t($props.statsCurrency),
+    C: common_vendor.f($options.chartTrend, (bar, k0, i0) => {
       return {
         a: common_vendor.t($props.compactAmount(bar.value)),
         b: bar.plotHeight + "%",
@@ -128,15 +206,17 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
         d: bar.month
       };
     }),
-    o: common_vendor.p({
+    D: common_vendor.p({
       type: "info-filled",
       size: "20",
       color: "var(--blue)"
     }),
-    p: $props.exchangeRateNote
+    E: $props.exchangeRateNote
   }, $props.exchangeRateNote ? {
-    q: common_vendor.t($props.exchangeRateNote)
-  } : {}) : {});
+    F: common_vendor.t($props.exchangeRateNote)
+  } : {}) : {}) : {}, {
+    p: !$props.loadingError
+  }));
 }
 const Component = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render]]);
 wx.createComponent(Component);

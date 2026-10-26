@@ -59,6 +59,8 @@ function createSubscriptionPageState() {
     weekdays: ["日", "一", "二", "三", "四", "五", "六"],
     calendarCursor: today.slice(0, 7) + "-01",
     selectedDate: today,
+    statsMode: "history",
+    historyMonth: today.slice(0, 7),
     statsPeriod: "month",
     statsCurrency: "CNY",
     statPeriods: [{ value: "month", label: "月均" }, { value: "year", label: "年度" }, { value: "next", label: "未来30天" }],

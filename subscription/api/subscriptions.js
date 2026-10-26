@@ -59,6 +59,7 @@ export const subscriptionApi = {
 	updateSettings: data => request('/settings', { method: 'PATCH', data }),
 	membership: () => request('/membership'),
 	stats: (period, currency) => request('/dashboard/stats', { query: { period, currency } }),
+	history: (month, currency, page = 1) => request('/dashboard/history', { query: { month, currency, page } }),
 	reminders: () => request('/reminders', { query: { days: 30 } }),
 	catalog: () => request('/catalog')
 }

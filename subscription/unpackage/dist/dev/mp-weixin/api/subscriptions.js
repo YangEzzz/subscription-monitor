@@ -83,6 +83,7 @@ const subscriptionApi = {
   updateSettings: (data) => api_request.request("/settings", { method: "PATCH", data }),
   membership: () => api_request.request("/membership"),
   stats: (period, currency) => api_request.request("/dashboard/stats", { query: { period, currency } }),
+  history: (month, currency, page = 1) => api_request.request("/dashboard/history", { query: { month, currency, page } }),
   reminders: () => api_request.request("/reminders", { query: { days: 30 } }),
   catalog: () => api_request.request("/catalog")
 };

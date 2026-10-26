@@ -5,6 +5,10 @@
     "donut-chart": "./DonutChart",
     "stat-summary-card": "./StatSummaryCard",
     "empty-state-view": "./EmptyStateView",
+    "spending-history-view": "./SpendingHistoryView",
+    "ui-selection": "./UiSelection",
+    "async-state-view": "./AsyncStateView",
+    "ui-skeleton": "./UiSkeleton",
     "uni-icons": "../../uni_modules/uni-icons/components/uni-icons/uni-icons"
   }
 }

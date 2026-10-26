@@ -693,9 +693,12 @@ page {
   color: var(--ink);
   font-weight: 600;
 }
+.selection-tabs {
+  // Keep the gutter outside the viewport so scroll-into-view cannot scroll it away.
+  margin: 0 ui(22);
+}
 .selection-track-tabs {
   gap: ui(22);
-  padding: 0 ui(22);
 }
 .selection-track-tabs .selection-option {
   height: ui(40);

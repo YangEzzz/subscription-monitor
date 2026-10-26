@@ -37,12 +37,6 @@
           >正在登录并整理你的续订清单…</text
         ></view
       >
-      <page-header
-        v-if="activeView === 'stats' && statsError"
-        title="统计"
-        secondary
-        @back="goBackView('home')"
-      />
       <page-header v-if="!dataReady && loadError" title="续订清单" />
       <async-state-view
         v-if="loadError"
@@ -54,7 +48,7 @@
         @action="refreshData"
       />
       <async-state-view
-        v-if="statsError && (activeView === 'stats' || activeView === 'home')"
+        v-if="statsError && activeView === 'home'"
         compact
         title="统计暂时不可用"
         :description="statsErrorDescription"
@@ -71,13 +65,6 @@
         :busy="loading || mutating"
         @action="refreshData"
       />
-      <view v-if="statsLoading && activeView === 'stats'" role="status"
-        ><page-header
-          title="统计"
-          secondary
-          @back="goBackView('home')" /><ui-skeleton
-          variant="hero" /><ui-skeleton variant="chart"
-      /></view>
       <template v-if="dataReady">
         <!-- 首页 -->
         <subscription-home-view
@@ -156,7 +143,12 @@
 
         <!-- 统计 -->
         <subscription-stats-view
-          v-else-if="activeView === 'stats' && !statsLoading && !statsError"
+          v-else-if="activeView === 'stats'"
+          :mode="statsMode"
+          :history-month="historyMonth"
+          :history-revision="subscriptions"
+          :loading="statsLoading"
+          :loading-error="statsErrorDescription"
           :navigation-bar-height="navigationBarHeight"
           :currencies="currencies"
           :stats-currency="statsCurrency"
@@ -173,6 +165,10 @@
           :format-money="formatMoney"
           :compact-amount="compactAmount"
           @back="goBackView('home')"
+          @mode-change="statsMode = $event"
+          @month-change="historyMonth = $event"
+          @open-detail="openDetail"
+          @retry-estimates="refreshStats"
           @currency-change="changeStatsCurrency"
           @period-change="statsPeriod = $event"
           @open-form="openForm"

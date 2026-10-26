@@ -74,6 +74,10 @@ PageHeader 仅读取屏幕与胶囊位置；UiSelection 仅输出 select，不�
 
 ## Dataset and navigation policy
 
+历史支出第一版由 `SpendingHistoryView.vue` + `spending-history.js` 和受认证保护的 `GET /dashboard/history?month=YYYY-MM&currency=CNY&page=1` 拥有。默认本月，按已确认续费记录的 `previousNextBillingDate` 归属月份；使用续费时保存的 amount/currency，排除演示数据，不根据当前价格或周期倒推历史。按原币种分别汇总，分类使用当前订阅分类。无记录和金额未知分别提示，不将未知金额当作零；零元记录计入已确认笔数。
+
+暂停、取消、归档、软删除不移除历史；撤销续费移除相应记录。彻底删除订阅沿用现有级联删除记录的行为，本版不修改数据生命周期。软删除明细保留金额并注明回收站状态，详情入口禁用，需先从回收站恢复。未删除明细可进入订阅详情，返回保留统计模式、月份和币种。历史和估算的加载、空态、错误相互独立，估算汇率失败不影响历史查看。历史明细每页20条，显式加载更多，失败保留已加载明细并重试原页；月份/币种变化清除不匹配旧数据，请求序号与账号校验阻止迟到响应覆盖当前结果。下拉刷新或订阅变化触发历史重读。
+
 新增/编辑的保存栏由各页面入口的根层持有，与 scroll-view 为兄弟节点，固定在屏幕底部并保留安全区；表单内容继续预留底部空间，保存栏不得嵌入滚动容器。
 
 微信新增/编辑使用独立的 pages/subscription/editor 原生入口，仅加载表单、保存后详情及错误状态；首页、统计、会员与个人设置不进入该入口的组件声明。两入口复用 SubscriptionFormView、SubscriptionSaveBar、同一导航桥和业务方法；保存栏始终在各入口 scroll-view 外，网页仍使用 index 内的表单分支。

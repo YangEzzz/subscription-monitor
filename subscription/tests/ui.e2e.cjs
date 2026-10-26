@@ -252,7 +252,7 @@ global.fetch = (url, options) =>
     await page.setViewportSize({ width: 390, height: 844 });
     await noOverflow();
     await shot("list-mobile");
-    await page.locator(".rd-add").click();
+    await page.locator(".dock-add").click();
     await expect(page.locator(".form-page")).toBeVisible();
     await page.getByRole("button", { name: "返回", exact: true }).click();
     await expect(page.locator(".list-page")).toBeVisible();
@@ -382,6 +382,7 @@ global.fetch = (url, options) =>
     await page.locator(".rd-month-arrow").last().click();
     await page.locator(".rd-today").click();
     await tab("统计");
+    await page.getByRole("tab", { name: "支出估算", exact: true }).click();
     await expect(page.locator(".rd-stats-hero")).toBeVisible();
     await noOverflow();
     await shot("stats-320");

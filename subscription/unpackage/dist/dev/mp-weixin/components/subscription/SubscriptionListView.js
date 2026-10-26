@@ -121,28 +121,27 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     }),
     h: common_vendor.o((...args) => $options.clearSearch && $options.clearSearch(...args), "a6")
   } : {}, {
-    i: common_vendor.o(($event) => _ctx.$emit("open-form"), "60"),
-    j: common_vendor.o(($event) => _ctx.$emit("category", $event), "60"),
-    k: common_vendor.p({
+    i: common_vendor.o(($event) => _ctx.$emit("category", $event), "11"),
+    j: common_vendor.p({
       options: $options.categoryOptions,
       ["model-value"]: $props.activeCategory,
       variant: "chips",
       label: "按服务分类筛选，可左右滑动"
     }),
-    l: common_vendor.o(($event) => _ctx.$emit("status", $event), "d2"),
-    m: common_vendor.p({
+    k: common_vendor.o(($event) => _ctx.$emit("status", $event), "ff"),
+    l: common_vendor.p({
       options: $props.statusFilters,
       ["model-value"]: $props.activeStatus,
       variant: "tabs",
       label: "按订阅状态筛选，可左右滑动"
     }),
-    n: common_vendor.t($props.sortLabel),
-    o: common_vendor.t($props.activeStatusLabel),
-    p: common_vendor.t($props.visibleSubscriptions.length),
-    q: common_vendor.o(($event) => _ctx.$emit("choose-sort"), "60"),
-    r: $props.visibleSubscriptions.length
+    m: common_vendor.t($props.sortLabel),
+    n: common_vendor.t($props.activeStatusLabel),
+    o: common_vendor.t($props.visibleSubscriptions.length),
+    p: common_vendor.o(($event) => _ctx.$emit("choose-sort"), "40"),
+    q: $props.visibleSubscriptions.length
   }, $props.visibleSubscriptions.length ? {
-    s: common_vendor.f($props.visibleSubscriptions.slice(0, $data.displayLimit), (item, index, i0) => {
+    r: common_vendor.f($props.visibleSubscriptions.slice(0, $data.displayLimit), (item, index, i0) => {
       return {
         a: item.id,
         b: Math.min(index, 10) * 30 + "ms",
@@ -160,31 +159,31 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       };
     })
   } : {}, {
-    t: $props.visibleSubscriptions.length > $data.displayLimit
+    s: $props.visibleSubscriptions.length > $data.displayLimit
   }, $props.visibleSubscriptions.length > $data.displayLimit ? {
-    v: common_vendor.t($data.displayLimit),
-    w: common_vendor.t($props.visibleSubscriptions.length),
-    x: common_vendor.o(($event) => $data.displayLimit += 20, "cb")
+    t: common_vendor.t($data.displayLimit),
+    v: common_vendor.t($props.visibleSubscriptions.length),
+    w: common_vendor.o(($event) => $data.displayLimit += 20, "d1")
   } : {}, {
-    y: !$props.visibleSubscriptions.length && $props.liveSubscriptions.length
+    x: !$props.visibleSubscriptions.length && $props.liveSubscriptions.length
   }, !$props.visibleSubscriptions.length && $props.liveSubscriptions.length ? {
-    z: common_vendor.o(($event) => _ctx.$emit("reset-filters"), "d2"),
-    A: common_vendor.p({
+    y: common_vendor.o(($event) => _ctx.$emit("reset-filters"), "96"),
+    z: common_vendor.p({
       icon: "search",
       title: "没有匹配的订阅",
       description: "调整搜索词或筛选条件，也可以新增一条订阅",
       ["action-label"]: "重置筛选"
     })
   } : !$props.liveSubscriptions.length ? {
-    C: common_vendor.o(($event) => _ctx.$emit("open-form"), "9b"),
-    D: common_vendor.p({
+    B: common_vendor.o(($event) => _ctx.$emit("open-form"), "df"),
+    C: common_vendor.p({
       icon: "plus",
       title: "还没有添加订阅",
       description: "添加第一条订阅后，这里会显示所有续费项目",
       ["action-label"]: "新增订阅"
     })
   } : {}, {
-    B: !$props.liveSubscriptions.length
+    A: !$props.liveSubscriptions.length
   });
 }
 const Component = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render]]);

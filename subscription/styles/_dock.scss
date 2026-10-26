@@ -30,7 +30,7 @@ page {
   position: absolute;
   left: ui(12);
   right: ui(12);
-  bottom: calc(#{ui(22)} + env(safe-area-inset-bottom));
+  bottom: max(#{ui(12)}, env(safe-area-inset-bottom));
   height: ui(64);
   padding: 0 ui(6);
   display: flex;

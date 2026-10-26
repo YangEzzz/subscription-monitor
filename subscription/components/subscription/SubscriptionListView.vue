@@ -25,17 +25,7 @@
             size="18"
             color="var(--ink-4)"
           /></button></view
-      ><button
-        role="button"
-        tabindex="0"
-        class="btn-soft rd-add pressable"
-        aria-label="新增订阅"
-        hover-class="is-pressed"
-        @tap="$emit('open-form')"
-      >
-        ＋ 新增订阅
-      </button></view
-    >
+    ></view>
     <ui-selection
       :options="categoryOptions"
       :model-value="activeCategory"

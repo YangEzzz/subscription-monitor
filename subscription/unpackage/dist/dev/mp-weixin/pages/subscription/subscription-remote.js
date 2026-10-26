@@ -111,6 +111,9 @@ const remoteMethods = {
     this.notificationRequestId++;
     this.notificationLoading = false;
     this.serverStats = {};
+    this.statsMode = "history";
+    const historyToday = /* @__PURE__ */ new Date();
+    this.historyMonth = `${historyToday.getFullYear()}-${String(historyToday.getMonth() + 1).padStart(2, "0")}`;
     this.serverReminders = [];
     this.statsRequestId++;
     this.statsLoading = false;

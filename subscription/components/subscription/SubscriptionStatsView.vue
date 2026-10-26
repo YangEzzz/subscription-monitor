@@ -1,96 +1,134 @@
 <template>
   <view class="page stats-page redesign-page"
-    ><page-header
-      title="统计"
-      secondary
-      @back="$emit('back')"
-    /><stat-summary-card
-      :currencies="currencies"
-      :stats-currency="statsCurrency"
-      :stats-label="statsLabel"
-      :stat-periods="statPeriods"
-      :stats-period="statsPeriod"
-      :stats-total="statsTotal"
-      :stats-subscription-count="statsSubscriptionCount"
-      :format-money="formatMoney"
-      @currency-change="$emit('currency-change', $event)"
-      @period-change="$emit('period-change', $event)"
-    />
-    <view v-if="statsSubscriptionCount === 0" class="rd-inset"
-      ><empty-state-view
-        icon="wallet"
-        title="暂无可统计的订阅"
-        description="添加包含金额的有效订阅后，这里会显示分类和趋势"
-        action-label="新增订阅"
-        @action="$emit('open-form')"
+    ><page-header title="统计" secondary @back="$emit('back')" />
+    <view class="rd-inset history-mode"
+      ><ui-selection
+        :options="[
+          { value: 'history', label: '历史支出' },
+          { value: 'estimate', label: '支出估算' },
+        ]"
+        :model-value="mode"
+        variant="segmented"
+        label="统计类型"
+        @select="$emit('mode-change', $event)"
     /></view>
-    <template v-if="statsSubscriptionCount > 0"
-      ><view class="card rd-chart-card"
-        ><view class="rd-chart-head"
-          ><text class="card-title">分类构成</text
-          ><text class="pill gray">{{ periodLabel }}</text></view
-        ><view class="rd-category-body"
-          ><donut-chart :segments="chartCategories" :title="periodLabel" /><view
-            class="rd-legend"
-            ><view
-              v-for="item in chartCategories"
-              :key="item.name"
-              class="rd-legend-row"
-              ><view class="rd-legend-top"
+    <spending-history-view
+      v-if="mode === 'history'"
+      :month="historyMonth"
+      :currency="statsCurrency"
+      :currencies="currencies"
+      :revision="historyRevision"
+      :format-money="formatMoney"
+      :compact-amount="compactAmount"
+      @month-change="$emit('month-change', $event)"
+      @currency-change="$emit('currency-change', $event)"
+      @open-detail="$emit('open-detail', $event)"
+    />
+    <template v-else>
+      <async-state-view
+        v-if="loadingError"
+        compact
+        title="统计暂时不可用"
+        :description="loadingError"
+        :busy="loading"
+        action-label="重试统计"
+        @action="$emit('retry-estimates')"
+      />
+      <view v-if="loading" role="status"
+        ><ui-skeleton variant="hero" /><ui-skeleton variant="chart"
+      /></view>
+      <template v-else-if="!loadingError">
+        <stat-summary-card
+          :currencies="currencies"
+          :stats-currency="statsCurrency"
+          :stats-label="statsLabel"
+          :stat-periods="statPeriods"
+          :stats-period="statsPeriod"
+          :stats-total="statsTotal"
+          :stats-subscription-count="statsSubscriptionCount"
+          :format-money="formatMoney"
+          @currency-change="$emit('currency-change', $event)"
+          @period-change="$emit('period-change', $event)"
+        />
+        <view v-if="statsSubscriptionCount === 0" class="rd-inset"
+          ><empty-state-view
+            icon="wallet"
+            title="暂无可统计的订阅"
+            description="添加包含金额的有效订阅后，这里会显示分类和趋势"
+            action-label="新增订阅"
+            @action="$emit('open-form')"
+        /></view>
+        <template v-if="statsSubscriptionCount > 0"
+          ><view class="card rd-chart-card"
+            ><view class="rd-chart-head"
+              ><text class="card-title">分类构成</text
+              ><text class="pill gray">{{ periodLabel }}</text></view
+            ><view class="rd-category-body"
+              ><donut-chart
+                :segments="chartCategories"
+                :title="periodLabel" /><view class="rd-legend"
                 ><view
-                  class="rd-legend-dot"
-                  :style="{ backgroundColor: item.color }"
-                ></view
-                ><text class="rd-legend-name">{{ item.name }}</text
-                ><text class="rd-legend-percent num"
-                  >{{ item.percent }}%</text
-                ></view
-              ><text class="rd-legend-value num">{{
-                formatMoney(item.value, statsCurrency)
-              }}</text
-              ><view class="rd-legend-track"
-                ><view
-                  class="rd-legend-fill"
-                  :style="{
-                    width: item.percent + '%',
-                    backgroundColor: item.color,
-                  }"
-                ></view></view></view></view></view
-      ></view>
-      <view class="card rd-chart-card"
-        ><view class="rd-chart-head"
-          ><view
-            ><text class="card-title">未来支出估算</text
-            ><text class="rd-chart-sub">按当前月均估算（6个月）</text></view
-          ><text class="pill gray">币种：{{ statsCurrency }}</text></view
-        ><view class="rd-bars"
-          ><view
-            v-for="bar in chartTrend"
-            :key="bar.month"
-            class="rd-bar-column"
-            ><view class="rd-bar-track"
+                  v-for="item in chartCategories"
+                  :key="item.name"
+                  class="rd-legend-row"
+                  ><view class="rd-legend-top"
+                    ><view
+                      class="rd-legend-dot"
+                      :style="{ backgroundColor: item.color }"
+                    ></view
+                    ><text class="rd-legend-name">{{ item.name }}</text
+                    ><text class="rd-legend-percent num"
+                      >{{ item.percent }}%</text
+                    ></view
+                  ><text class="rd-legend-value num">{{
+                    formatMoney(item.value, statsCurrency)
+                  }}</text
+                  ><view class="rd-legend-track"
+                    ><view
+                      class="rd-legend-fill"
+                      :style="{
+                        width: item.percent + '%',
+                        backgroundColor: item.color,
+                      }"
+                    ></view></view></view></view></view
+          ></view>
+          <view class="card rd-chart-card"
+            ><view class="rd-chart-head"
               ><view
-                class="rd-bar-fill"
-                :style="{ height: bar.plotHeight + '%' }"
-                ><text class="rd-bar-value num">{{
-                  compactAmount(bar.value)
-                }}</text></view
+                ><text class="card-title">未来支出估算</text
+                ><text class="rd-chart-sub">按当前月均估算（6个月）</text></view
+              ><text class="pill gray">币种：{{ statsCurrency }}</text></view
+            ><view class="rd-bars"
+              ><view
+                v-for="bar in chartTrend"
+                :key="bar.month"
+                class="rd-bar-column"
+                ><view class="rd-bar-track"
+                  ><view
+                    class="rd-bar-fill"
+                    :style="{ height: bar.plotHeight + '%' }"
+                    ><text class="rd-bar-value num">{{
+                      compactAmount(bar.value)
+                    }}</text></view
+                  ></view
+                ><text class="rd-bar-month num">{{ bar.month }}</text></view
               ></view
-            ><text class="rd-bar-month num">{{ bar.month }}</text></view
-          ></view
-        ></view
-      >
-      <view class="card rd-insight"
-        ><uni-icons type="info-filled" size="20" color="var(--blue)" /><view
-          ><text class="rd-insight-title">先确认金额，再看估算</text
-          ><text class="rd-insight-copy"
-            >不同币种按参考汇率统一折算，结果仅供支出估算。未填写金额的订阅不计入，可在详情中补充。</text
-          ><text v-if="exchangeRateNote" class="rd-insight-copy">{{ exchangeRateNote }}</text
-          ></view
-        ></view
-      ></template
-    ></view
-  >
+            ></view
+          >
+          <view class="card rd-insight"
+            ><uni-icons type="info-filled" size="20" color="var(--blue)" /><view
+              ><text class="rd-insight-title">先确认金额，再看估算</text
+              ><text class="rd-insight-copy"
+                >不同币种按参考汇率统一折算，结果仅供支出估算。未填写金额的订阅不计入，可在详情中补充。</text
+              ><text v-if="exchangeRateNote" class="rd-insight-copy">{{
+                exchangeRateNote
+              }}</text></view
+            ></view
+          ></template
+        >
+      </template>
+    </template>
+  </view>
 </template>
 <script>
 import PageHeader from "./PageHeader.vue";
@@ -98,11 +136,33 @@ import DonutChart from "./DonutChart.vue";
 import { UI_COLORS } from "../../styles/ui-palette.js";
 import StatSummaryCard from "./StatSummaryCard.vue";
 import EmptyStateView from "./EmptyStateView.vue";
+import SpendingHistoryView from "./SpendingHistoryView.vue";
+import UiSelection from "./UiSelection.vue";
+import AsyncStateView from "./AsyncStateView.vue";
+import UiSkeleton from "./UiSkeleton.vue";
 
 export default {
   name: "SubscriptionStatsView",
-  components: { StatSummaryCard, EmptyStateView, PageHeader, DonutChart },
-  emits: ["currency-change", "period-change", "open-form", "back"],
+  components: {
+    StatSummaryCard,
+    EmptyStateView,
+    PageHeader,
+    DonutChart,
+    SpendingHistoryView,
+    UiSelection,
+    AsyncStateView,
+    UiSkeleton,
+  },
+  emits: [
+    "currency-change",
+    "period-change",
+    "open-form",
+    "back",
+    "mode-change",
+    "month-change",
+    "open-detail",
+    "retry-estimates",
+  ],
   computed: {
     chartTrend() {
       const max = Math.max(
@@ -143,6 +203,11 @@ export default {
     },
   },
   props: {
+    mode: { type: String, default: "history" },
+    historyMonth: { type: String, required: true },
+    historyRevision: { type: Array, default: () => [] },
+    loading: { type: Boolean, default: false },
+    loadingError: { type: String, default: "" },
     categoryOrder: { type: Array, default: () => [] },
     navigationBarHeight: { type: Number, default: 0 },
     currencies: { type: Array, default: () => [] },

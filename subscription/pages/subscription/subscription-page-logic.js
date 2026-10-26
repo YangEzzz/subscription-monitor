@@ -42,6 +42,7 @@ export function createSubscriptionPageState() {
 					{ value: 'created', label: '按添加时间', desc: '最近添加的订阅排在前面', icon: 'compose' }
 				],
 				weekdays: ['日', '一', '二', '三', '四', '五', '六'], calendarCursor: today.slice(0, 7) + '-01', selectedDate: today,
+				statsMode: 'history', historyMonth: today.slice(0, 7),
 				statsPeriod: 'month', statsCurrency: 'CNY', statPeriods: [{ value: 'month', label: '月均' }, { value: 'year', label: '年度' }, { value: 'next', label: '未来30天' }],
 				selectedId: null, detailLoading: false, detailError: '', detailRequestId: 0, detailRequestCancel: null, editingId: null, originalBillingDate: null, formError: '', formBaseline: '',
 				categories: [],
