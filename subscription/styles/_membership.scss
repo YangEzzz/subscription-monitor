@@ -8,6 +8,113 @@
   overflow: hidden;
   box-shadow: var(--shadow-hero);
 }
+.quota-upgrade-hero {
+  margin: 0 30.7692rpx 26.9231rpx;
+  padding: 34.6154rpx;
+  border-radius: 38.4615rpx;
+  background: var(--member-fill);
+  color: var(--surface);
+  box-shadow: var(--shadow-hero);
+}
+.quota-upgrade-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15.3846rpx;
+}
+.quota-upgrade-label {
+  font-size: 23.0769rpx;
+}
+.quota-upgrade-status {
+  padding: 7.6923rpx 11.5385rpx;
+  border-radius: var(--r-full);
+  background: var(--white-highlight);
+  font-size: 19.2308rpx;
+  line-height: 1.4;
+}
+.quota-upgrade-title {
+  display: block;
+  margin-top: 30.7692rpx;
+  font-size: 46.1538rpx;
+  line-height: 1.45;
+  font-weight: 700;
+}
+.quota-upgrade-accent {
+  color: var(--member-gold);
+}
+.quota-upgrade-copy {
+  display: block;
+  margin-top: 11.5385rpx;
+  font-size: 25rpx;
+  line-height: 1.7;
+}
+.quota-upgrade-meter {
+  display: flex;
+  align-items: center;
+  gap: 23.0769rpx;
+  margin-top: 26.9231rpx;
+  padding-top: 23.0769rpx;
+  border-top: 1px solid var(--white-highlight);
+}
+.quota-upgrade-number,
+.quota-upgrade-infinity {
+  display: block;
+  font-size: 69.2308rpx;
+  line-height: 1.1;
+  font-weight: 700;
+}
+.quota-upgrade-infinity {
+  color: var(--member-gold);
+}
+.quota-upgrade-count-label {
+  display: block;
+  margin-top: 7.6923rpx;
+  font-size: 21.1538rpx;
+  line-height: 1.5;
+}
+.quota-upgrade-progress {
+  flex: 1;
+  min-width: 0;
+  height: 7.6923rpx;
+  border-radius: var(--r-full);
+  background: var(--white-highlight);
+  overflow: hidden;
+}
+.quota-upgrade-progress-fill {
+  height: 100%;
+  background: var(--member-gold);
+}
+.quota-upgrade-resume.membership-primary {
+  width: calc(100% - 61.5384rpx);
+  margin: 0 30.7692rpx 26.9231rpx;
+}
+.quota-upgrade-alternative {
+  margin: 19.2308rpx 30.7692rpx 26.9231rpx;
+}
+.quota-upgrade-defer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 44px;
+  margin: 0;
+  padding: 11.5385rpx;
+  border: 0;
+  background: transparent;
+  color: var(--ink-2);
+  font-size: 25rpx;
+  line-height: 1.5;
+}
+.quota-upgrade-defer::after {
+  border: 0;
+}
+.quota-upgrade-free-note {
+  display: block;
+  color: var(--ink-3);
+  font-size: 23.0769rpx;
+  line-height: 1.7;
+  text-align: center;
+}
 .club-pass::before {
   content: "";
   position: absolute;

@@ -1,60 +1,68 @@
 <template>
   <view class="spending-history">
     <view class="history-toolbar rd-inset">
-      <button
-        class="history-month-arrow btn-ghost pressable"
-        aria-label="上一个月"
-        hover-class="is-pressed"
-        @tap="selectMonth(shiftMonth(month, -1))"
-      >
-        ‹
-      </button>
-      <picker
-        mode="date"
-        fields="month"
-        :value="month"
-        :end="todayMonth"
-        @change="selectMonth($event.detail.value)"
-      >
-        <view
-          class="history-month pressable"
-          role="button"
-          :aria-label="'选择支出月份，当前' + month"
-          >{{ monthLabel }} <text class="history-picker-caret">▾</text></view
+      <view class="history-month-controls">
+        <button
+          class="history-month-arrow pressable"
+          aria-label="上一个月"
+          hover-class="is-pressed"
+          @tap="selectMonth(shiftMonth(month, -1))"
         >
-      </picker>
-      <button
-        class="history-month-arrow btn-ghost pressable"
-        aria-label="下一个月"
-        :disabled="month >= todayMonth"
-        hover-class="is-pressed"
-        @tap="selectMonth(shiftMonth(month, 1))"
-      >
-        ›
-      </button>
-      <button
-        v-if="month !== todayMonth"
-        class="history-today btn-ghost pressable"
-        hover-class="is-pressed"
-        @tap="selectMonth(todayMonth)"
-      >
-        本月
-      </button>
-    </view>
-    <view class="history-currency-row rd-inset">
-      <text class="history-note">按账期归属月份 · 原币种统计</text>
+          <view class="history-month-icon"
+            ><uni-icons type="left" size="18" color="var(--ink-2)"
+          /></view>
+        </button>
+        <picker
+          class="history-month-picker"
+          mode="date"
+          fields="month"
+          :value="month"
+          :end="todayMonth"
+          @change="selectMonth($event.detail.value)"
+        >
+          <view
+            class="history-month pressable"
+            role="button"
+            :aria-label="'选择支出月份，当前' + month"
+            >{{ monthLabel }} <text class="history-picker-caret">▾</text></view
+          >
+        </picker>
+        <button
+          class="history-month-arrow pressable"
+          :class="{ 'history-month-arrow-disabled': month >= todayMonth }"
+          aria-label="下一个月"
+          :disabled="month >= todayMonth"
+          hover-class="is-pressed"
+          @tap="selectMonth(shiftMonth(month, 1))"
+        >
+          <view class="history-month-icon"
+            ><uni-icons type="right" size="18" color="var(--ink-2)"
+          /></view>
+        </button>
+      </view>
       <picker
         :range="currencyOptions"
         :value="currencyOptions.indexOf(currency)"
         @change="$emit('currency-change', currencyOptions[$event.detail.value])"
       >
         <view
-          class="rd-currency pressable"
+          class="history-currency pressable"
           role="button"
           aria-label="选择历史支出币种"
           >{{ currency }} ▾</view
         >
       </picker>
+    </view>
+    <view class="history-caption-row rd-inset">
+      <text class="history-note">按账期归属月份 · 原币种统计</text>
+      <button
+        v-if="month !== todayMonth"
+        class="history-today btn-ghost pressable"
+        hover-class="is-pressed"
+        @tap="selectMonth(todayMonth)"
+      >
+        回到本月
+      </button>
     </view>
     <async-state-view
       v-if="error"
@@ -70,9 +78,7 @@
     /></view>
     <template v-if="result">
       <view class="card hero rd-stats-hero history-summary">
-        <text class="rd-eyebrow"
-          >{{ monthLabel }}已记录支出 · {{ currency }}</text
-        >
+        <text class="rd-eyebrow">已记录支出 · {{ currency }}</text>
         <display-amount
           v-if="result.count > result.unknownCount"
           :value="formatMoney(result.total, currency)"
@@ -85,10 +91,7 @@
             · {{ result.unknownCount }} 笔金额未填写，未计入总额</text
           ></text
         >
-        <view
-          v-if="result.totalsByCurrency.length"
-          class="history-currency-totals"
-        >
+        <view v-if="showCurrencyBreakdown" class="history-currency-totals">
           <button
             v-for="group in result.totalsByCurrency"
             :key="group.currency"
@@ -237,7 +240,7 @@
           ><text class="rd-insight-copy"
             >按账期月份归属，补确认仍计入原账期。未确认的扣费不计入；不同币种分别统计，不做换汇。分类采用订阅当前分类。</text
           ><text class="rd-insight-copy"
-            >暂停、取消和移入回收站不影响已记录支出；撤销续费会移除对应记录，彻底删除订阅也会删除其历史记录。</text
+            >删除订阅只会移入回收站，已确认的历史账单仍会保留；恢复订阅不会重复记账。撤销续费会移除对应账单。</text
           ></view
         ></view
       >
@@ -286,6 +289,13 @@ export default {
     };
   },
   computed: {
+    showCurrencyBreakdown() {
+      return (
+        this.result?.totalsByCurrency.some(
+          (group) => group.currency !== this.currency,
+        ) || false
+      );
+    },
     monthLabel() {
       const [year, month] = this.month.split("-");
       return `${year}年${Number(month)}月`;

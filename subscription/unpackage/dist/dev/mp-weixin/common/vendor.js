@@ -7276,7 +7276,7 @@ const UNI_CONSOLE_RUNTIME_PROMISE = "__uni_console_runtime_promise__";
 function initRuntimeSocketService() {
   const hosts = "172.31.17.7,127.0.0.1";
   const port = "8090";
-  const id = "mp-weixin_cbCbCv";
+  const id = "mp-weixin_y0tsk0";
   const runtimeGlobal = getRuntimeGlobal();
   const existingPromise = runtimeGlobal === null || runtimeGlobal === void 0 ? void 0 : runtimeGlobal[UNI_CONSOLE_RUNTIME_PROMISE];
   if (existingPromise) {

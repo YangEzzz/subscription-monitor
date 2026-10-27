@@ -99,6 +99,22 @@ function harness(extraRuntime = {}) {
   };
 }
 
+test("quota recommendations use the index page and preserve a covered editor draft on back", () => {
+  const h = harness();
+  h.root.activeView = "form";
+  h.root.form = { name: "第十一个订阅", amount: "18", reminders: [1] };
+  h.root.formBaseline = "{}";
+  h.bridge.push(h.root, "membership");
+  assert.match(h.request().url, /pages\/subscription\/index\?/);
+  assert.equal(h.root.activeView, "form");
+  const recommendation = h.completePush();
+  assert.equal(recommendation.activeView, "membership");
+  h.pop();
+  assert.equal(h.root.activeView, "form");
+  assert.equal(h.root.form.name, "第十一个订阅");
+  assert.equal(h.root.form.amount, "18");
+});
+
 test("internal pages create native history and system back restores the previous view", () => {
   const h = harness();
   h.root.selectedId = "subscription-a";

@@ -4,6 +4,36 @@ const api_membership = require("../../api/membership.js");
 const api_auth = require("../../api/auth.js");
 const requestKey = () => "mp_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 14).padEnd(12, "0");
 const membershipMethods = {
+  openMembership(reason = "general") {
+    if (!this.membershipEntryEnabled)
+      return;
+    this.membershipEntryReason = reason === "quota" ? "quota" : "general";
+    if (this.membershipEntryReason !== "quota")
+      this.membershipIntent = null;
+    this.navigateToView("membership");
+    void this.loadMembershipOrders();
+  },
+  showMembershipLimit(intent) {
+    this.membershipIntent = intent || (this.activeView === "form" && !this.editingId ? { kind: "draft" } : { kind: "manage" });
+    if (this.membershipEntryEnabled)
+      return this.openMembership("quota");
+    common_vendor.index.showModal({
+      title: "免费额度已用完",
+      content: `当前账号最多保存 ${this.subscriptionLimit} 条订阅。可删除不再使用的订阅释放额度，历史账单会保留。`,
+      showCancel: false,
+      confirmText: "知道了"
+    });
+  },
+  resumeMembershipCreation() {
+    if (this.membershipBusy || this.membershipLoading || this.membershipError || !this.canCreateSubscription)
+      return;
+    const intent = this.membershipIntent;
+    this.membershipIntent = null;
+    if ((intent == null ? void 0 : intent.kind) === "new")
+      this.openForm(intent.date, null, intent.initialValues);
+    else
+      this.goBackView("all");
+  },
   async refundMembershipOrder() {
     var _a;
     if (this.membershipError || ((_a = this.membershipOrder) == null ? void 0 : _a.status) !== "paid")

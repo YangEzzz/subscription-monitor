@@ -130,6 +130,7 @@ if (!Array) {
   (_component_page_header + _component_ui_skeleton + _component_async_state_view + _component_subscription_home_view + _component_subscription_list_view + _component_subscription_calendar_view + _component_subscription_stats_view + _component_subscription_profile_view + _component_subscription_about_view + _component_membership_view + _component_subscription_detail_load_state + _component_subscription_detail_view + _component_subscription_form_view + _component_reminder_settings_view + _component_subscription_save_bar + _component_subscription_sort_sheet + _component_subscription_tab_bar)();
 }
 function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
+  var _a;
   return common_vendor.e({
     a: _ctx.activeView === "form" ? 1 : "",
     b: _ctx.statusBarHeight + "px",
@@ -318,14 +319,17 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     ao: common_vendor.o(($event) => _ctx.goBackView("profile"), "25"),
     ap: common_vendor.o(_ctx.showPrivacy, "12")
   } : _ctx.activeView === "membership" && _ctx.membershipEntryEnabled ? {
-    ar: common_vendor.o(_ctx.beginMembershipPurchase, "4d"),
-    as: common_vendor.o(_ctx.payMembershipOrder, "ee"),
-    at: common_vendor.o(_ctx.simulateMembershipPayment, "1a"),
-    av: common_vendor.o(_ctx.refundMembershipOrder, "35"),
-    aw: common_vendor.o(_ctx.loadMembershipOrders, "76"),
-    ax: common_vendor.o(_ctx.selectMembershipOrder, "68"),
-    ay: common_vendor.o(($event) => _ctx.goBackView("profile"), "31"),
-    az: common_vendor.p({
+    ar: common_vendor.o(_ctx.beginMembershipPurchase, "b1"),
+    as: common_vendor.o(_ctx.resumeMembershipCreation, "7e"),
+    at: common_vendor.o(_ctx.payMembershipOrder, "82"),
+    av: common_vendor.o(_ctx.simulateMembershipPayment, "e5"),
+    aw: common_vendor.o(_ctx.refundMembershipOrder, "5a"),
+    ax: common_vendor.o(_ctx.loadMembershipOrders, "21"),
+    ay: common_vendor.o(_ctx.selectMembershipOrder, "d2"),
+    az: common_vendor.o(($event) => _ctx.goBackView("profile"), "33"),
+    aA: common_vendor.p({
+      ["quota-prompt"]: _ctx.membershipEntryReason === "quota",
+      ["resume-create"]: ["new", "draft"].includes((_a = _ctx.membershipIntent) == null ? void 0 : _a.kind),
       ["is-member"]: _ctx.isMember,
       ["free-quota-value"]: _ctx.freeQuotaValue,
       ["subscription-limit"]: _ctx.subscriptionLimit,
@@ -338,23 +342,23 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       message: _ctx.membershipMessage
     })
   } : _ctx.activeView === "detail" && (_ctx.detailLoading || _ctx.detailError || !_ctx.selectedSubscription) ? {
-    aB: common_vendor.o(($event) => _ctx.goBackView("all"), "8c"),
-    aC: common_vendor.o(($event) => _ctx.openDetail({
+    aC: common_vendor.o(($event) => _ctx.goBackView("all"), "13"),
+    aD: common_vendor.o(($event) => _ctx.openDetail({
       id: _ctx.selectedId
-    }), "91"),
-    aD: common_vendor.p({
+    }), "61"),
+    aE: common_vendor.p({
       error: _ctx.detailError,
       ["scroll-offset"]: _ctx.uiScrollTop
     })
   } : _ctx.activeView === "detail" && _ctx.selectedSubscription ? {
-    aF: common_vendor.o(($event) => _ctx.goBackView("all"), "1a"),
-    aG: common_vendor.o(_ctx.confirmRenewal, "33"),
-    aH: common_vendor.o(_ctx.undoRenewal, "a1"),
-    aI: common_vendor.o(_ctx.snoozeSubscription, "14"),
-    aJ: common_vendor.o(_ctx.cancelSubscription, "8b"),
-    aK: common_vendor.o(_ctx.showMoreActions, "dc"),
-    aL: common_vendor.o(($event) => _ctx.openForm(null, _ctx.selectedSubscription), "94"),
-    aM: common_vendor.p({
+    aG: common_vendor.o(($event) => _ctx.goBackView("all"), "2c"),
+    aH: common_vendor.o(_ctx.confirmRenewal, "4e"),
+    aI: common_vendor.o(_ctx.undoRenewal, "59"),
+    aJ: common_vendor.o(_ctx.snoozeSubscription, "6b"),
+    aK: common_vendor.o(_ctx.cancelSubscription, "4e"),
+    aL: common_vendor.o(_ctx.showMoreActions, "8a"),
+    aM: common_vendor.o(($event) => _ctx.openForm(null, _ctx.selectedSubscription), "01"),
+    aN: common_vendor.p({
       subscription: _ctx.selectedSubscription,
       ["scroll-offset"]: _ctx.uiScrollTop,
       ["notification-enabled"]: _ctx.notificationReady,
@@ -371,18 +375,18 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       ["process-title"]: _ctx.processTitle
     })
   } : _ctx.activeView === "form" ? {
-    aO: common_vendor.o(($event) => _ctx.goBackView(_ctx.editingId ? "detail" : "home"), "2a"),
-    aP: common_vendor.o(_ctx.applyTemplate, "18"),
-    aQ: common_vendor.o(($event) => _ctx.form.category = $event, "f2"),
-    aR: common_vendor.o(($event) => _ctx.form.currency = $event, "3c"),
-    aS: common_vendor.o(_ctx.changeCycle, "85"),
-    aT: common_vendor.o(($event) => _ctx.form.payment = $event, "53"),
-    aU: common_vendor.o(($event) => _ctx.form.nextBillingDate = $event, "2b"),
-    aV: common_vendor.o(($event) => _ctx.form.autoRenew = $event, "4f"),
-    aW: common_vendor.o(_ctx.setTrial, "b6"),
-    aX: common_vendor.o(($event) => _ctx.form.trialEndDate = $event, "73"),
-    aY: common_vendor.o(_ctx.toggleReminder, "71"),
-    aZ: common_vendor.p({
+    aP: common_vendor.o(($event) => _ctx.goBackView(_ctx.editingId ? "detail" : "home"), "f2"),
+    aQ: common_vendor.o(_ctx.applyTemplate, "69"),
+    aR: common_vendor.o(($event) => _ctx.form.category = $event, "97"),
+    aS: common_vendor.o(($event) => _ctx.form.currency = $event, "56"),
+    aT: common_vendor.o(_ctx.changeCycle, "93"),
+    aU: common_vendor.o(($event) => _ctx.form.payment = $event, "2b"),
+    aV: common_vendor.o(($event) => _ctx.form.nextBillingDate = $event, "e0"),
+    aW: common_vendor.o(($event) => _ctx.form.autoRenew = $event, "00"),
+    aX: common_vendor.o(_ctx.setTrial, "a5"),
+    aY: common_vendor.o(($event) => _ctx.form.trialEndDate = $event, "b0"),
+    aZ: common_vendor.o(_ctx.toggleReminder, "b0"),
+    ba: common_vendor.p({
       ["editing-id"]: _ctx.editingId,
       ["scroll-offset"]: _ctx.uiScrollTop,
       form: _ctx.form,
@@ -403,10 +407,10 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       ["days-text"]: _ctx.daysText
     })
   } : _ctx.activeView === "reminder-settings" ? {
-    bb: common_vendor.o(($event) => _ctx.goBackView("profile"), "73"),
-    bc: common_vendor.o(_ctx.toggleDefaultReminder, "e2"),
-    bd: common_vendor.o(($event) => _ctx.updateSetting($event.key, $event.value), "4e"),
-    be: common_vendor.p({
+    bc: common_vendor.o(($event) => _ctx.goBackView("profile"), "79"),
+    bd: common_vendor.o(_ctx.toggleDefaultReminder, "bd"),
+    be: common_vendor.o(($event) => _ctx.updateSetting($event.key, $event.value), "22"),
+    bf: common_vendor.p({
       ["reminder-options"]: _ctx.reminderOptions,
       settings: _ctx.settings
     })
@@ -417,47 +421,47 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     ad: _ctx.activeView === "profile",
     an: _ctx.activeView === "about",
     aq: _ctx.activeView === "membership" && _ctx.membershipEntryEnabled,
-    aA: _ctx.activeView === "detail" && (_ctx.detailLoading || _ctx.detailError || !_ctx.selectedSubscription),
-    aE: _ctx.activeView === "detail" && _ctx.selectedSubscription,
-    aN: _ctx.activeView === "form",
-    ba: _ctx.activeView === "reminder-settings"
+    aB: _ctx.activeView === "detail" && (_ctx.detailLoading || _ctx.detailError || !_ctx.selectedSubscription),
+    aF: _ctx.activeView === "detail" && _ctx.selectedSubscription,
+    aO: _ctx.activeView === "form",
+    bb: _ctx.activeView === "reminder-settings"
   }) : {}, {
-    bf: `calc(100vh - ${_ctx.statusBarHeight}px)`,
-    bg: _ctx.scrollTop,
-    bh: _ctx.dataReady && _ctx.showTabBar && !_ctx.mutating,
-    bi: _ctx.refreshing,
-    bj: common_vendor.o((...args) => _ctx.refreshFromGesture && _ctx.refreshFromGesture(...args), "8b"),
-    bk: common_vendor.o(($event) => _ctx.uiScrollTop = $event.detail.scrollTop, "56"),
-    bl: _ctx.dataReady && _ctx.activeView === "form"
+    bg: `calc(100vh - ${_ctx.statusBarHeight}px)`,
+    bh: _ctx.scrollTop,
+    bi: _ctx.dataReady && _ctx.showTabBar && !_ctx.mutating,
+    bj: _ctx.refreshing,
+    bk: common_vendor.o((...args) => _ctx.refreshFromGesture && _ctx.refreshFromGesture(...args), "8b"),
+    bl: common_vendor.o(($event) => _ctx.uiScrollTop = $event.detail.scrollTop, "56"),
+    bm: _ctx.dataReady && _ctx.activeView === "form"
   }, _ctx.dataReady && _ctx.activeView === "form" ? {
-    bm: common_vendor.o(($event) => _ctx.saveSubscription(), "87"),
-    bn: common_vendor.p({
+    bn: common_vendor.o(($event) => _ctx.saveSubscription(), "01"),
+    bo: common_vendor.p({
       ["editing-id"]: _ctx.editingId,
       busy: _ctx.mutating
     })
   } : {}, {
-    bo: _ctx.sortSheetVisible
+    bp: _ctx.sortSheetVisible
   }, _ctx.sortSheetVisible ? {
-    bp: common_vendor.o(_ctx.closeSortSheet, "b5"),
-    bq: common_vendor.o(_ctx.selectSort, "b3"),
-    br: common_vendor.p({
+    bq: common_vendor.o(_ctx.closeSortSheet, "33"),
+    br: common_vendor.o(_ctx.selectSort, "ed"),
+    bs: common_vendor.p({
       ["sort-options"]: _ctx.sortOptions,
       ["sort-mode"]: _ctx.sortMode
     })
   } : {}, {
-    bs: _ctx.showTabBar && _ctx.dataReady
+    bt: _ctx.showTabBar && _ctx.dataReady
   }, _ctx.showTabBar && _ctx.dataReady ? {
-    bt: common_vendor.o(_ctx.switchTab, "a2"),
-    bv: common_vendor.o(($event) => _ctx.openForm(), "c9"),
-    bw: common_vendor.p({
+    bv: common_vendor.o(_ctx.switchTab, "61"),
+    bw: common_vendor.o(($event) => _ctx.openForm(), "a6"),
+    bx: common_vendor.p({
       tabs: _ctx.tabs,
       ["active-view"]: _ctx.activeView
     })
   } : {}, {
-    bx: !_ctx.showTabBar ? 1 : "",
-    by: _ctx.reducedMotion ? 1 : "",
-    bz: _ctx.statusBarHeight + "px",
-    bA: common_vendor.o((...args) => _ctx.handleKeyboardAction && _ctx.handleKeyboardAction(...args), "6d")
+    by: !_ctx.showTabBar ? 1 : "",
+    bz: _ctx.reducedMotion ? 1 : "",
+    bA: _ctx.statusBarHeight + "px",
+    bB: common_vendor.o((...args) => _ctx.handleKeyboardAction && _ctx.handleKeyboardAction(...args), "6d")
   });
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-a355b6de"]]);

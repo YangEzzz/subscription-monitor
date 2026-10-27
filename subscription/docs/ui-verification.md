@@ -130,3 +130,20 @@ H5重编译和Edge会员页待支付/已支付、错误恢复、模拟隔离、3
 - 修改文件 Prettier 与 git diff --check 通过。designmd lint：0 errors、7 个已有 orphaned-token 警告。
 - premium strict 审计原始报告 .preview/membership-club-audit.json：59 项 actionless-button、canonical unresolved=0；均为 @tap 或 Reka 组合按钮未被静态规则识别，未修改审计器或隐藏报告。会员页所有按钮已逐个核对 @tap，新增展开操作已在浏览器验证，不据此声称 strict 审计通过。
 - 尚未在微信开发者工具/真实手机执行验收，未部署或执行实际付款。
+## 2026-10-27 统计页控件与信息密度优化
+
+- 历史/估算切换降低边框与阴影强度，选中态采用蓝色文字；月份和币种合为一行，翻月按钮保留44px热区并移除重复底块，回到本月放入说明行。
+- 金额摘要不重复顶部月份；仅当存在其他币种记录时保留额外币种汇总，单币种不再重复相同总额，当前所选币种无记录但有其他币种时仍可切换。统计口径不变。
+- `pnpm --dir subscription test`：90/90通过；改动 Vue/SCSS 格式和差异检查、设计令牌漂移检查通过。HBuilderX 5.26 mp-weixin 编译通过，产物 `.preview/stats-refined-mp`，保留既有第三方组件和 uniCloud 警告。
+- `.preview/check-stats-layout.cjs` 使用真实 Vue 组件源文件与编译后的真实样式做隔离浏览器验证，避免全应用 H5 预览的既有运行时阻断。320/390px留白及工具栏无溢出、单/多币种摘要、月份选择、币种选择、历史/估算切换通过，pageerror=0；截图 `.preview/stats-refined-320.png`、`.preview/stats-refined-390.png`、`.preview/stats-refined-multicurrency.png`。原生 picker 用浏览器适配器替代，不能代替微信真机 picker 验收。
+- 静态 premium strict 审计保留 `.preview/stats-refined-audit.json`，其 @tap/组合按钮识别限制仍在，不宣称全量 strict 通过。尚未微信真机验收，未部署。
+## 2026-10-27 免费10条额度与第11条会员推荐页
+
+- 后端 `FREE_SUBSCRIPTION_LIMIT=10` 为唯一额度来源，前端继续读取真实 quota。首次进入新增、复制、保存时本地额度已满，以及服务端返回 SUBSCRIPTION_LIMIT_REACHED，都直接进入会员推荐态。已有订阅编辑不受影响。
+- 复用 MembershipView 及现有收银台。推荐首屏是用量→无限额度、永久会员真实价格与开通按钮，保留「暂不升级，返回」；免费提醒、统计、导出及删除保留历史账单的说明明确。服务端未开放、读取失败或设备不支持支付时不会创建可扣款订单。
+- 保留新建日期、复制字段和已填写草稿，用户返回或在权益确认后点击继续添加；不自动付款、保存或虚构开通成功。原生会员入口仍为 index，editor 草稿通过原有页面帧保留。普通会员中心继续显示原有界面。
+- 前端97项单测通过，包含6项额度/草稿/迟到服务端拦截测试及新增原生会员页返回测试。后端21套、121项单测通过（排除既有需占用本机3002端口的 admin.module.spec.ts）；后端构建、相关 ESLint、改动文件格式及设计令牌漂移检查通过。
+- 实际Nest HTTP的订阅、会员、历史和虚拟支付回归4/4通过。免费第1—10条新增成功、第11条403、模拟会员权益生效后第11条可创建、撤销模拟权益后已有11条保留且剩余额度为0均已验证。没有真实交易。
+- `.preview/check-membership-quota.cjs` 在真实Vue会员组件和真实页面方法上验证320/390px、首屏可见开通按钮、不自动下单、返回、停售、读取失败重试、虚拟支付平台不支持、模拟权益确认及原日期/字段继续填写，pageerror=0。截图 `.preview/membership-quota-320.png`、`.preview/membership-quota-390.png`；平台API由测试适配器提供，不替代微信真机交易验收。
+- HBuilderX 5.26 mp-weixin编译通过，产物 `.preview/membership-quota-mp`。designmd lint为0错误、7项既有令牌警告。premium strict原始报告 `.preview/membership-quota-audit.json` 为59项actionless-button、unresolved=0，包含 @tap 与组合按钮识别误报，未宣称strict全通过。
+- 无数据库迁移或新环境变量。生效需要部署新版API并重新编译/发布小程序，尚未部署或进行真机交易验收。

@@ -237,6 +237,7 @@ test('manage menu finishes closing before deletion opens a native confirmation m
 		},
 		showModal(options) {
 			assert.equal(sheetVisible, false, 'the native menu must finish closing first')
+			assert.match(options.content, /历史账单.*保留/)
 			modalOpened = true
 			options.success({ confirm: true })
 		},

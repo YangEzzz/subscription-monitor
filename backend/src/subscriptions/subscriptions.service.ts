@@ -35,7 +35,7 @@ import {
   SubscriptionsRepository,
 } from './repositories/subscriptions.repository';
 
-export const FREE_SUBSCRIPTION_LIMIT = 5;
+export const FREE_SUBSCRIPTION_LIMIT = 10;
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const DEFAULT_REMINDERS = [7, 3, 1];
@@ -485,6 +485,8 @@ export class SubscriptionsService {
       );
       if (record.deletedAt)
         throw new BadRequestException('Subscription is already deleted');
+      // Removing a subscription only hides it from active lists/reminders.
+      // Keep its confirmed bills intact for historical spending and restore.
       record.deletedAt = this.now();
       record.updatedAt = this.now();
       await repository.saveSubscription(record);

@@ -1,5 +1,5 @@
-process.env.WECHAT_VIRTUAL_PAY_ENABLED = 'false';
-process.env.WECHAT_PAY_ENABLED = 'false';
+process.env.WECHAT_VIRTUAL_PAY_ENABLED = "false";
+process.env.WECHAT_PAY_ENABLED = "false";
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
@@ -52,6 +52,25 @@ test("simulated orders enforce HTTP authentication, DTOs, entitlement and the se
       (await (await call("/auth/wechat", null, { code })).json()).accessToken;
     const alice = await login("alice");
     const bob = await login("bob");
+    const subscription = (index) => ({
+      name: `额度测试 ${index}`,
+      amount: 10,
+      currency: "CNY",
+      category: "other",
+      cycle: "monthly",
+      nextBillingDate: "2026-12-01",
+      payment: "card",
+    });
+    for (let index = 0; index < 10; index++)
+      assert.equal(
+        (await call("/subscriptions", alice, subscription(index))).status,
+        201,
+      );
+    const freeQuota = await (await call("/membership", alice)).json();
+    assert.deepEqual(freeQuota.quota, { used: 10, limit: 10, remaining: 0 });
+    const blocked = await call("/subscriptions", alice, subscription(11));
+    assert.equal(blocked.status, 403);
+    assert.equal((await blocked.json()).code, "SUBSCRIPTION_LIMIT_REACHED");
     assert.equal(
       (
         await call("/membership/orders", alice, {
@@ -108,6 +127,10 @@ test("simulated orders enforce HTTP authentication, DTOs, entitlement and the se
     assert.equal(membership.source, "simulation");
     assert.equal(membership.lifetime, true);
     assert.equal(membership.quota.limit, null);
+    assert.equal(
+      (await call("/subscriptions", alice, subscription(11))).status,
+      201,
+    );
     // Same WeChat identity logging in again reads the same durable repository state.
     const again = await login("alice");
     assert.equal(
@@ -140,7 +163,13 @@ test("simulated orders enforce HTTP authentication, DTOs, entitlement and the se
     );
     const refundedMembership = await (await call("/membership", alice)).json();
     assert.equal(refundedMembership.status, "free");
-    assert.equal(refundedMembership.quota.limit, 5);
+    assert.equal(refundedMembership.quota.limit, 10);
+    assert.equal(refundedMembership.quota.used, 11);
+    assert.equal(refundedMembership.quota.remaining, 0);
+    assert.equal(
+      (await (await call("/subscriptions", alice)).json()).meta.total,
+      11,
+    );
     app.get(ConfigService).set("app.membershipSimulationEnabled", false);
     assert.equal(
       (

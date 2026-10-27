@@ -53,7 +53,8 @@ export function createSubscriptionPageState() {
 				serviceTemplates: [],
 				form: {},
 				membershipOrders: [], membershipOrder: null, membershipPurchaseKey: '',
-        membershipBusy: false, membershipLoading: false, membershipError: '', membershipMessage: '', membershipRequestId: 0
+					membershipBusy: false, membershipLoading: false, membershipError: '', membershipMessage: '', membershipRequestId: 0,
+					membershipEntryReason: 'general', membershipIntent: null
 			}
 }
 
@@ -225,9 +226,7 @@ export const subscriptionMethods = {
 			goToday() { this.calendarCursor = this.todayKey.slice(0, 7) + '-01'; this.selectedDate = this.todayKey },
 			selectDate(key) { this.selectedDate = key; if (key.slice(0, 7) !== this.calendarCursor.slice(0, 7)) this.calendarCursor = key.slice(0, 7) + '-01' },
 			createEmptyForm(date) { const nextBillingDate = date || addDays(this.todayKey, 7); return { name: '', plan: '', logo: '订', color: '#16834d', amount: '', currency: this.settings.defaultCurrency, cycle: '每月', cycleValue: '', nextBillingDate, anchorDay: parseDate(nextBillingDate).getDate(), payment: '微信支付', category: '其他', status: 'active', autoRenew: true, trial: false, trialEndDate: null, reminders: this.settings.defaultReminders.slice(), note: '', cancelGuide: '' } },
-			openMembership() { if (!MEMBERSHIP_ENTRY_ENABLED) return; this.navigateToView('membership'); void this.loadMembershipOrders() },
-			showMembershipLimit() { uni.showModal({ title: '免费额度已用完', content: `当前账号最多保存 ${this.subscriptionLimit} 条订阅。可删除不再需要的记录后继续新增。`, showCancel: MEMBERSHIP_ENTRY_ENABLED, confirmText: MEMBERSHIP_ENTRY_ENABLED ? '查看额度' : '知道了', success: res => { if (MEMBERSHIP_ENTRY_ENABLED && res.confirm) this.openMembership() } }) },
-			openForm(date, item, initialValues) { if (!item && !this.canCreateSubscription) { this.showMembershipLimit(); return } this.formError = ''; this.editingId = item ? item.id : null; this.originalBillingDate = item ? item.nextBillingDate : null; this.form = item ? { ...item, amount: item.amount === null ? '' : String(item.amount), cycleValue: item.cycleValue || '', trial: Boolean(item.trialEndDate), trialEndDate: item.trialEndDate || null, reminders: (item.reminders || []).slice() } : this.createEmptyForm(date); if (initialValues) Object.assign(this.form, initialValues); this.formBaseline = JSON.stringify(this.form); if (!initialValues) nativeNavigation.restoreDraft(this); this.navigateToView('form') },
+			openForm(date, item, initialValues) { if (!item && !this.canCreateSubscription) { this.showMembershipLimit({ kind: 'new', date: date || null, initialValues: initialValues ? { ...initialValues } : null }); return } this.formError = ''; this.editingId = item ? item.id : null; this.originalBillingDate = item ? item.nextBillingDate : null; this.form = item ? { ...item, amount: item.amount === null ? '' : String(item.amount), cycleValue: item.cycleValue || '', trial: Boolean(item.trialEndDate), trialEndDate: item.trialEndDate || null, reminders: (item.reminders || []).slice() } : this.createEmptyForm(date); if (initialValues) Object.assign(this.form, initialValues); this.formBaseline = JSON.stringify(this.form); if (!initialValues) nativeNavigation.restoreDraft(this); this.navigateToView('form') },
 			applyTemplate(template) { Object.assign(this.form, { ...template, amount: template.amount == null ? '' : String(template.amount) }); uni.showToast({ title: `已选择${template.short}`, icon: 'none' }) },
 			toggleReminder(value) { const index = this.form.reminders.indexOf(value); if (index >= 0) this.form.reminders.splice(index, 1); else this.form.reminders.push(value); this.form.reminders.sort((a, b) => b - a) },
 			changeCycle(value) { this.form.cycle = value; if (value !== '自定义天数') this.form.cycleValue = ''; if (value === '一次性') { this.form.autoRenew = false; this.form.trial = false; this.form.trialEndDate = null } },

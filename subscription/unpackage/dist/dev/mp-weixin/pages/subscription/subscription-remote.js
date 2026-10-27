@@ -104,6 +104,8 @@ const remoteMethods = {
     this.membershipLoading = false;
     this.membershipError = "";
     this.membershipMessage = "";
+    this.membershipEntryReason = "general";
+    this.membershipIntent = null;
     this.subscriptions = [];
     this.settings = pages_subscription_subscriptionData.createDefaultSettings();
     this.notifications = { configured: false, schedulerEnabled: false, credits: 0, recentDeliveries: [] };
@@ -337,7 +339,10 @@ const remoteMethods = {
       this.mutating = false;
     }
     if (operationError) {
-      toast(operationError.message);
+      if (operationError.code === "SUBSCRIPTION_LIMIT_REACHED")
+        this.showMembershipLimit();
+      else
+        toast(operationError.message);
       return false;
     }
     await this.refreshData();
@@ -474,8 +479,6 @@ const remoteMethods = {
     if (action === "delete")
       return this.deleteSubscription();
     if (action === "copy") {
-      if (!this.canCreateSubscription)
-        return this.showMembershipLimit();
       this.openForm(null, null, { ...item, name: `${item.name.slice(0, 27)} 副本`, amount: item.amount === null ? "" : String(item.amount), status: "active", reminders: [...item.reminders] });
       return;
     }
@@ -503,7 +506,7 @@ const remoteMethods = {
     const item = this.selectedSubscription;
     if (!item)
       return;
-    if (!await confirm({ title: `删除“${item.name}”`, content: "订阅将移入回收站，可在“我的”中恢复。", confirmText: "确认删除" }))
+    if (!await confirm({ title: `删除“${item.name}”`, content: "订阅将移入回收站，已确认的历史账单会保留在统计中。可在“我的”中恢复订阅。", confirmText: "确认删除" }))
       return;
     await this.mutate(() => api_subscriptions.subscriptionApi.remove(item.id), "已移入回收站", (record) => {
       this.upsertSubscription(record);

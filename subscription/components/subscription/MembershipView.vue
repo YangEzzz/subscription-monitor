@@ -1,111 +1,172 @@
 <template>
   <view class="page membership-page redesign-page">
     <page-header
-      title="会员中心"
+      :title="quotaPrompt ? '订阅额度' : '会员中心'"
       secondary
       :disabled="busy"
       @back="$emit('back')"
     />
-    <view
-      class="club-pass"
-      :class="{ 'club-pass-active': isMember, 'club-pass-free': !isMember }"
-    >
-      <view class="club-pass-top">
-        <text class="club-brand">续订清单 · 会员俱乐部</text>
-        <text class="club-status">{{
+    <view v-if="quotaPrompt && !isMember" class="quota-upgrade-hero">
+      <view class="quota-upgrade-top"
+        ><text class="quota-upgrade-label">免费版订阅额度</text
+        ><text class="quota-upgrade-status">{{
           loading
-            ? "读取中"
+            ? "确认中"
             : error
               ? "状态待确认"
-              : isMember
-                ? "权益已生效"
-                : "未开通"
-        }}</text>
+              : (membership.quota?.remaining || 0) > 0
+                ? "已有可用位置"
+                : "免费额度已用完"
+        }}</text></view
+      >
+      <text class="quota-upgrade-title"
+        >给下一份订阅，<text class="quota-upgrade-accent">留个位置</text></text
+      >
+      <text class="quota-upgrade-copy"
+        >免费版可保存
+        {{ subscriptionLimit ?? 10 }}
+        个订阅。开通永久会员，让新增不再受数量限制。</text
+      >
+      <view class="quota-upgrade-meter">
+        <view class="quota-upgrade-count"
+          ><text class="quota-upgrade-number num">{{
+            loading || error ? "—" : (membership.quota?.used ?? "—")
+          }}</text
+          ><text class="quota-upgrade-count-label"
+            >已使用 / {{ subscriptionLimit ?? "—" }} 个</text
+          ></view
+        >
+        <view class="quota-upgrade-progress"
+          ><view
+            class="quota-upgrade-progress-fill"
+            :style="{ width: quotaPercent + '%' }"
+          ></view
+        ></view>
+        <view class="quota-upgrade-unlimited"
+          ><text class="quota-upgrade-infinity">∞</text
+          ><text class="quota-upgrade-count-label">会员不限数量</text></view
+        >
       </view>
-      <view class="club-pass-body">
-        <view class="club-pass-copy">
-          <text class="club-eyebrow">{{
-            isMember ? "很高兴，有你同行" : "给每一份订阅，留个位置"
-          }}</text>
-          <text class="club-title">{{ "永久会员" }}</text>
-          <text class="club-description">{{
-            isMember
-              ? "不限订阅数量，陪你从容管理每一次续费。"
-              : "解锁无限订阅，让喜欢的服务都有迹可循。"
+    </view>
+    <button
+      v-if="quotaPrompt && resumeCreate && canResume"
+      class="quota-upgrade-resume membership-primary pressable"
+      hover-class="is-pressed"
+      @tap="$emit('resume-create')"
+    >
+      继续添加订阅
+    </button>
+    <template v-if="!quotaPrompt || isMember">
+      <view
+        class="club-pass"
+        :class="{ 'club-pass-active': isMember, 'club-pass-free': !isMember }"
+      >
+        <view class="club-pass-top">
+          <text class="club-brand">续订清单 · 会员俱乐部</text>
+          <text class="club-status">{{
+            loading
+              ? "读取中"
+              : error
+                ? "状态待确认"
+                : isMember
+                  ? "权益已生效"
+                  : "未开通"
           }}</text>
         </view>
-        <view class="club-emblem" aria-hidden="true">
-          <view class="club-emblem-ring"></view>
-          <view class="club-emblem-face"
-            ><uni-icons type="vip-filled" size="52" color="var(--member-gold)"
+        <view class="club-pass-body">
+          <view class="club-pass-copy">
+            <text class="club-eyebrow">{{
+              isMember ? "很高兴，有你同行" : "给每一份订阅，留个位置"
+            }}</text>
+            <text class="club-title">{{ "永久会员" }}</text>
+            <text class="club-description">{{
+              isMember
+                ? "不限订阅数量，陪你从容管理每一次续费。"
+                : "解锁无限订阅，让喜欢的服务都有迹可循。"
+            }}</text>
+          </view>
+          <view class="club-emblem" aria-hidden="true">
+            <view class="club-emblem-ring"></view>
+            <view class="club-emblem-face"
+              ><uni-icons
+                type="vip-filled"
+                size="52"
+                color="var(--member-gold)"
+            /></view>
+            <text class="club-spark club-spark-one">✦</text
+            ><text class="club-spark club-spark-two">✦</text>
+          </view>
+        </view>
+        <view class="club-pass-bottom">
+          <text>{{
+            loading
+              ? "正在读取会员权益…"
+              : error
+                ? "请刷新以确认最新权益"
+                : isMember
+                  ? "有效期：永久"
+                  : "订阅用量：" + (freeQuotaValue || "待确认") + " 条"
+          }}</text>
+          <text>{{ isMember ? "无需续费" : "升级后数量不限" }}</text>
+        </view>
+      </view>
+      <text
+        v-if="isMember && membership.source === 'simulation'"
+        class="club-test-note"
+        >测试权益 · 模拟支付开通，未发生实际扣款</text
+      >
+      <view class="club-section-heading"
+        ><text class="club-section-title">把喜欢的，都安排好</text
+        ><text class="club-section-caption">永久会员权益</text></view
+      >
+      <view class="club-benefits">
+        <view class="club-benefit-main">
+          <view class="club-benefit-icon"
+            ><uni-icons type="list" size="26" color="var(--violet)"
           /></view>
-          <text class="club-spark club-spark-one">✦</text
-          ><text class="club-spark club-spark-two">✦</text>
+          <view class="club-benefit-copy"
+            ><text class="club-benefit-title">订阅数量，不设上限</text
+            ><text class="club-benefit-description"
+              >从日常影音到效率工具，想记多少就记多少</text
+            ></view
+          >
+          <text class="club-infinity" aria-hidden="true">∞</text>
+        </view>
+        <view class="club-benefit-pair">
+          <view class="club-benefit-small"
+            ><uni-icons type="medal" size="25" color="var(--gold)" /><text
+              class="club-benefit-title"
+              >一次开通，永久拥有</text
+            ><text class="club-benefit-description"
+              >无到期日，不会自动续费</text
+            ></view
+          >
+          <view class="club-benefit-small"
+            ><uni-icons
+              type="cloud-upload"
+              size="25"
+              color="var(--blue)"
+            /><text class="club-benefit-title">换台设备，权益还在</text
+            ><text class="club-benefit-description"
+              >会员权益跟随微信账号</text
+            ></view
+          >
         </view>
       </view>
-      <view class="club-pass-bottom">
-        <text>{{
-          loading
-            ? "正在读取会员权益…"
-            : error
-              ? "请刷新以确认最新权益"
-              : isMember
-                ? "有效期：永久"
-                : "订阅用量：" + (freeQuotaValue || "待确认") + " 条"
-        }}</text>
-        <text>{{ isMember ? "无需续费" : "升级后数量不限" }}</text>
-      </view>
-    </view>
-    <text
-      v-if="isMember && membership.source === 'simulation'"
-      class="club-test-note"
-      >测试权益 · 模拟支付开通，未发生实际扣款</text
-    >
-    <view class="club-section-heading"
-      ><text class="club-section-title">把喜欢的，都安排好</text
-      ><text class="club-section-caption">永久会员权益</text></view
-    >
-    <view class="club-benefits">
-      <view class="club-benefit-main">
-        <view class="club-benefit-icon"
-          ><uni-icons type="list" size="26" color="var(--violet)"
-        /></view>
-        <view class="club-benefit-copy"
-          ><text class="club-benefit-title">订阅数量，不设上限</text
-          ><text class="club-benefit-description"
-            >从日常影音到效率工具，想记多少就记多少</text
-          ></view
-        >
-        <text class="club-infinity" aria-hidden="true">∞</text>
-      </view>
-      <view class="club-benefit-pair">
-        <view class="club-benefit-small"
-          ><uni-icons type="medal" size="25" color="var(--gold)" /><text
-            class="club-benefit-title"
-            >一次开通，永久拥有</text
-          ><text class="club-benefit-description"
-            >无到期日，不会自动续费</text
-          ></view
-        >
-        <view class="club-benefit-small"
-          ><uni-icons type="cloud-upload" size="25" color="var(--blue)" /><text
-            class="club-benefit-title"
-            >换台设备，权益还在</text
-          ><text class="club-benefit-description"
-            >会员权益跟随微信账号</text
-          ></view
-        >
-      </view>
-    </view>
-    <view class="club-basic-note"
-      ><uni-icons type="checkmarkempty" size="17" color="var(--blue)" /><text
-        >提醒、统计与导出，免费版也能用</text
-      ></view
-    >
+      <view class="club-basic-note"
+        ><uni-icons type="checkmarkempty" size="17" color="var(--blue)" /><text
+          >提醒、统计与导出，免费版也能用</text
+        ></view
+      >
+    </template>
     <view class="membership-purchase club-plan">
       <view class="club-plan-heading"
         ><text class="club-section-title">{{
-          isMember ? "你的会员方案" : "一份开通，长久陪伴"
+          isMember
+            ? "你的会员方案"
+            : quotaPrompt
+              ? "一次开通，订阅数量不限"
+              : "一份开通，长久陪伴"
         }}</text
         ><text class="club-plan-tag">永久有效</text></view
       >
@@ -175,6 +236,19 @@
         "
         class="club-platform-note"
         >当前暂不支持 iOS 购买。</text
+      >
+    </view>
+    <view v-if="quotaPrompt && !isMember" class="quota-upgrade-alternative">
+      <button
+        class="quota-upgrade-defer pressable"
+        :disabled="busy"
+        hover-class="is-pressed"
+        @tap="$emit('back')"
+      >
+        暂不升级，返回
+      </button>
+      <text class="quota-upgrade-free-note"
+        >提醒、统计与导出仍可免费使用。也可以删除不再使用的订阅腾出位置，历史账单会保留。</text
       >
     </view>
     <async-state-view
@@ -467,6 +541,7 @@ export default {
     "refresh",
     "select-order",
     "refund",
+    "resume-create",
   ],
   data() {
     return { refundConfirm: false, showOrders: false, openQuestion: -1 };
@@ -477,6 +552,8 @@ export default {
     },
   },
   props: {
+    quotaPrompt: { type: Boolean, default: false },
+    resumeCreate: { type: Boolean, default: false },
     isMember: { type: Boolean, default: false },
     freeQuotaValue: { type: String, default: "" },
     subscriptionLimit: { type: Number, default: null },
@@ -489,11 +566,27 @@ export default {
     message: { type: String, default: "" },
   },
   computed: {
+    quotaPercent() {
+      return this.subscriptionLimit
+        ? Math.min(
+            100,
+            ((this.membership.quota?.used || 0) / this.subscriptionLimit) * 100,
+          )
+        : 0;
+    },
+    canResume() {
+      return (
+        !this.loading &&
+        !this.busy &&
+        !this.error &&
+        (this.isMember || (this.membership.quota?.remaining || 0) > 0)
+      );
+    },
     questions() {
       return [
         {
           title: "免费版与永久会员有什么区别？",
-          answer: `免费版最多保存 ${this.subscriptionLimit ?? 5} 条订阅，永久会员不限数量。提醒、支出统计和导出在免费版同样可用，提醒需完成授权。删除订阅可释放免费额度。`,
+          answer: `免费版最多保存 ${this.subscriptionLimit ?? 10} 条订阅，永久会员不限数量。提醒、支出统计和导出在免费版同样可用，提醒需完成授权。删除订阅可释放免费额度，历史账单保留。`,
         },
         {
           title: "会自动续费或再次扣款吗？",

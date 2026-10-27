@@ -101,6 +101,12 @@ page {
   background: var(--flow-nav-fill);
   box-shadow: var(--flow-nav-shadow);
 }
+// The native editor header sits outside the scroller. Let the shell's
+// atmosphere show through at every scroll position instead of adding a panel.
+.editor-shell .editor-header .flow-navbar-scrolled {
+  background: transparent;
+  box-shadow: none;
+}
 .flow-page .navbar-back {
   background: transparent;
   border: 0;

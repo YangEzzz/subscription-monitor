@@ -16,6 +16,56 @@ const input = {
 };
 
 describe('Recorded spending history', () => {
+  it('preserves every bill across delete, restore and repeated delete without duplicating monthly totals', async () => {
+    const repository = new MemorySubscriptionsRepository();
+    const service = new SubscriptionsService(repository);
+    const created = await service.create('alice', input);
+    const id = String(created.id);
+    await service.renew('alice', id, '2026-01-31');
+    const record = await repository.findSubscription('alice', id);
+    record!.renewalHistory.push({
+      ...record!.renewalHistory[0],
+      id: 'feb-usd-bill',
+      previousNextBillingDate: '2026-02-28',
+      nextBillingDate: '2026-03-31',
+      amount: 9,
+      currency: 'USD',
+    });
+    await repository.saveSubscription(record!);
+    const bills = JSON.parse(JSON.stringify(record!.renewalHistory));
+    const january = await service.history('alice', {
+      month: '2026-01',
+      currency: 'CNY',
+    });
+    const february = await service.history('alice', {
+      month: '2026-02',
+      currency: 'USD',
+    });
+    for (const deleted of [true, false, true]) {
+      if (deleted) await service.remove('alice', id);
+      else await service.restore('alice', id);
+      expect(
+        (await repository.findSubscription('alice', id))!.renewalHistory,
+      ).toEqual(bills);
+      for (const original of [january, february]) {
+        const history = await service.history('alice', {
+          month: original.month,
+          currency: original.currency,
+        });
+        expect(history).toEqual({
+          ...original,
+          entries: original.entries.map((entry) => ({ ...entry, deleted })),
+        });
+      }
+      expect(
+        (await service.list('alice', { page: 1, limit: 20 })).meta.total,
+      ).toBe(deleted ? 0 : 1);
+      expect((await service.getMembership('alice')).quota.used).toBe(
+        deleted ? 0 : 1,
+      );
+    }
+  });
+
   it('uses original billing month and price, retains cancelled/trashed records and isolates owners', async () => {
     const repository = new MemorySubscriptionsRepository();
     const service = new SubscriptionsService(repository);

@@ -88,7 +88,9 @@ function createSubscriptionPageState() {
     membershipLoading: false,
     membershipError: "",
     membershipMessage: "",
-    membershipRequestId: 0
+    membershipRequestId: 0,
+    membershipEntryReason: "general",
+    membershipIntent: null
   };
 }
 const subscriptionComputed = {
@@ -444,19 +446,9 @@ const subscriptionMethods = {
     const nextBillingDate = date || pages_subscription_subscriptionData.addDays(this.todayKey, 7);
     return { name: "", plan: "", logo: "订", color: "#16834d", amount: "", currency: this.settings.defaultCurrency, cycle: "每月", cycleValue: "", nextBillingDate, anchorDay: pages_subscription_subscriptionData.parseDate(nextBillingDate).getDate(), payment: "微信支付", category: "其他", status: "active", autoRenew: true, trial: false, trialEndDate: null, reminders: this.settings.defaultReminders.slice(), note: "", cancelGuide: "" };
   },
-  openMembership() {
-    this.navigateToView("membership");
-    void this.loadMembershipOrders();
-  },
-  showMembershipLimit() {
-    common_vendor.index.showModal({ title: "免费额度已用完", content: `当前账号最多保存 ${this.subscriptionLimit} 条订阅。可删除不再需要的记录后继续新增。`, showCancel: config_features.MEMBERSHIP_ENTRY_ENABLED, confirmText: "查看额度", success: (res) => {
-      if (res.confirm)
-        this.openMembership();
-    } });
-  },
   openForm(date, item, initialValues) {
     if (!item && !this.canCreateSubscription) {
-      this.showMembershipLimit();
+      this.showMembershipLimit({ kind: "new", date: date || null, initialValues: initialValues ? { ...initialValues } : null });
       return;
     }
     this.formError = "";

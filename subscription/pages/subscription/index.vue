@@ -215,6 +215,8 @@
         <!-- 会员中心 -->
         <membership-view
           v-else-if="activeView === 'membership' && membershipEntryEnabled"
+          :quota-prompt="membershipEntryReason === 'quota'"
+          :resume-create="['new', 'draft'].includes(membershipIntent?.kind)"
           :is-member="isMember"
           :free-quota-value="freeQuotaValue"
           :subscription-limit="subscriptionLimit"
@@ -226,6 +228,7 @@
           :error="membershipError"
           :message="membershipMessage"
           @purchase="beginMembershipPurchase"
+          @resume-create="resumeMembershipCreation"
           @pay="payMembershipOrder"
           @simulate="simulateMembershipPayment"
           @refund="refundMembershipOrder"

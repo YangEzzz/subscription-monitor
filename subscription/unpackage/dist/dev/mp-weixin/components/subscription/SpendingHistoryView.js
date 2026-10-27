@@ -36,6 +36,12 @@ const _sfc_main = {
     };
   },
   computed: {
+    showCurrencyBreakdown() {
+      var _a;
+      return ((_a = this.result) == null ? void 0 : _a.totalsByCurrency.some(
+        (group) => group.currency !== this.currency
+      )) || false;
+    },
     monthLabel() {
       const [year, month] = this.month.split("-");
       return `${year}年${Number(month)}月`;
@@ -100,13 +106,13 @@ const _sfc_main = {
   }
 };
 if (!Array) {
+  const _easycom_uni_icons2 = common_vendor.resolveComponent("uni-icons");
   const _component_async_state_view = common_vendor.resolveComponent("async-state-view");
   const _component_ui_skeleton = common_vendor.resolveComponent("ui-skeleton");
   const _component_display_amount = common_vendor.resolveComponent("display-amount");
   const _component_donut_chart = common_vendor.resolveComponent("donut-chart");
   const _component_empty_state_view = common_vendor.resolveComponent("empty-state-view");
-  const _easycom_uni_icons2 = common_vendor.resolveComponent("uni-icons");
-  (_component_async_state_view + _component_ui_skeleton + _component_display_amount + _component_donut_chart + _component_empty_state_view + _easycom_uni_icons2)();
+  (_easycom_uni_icons2 + _component_async_state_view + _component_ui_skeleton + _component_display_amount + _component_donut_chart + _component_empty_state_view)();
 }
 const _easycom_uni_icons = () => "../../uni_modules/uni-icons/components/uni-icons/uni-icons.js";
 if (!Math) {
@@ -114,26 +120,37 @@ if (!Math) {
 }
 function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   return common_vendor.e({
-    a: common_vendor.o(($event) => $options.selectMonth($options.shiftMonth($props.month, -1)), "d9"),
-    b: common_vendor.t($options.monthLabel),
-    c: "选择支出月份，当前" + $props.month,
-    d: $props.month,
-    e: $data.todayMonth,
-    f: common_vendor.o(($event) => $options.selectMonth($event.detail.value), "83"),
-    g: $props.month >= $data.todayMonth,
-    h: common_vendor.o(($event) => $options.selectMonth($options.shiftMonth($props.month, 1)), "cc"),
-    i: $props.month !== $data.todayMonth
+    a: common_vendor.p({
+      type: "left",
+      size: "18",
+      color: "var(--ink-2)"
+    }),
+    b: common_vendor.o(($event) => $options.selectMonth($options.shiftMonth($props.month, -1)), "d8"),
+    c: common_vendor.t($options.monthLabel),
+    d: "选择支出月份，当前" + $props.month,
+    e: $props.month,
+    f: $data.todayMonth,
+    g: common_vendor.o(($event) => $options.selectMonth($event.detail.value), "44"),
+    h: common_vendor.p({
+      type: "right",
+      size: "18",
+      color: "var(--ink-2)"
+    }),
+    i: $props.month >= $data.todayMonth ? 1 : "",
+    j: $props.month >= $data.todayMonth,
+    k: common_vendor.o(($event) => $options.selectMonth($options.shiftMonth($props.month, 1)), "43"),
+    l: common_vendor.t($props.currency),
+    m: $options.currencyOptions,
+    n: $options.currencyOptions.indexOf($props.currency),
+    o: common_vendor.o(($event) => _ctx.$emit("currency-change", $options.currencyOptions[$event.detail.value]), "e5"),
+    p: $props.month !== $data.todayMonth
   }, $props.month !== $data.todayMonth ? {
-    j: common_vendor.o(($event) => $options.selectMonth($data.todayMonth), "51")
+    q: common_vendor.o(($event) => $options.selectMonth($data.todayMonth), "f8")
   } : {}, {
-    k: common_vendor.t($props.currency),
-    l: $options.currencyOptions,
-    m: $options.currencyOptions.indexOf($props.currency),
-    n: common_vendor.o(($event) => _ctx.$emit("currency-change", $options.currencyOptions[$event.detail.value]), "d7"),
-    o: $data.error
+    r: $data.error
   }, $data.error ? {
-    p: common_vendor.o(($event) => $options.load(Boolean($data.result)), "a1"),
-    q: common_vendor.p({
+    s: common_vendor.o(($event) => $options.load(Boolean($data.result)), "8f"),
+    t: common_vendor.p({
       compact: true,
       title: "支出记录暂时不可用",
       description: $data.error,
@@ -141,35 +158,34 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       ["action-label"]: "重试"
     })
   } : {}, {
-    r: $data.loading && !$data.result
+    v: $data.loading && !$data.result
   }, $data.loading && !$data.result ? {
-    s: common_vendor.p({
+    w: common_vendor.p({
       variant: "hero"
     }),
-    t: common_vendor.p({
+    x: common_vendor.p({
       variant: "list"
     })
   } : {}, {
-    v: $data.result
+    y: $data.result
   }, $data.result ? common_vendor.e({
-    w: common_vendor.t($options.monthLabel),
-    x: common_vendor.t($props.currency),
-    y: $data.result.count > $data.result.unknownCount
+    z: common_vendor.t($props.currency),
+    A: $data.result.count > $data.result.unknownCount
   }, $data.result.count > $data.result.unknownCount ? {
-    z: common_vendor.p({
+    B: common_vendor.p({
       value: $props.formatMoney($data.result.total, $props.currency)
     })
   } : {
-    A: common_vendor.t($data.result.count ? "金额待补充" : "暂无支出记录")
+    C: common_vendor.t($data.result.count ? "金额待补充" : "暂无支出记录")
   }, {
-    B: common_vendor.t($data.result.count),
-    C: $data.result.unknownCount
+    D: common_vendor.t($data.result.count),
+    E: $data.result.unknownCount
   }, $data.result.unknownCount ? {
-    D: common_vendor.t($data.result.unknownCount)
+    F: common_vendor.t($data.result.unknownCount)
   } : {}, {
-    E: $data.result.totalsByCurrency.length
-  }, $data.result.totalsByCurrency.length ? {
-    F: common_vendor.f($data.result.totalsByCurrency, (group, k0, i0) => {
+    G: $options.showCurrencyBreakdown
+  }, $options.showCurrencyBreakdown ? {
+    H: common_vendor.f($data.result.totalsByCurrency, (group, k0, i0) => {
       return {
         a: common_vendor.t(group.currency),
         b: common_vendor.t(group.count),
@@ -182,14 +198,14 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       };
     })
   } : {}, {
-    G: $data.result.categoryStats.length
+    I: $data.result.categoryStats.length
   }, $data.result.categoryStats.length ? {
-    H: common_vendor.t($props.currency),
-    I: common_vendor.p({
+    J: common_vendor.t($props.currency),
+    K: common_vendor.p({
       segments: $options.categories,
       title: Number($props.month.slice(5)) + "月"
     }),
-    J: common_vendor.f($options.categories, (item, k0, i0) => {
+    L: common_vendor.f($options.categories, (item, k0, i0) => {
       return {
         a: item.color,
         b: common_vendor.t(item.name),
@@ -199,8 +215,8 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
       };
     })
   } : {}, {
-    K: common_vendor.t($props.currency),
-    L: common_vendor.f($options.trend, (bar, k0, i0) => {
+    M: common_vendor.t($props.currency),
+    N: common_vendor.f($options.trend, (bar, k0, i0) => {
       return {
         a: common_vendor.t(bar.knownCount ? $props.compactAmount(bar.value) : "—"),
         b: bar.plotHeight + "%",
@@ -212,18 +228,18 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
         h: common_vendor.o(($event) => $options.selectMonth(bar.month), bar.month)
       };
     }),
-    M: common_vendor.t($props.currency),
-    N: common_vendor.t($data.result.count),
-    O: !$data.result.count
+    O: common_vendor.t($props.currency),
+    P: common_vendor.t($data.result.count),
+    Q: !$data.result.count
   }, !$data.result.count ? {
-    P: common_vendor.p({
+    R: common_vendor.p({
       embedded: true,
       icon: "wallet",
       title: "暂无支出记录",
       description: "本月此币种没有已确认的续费记录，可切换月份或币种查看"
     })
   } : {}, {
-    Q: common_vendor.f($data.result.entries, (entry, k0, i0) => {
+    S: common_vendor.f($data.result.entries, (entry, k0, i0) => {
       return common_vendor.e({
         a: common_vendor.t(entry.name),
         b: common_vendor.t(entry.billingDate),
@@ -240,13 +256,13 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
         }), entry.subscriptionId + "-" + entry.id)
       });
     }),
-    R: $data.result.meta.hasMore
+    T: $data.result.meta.hasMore
   }, $data.result.meta.hasMore ? {
-    S: common_vendor.t($data.loading ? "正在加载…" : "加载更多"),
-    T: $data.loading,
-    U: common_vendor.o(($event) => $options.load(true), "41")
+    U: common_vendor.t($data.loading ? "正在加载…" : "加载更多"),
+    V: $data.loading,
+    W: common_vendor.o(($event) => $options.load(true), "ac")
   } : {}, {
-    V: common_vendor.p({
+    X: common_vendor.p({
       type: "info-filled",
       size: "20",
       color: "var(--blue)"

@@ -28,14 +28,12 @@ function createInput(index: number) {
 describe('SubscriptionsService', () => {
   it('converts mixed currencies before totals, categories and trends using the global currency', async () => {
     const fx = new ExchangeRatesService();
-    jest
-      .spyOn(fx, 'snapshot')
-      .mockResolvedValue({
-        base: 'CNY',
-        rates: { CNY: 1, USD: 0.125, HKD: 1, JPY: 20 },
-        date: new Date().toISOString().slice(0, 10),
-        source: 'test',
-      });
+    jest.spyOn(fx, 'snapshot').mockResolvedValue({
+      base: 'CNY',
+      rates: { CNY: 1, USD: 0.125, HKD: 1, JPY: 20 },
+      date: new Date().toISOString().slice(0, 10),
+      source: 'test',
+    });
     const service = new SubscriptionsService(
       new MemorySubscriptionsRepository(),
       fx,
@@ -127,13 +125,26 @@ describe('SubscriptionsService', () => {
     const service = createService();
     const userId = 'quota-user';
 
-    for (let index = 0; index < 5; index += 1) {
+    for (let index = 0; index < 10; index += 1) {
       await service.create(userId, createInput(index));
     }
 
-    await expect(service.create(userId, createInput(5))).rejects.toThrow(
-      'Free plan allows up to 5 subscriptions',
+    await expect(service.create(userId, createInput(10))).rejects.toThrow(
+      'Free plan allows up to 10 subscriptions',
     );
+    expect((await service.getMembership(userId)).quota).toMatchObject({
+      limit: 10,
+      used: 10,
+      remaining: 0,
+    });
+    const first = (await service.list(userId, { page: 1, limit: 20 })).data[0];
+    await service.remove(userId, String(first.id));
+    await service.create(userId, createInput(10));
+    await expect(
+      service.restore(userId, String(first.id)),
+    ).rejects.toMatchObject({
+      response: { code: 'SUBSCRIPTION_LIMIT_REACHED', limit: 10, used: 10 },
+    });
 
     const repository = new MemorySubscriptionsRepository();
     await repository.saveMembership({
@@ -143,23 +154,27 @@ describe('SubscriptionsService', () => {
       startedAt: new Date().toISOString(),
     });
     const memberService = new SubscriptionsService(repository);
-    expect(await memberService.create(userId, createInput(5))).toHaveProperty(
-      'id',
-    );
+    for (let index = 0; index < 12; index++)
+      await memberService.create(userId, createInput(index));
+    expect((await memberService.getMembership(userId)).quota).toMatchObject({
+      limit: null,
+      used: 12,
+      remaining: null,
+    });
   });
 
   it('serializes concurrent creation at the free quota boundary', async () => {
     const service = createService();
-    for (let index = 0; index < 4; index++)
+    for (let index = 0; index < 9; index++)
       await service.create('parallel-user', createInput(index));
     const results = await Promise.allSettled([
-      service.create('parallel-user', createInput(4)),
-      service.create('parallel-user', createInput(5)),
+      service.create('parallel-user', createInput(9)),
+      service.create('parallel-user', createInput(10)),
     ]);
     expect(
       results.filter((result) => result.status === 'fulfilled'),
     ).toHaveLength(1);
-    expect((await service.getMembership('parallel-user')).quota.used).toBe(5);
+    expect((await service.getMembership('parallel-user')).quota.used).toBe(10);
   });
 
   it('should soft-delete and restore without losing the record', async () => {

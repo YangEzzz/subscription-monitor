@@ -90,6 +90,27 @@ test("authenticated history HTTP endpoint validates queries, preserves snapshots
     assert.equal(history.total, 15);
     assert.equal(history.count, 1);
     assert.equal(history.entries[0].deleted, true);
+    assert.equal(
+      (await call("/subscriptions/" + created.id + "/restore", "POST")).status,
+      201,
+    );
+    const restored = await (
+      await call("/dashboard/history?month=2026-01&currency=CNY")
+    ).json();
+    assert.deepEqual(restored, {
+      ...history,
+      entries: history.entries.map((entry) => ({ ...entry, deleted: false })),
+    });
+    assert.equal(
+      (await call("/subscriptions/" + created.id, "DELETE")).status,
+      200,
+    );
+    assert.deepEqual(
+      await (
+        await call("/dashboard/history?month=2026-01&currency=CNY")
+      ).json(),
+      history,
+    );
     const other = await (
       await call("/dashboard/history?month=2026-01", "GET", undefined, bob)
     ).json();
