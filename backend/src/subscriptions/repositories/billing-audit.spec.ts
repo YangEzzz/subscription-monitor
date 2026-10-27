@@ -38,6 +38,48 @@ const member = (
 });
 
 describe('payment and membership review', () => {
+  it('recognizes deliberate admin cancellation for the original order while keeping other anomalies visible', () => {
+    expect(
+      billingIssues(
+        [order('revoked')],
+        [
+          member('revoked', {
+            status: 'free',
+            plan: 'free',
+            source: 'admin_revoked',
+          }),
+        ],
+        now,
+      ),
+    ).toEqual([]);
+    expect(
+      billingIssues(
+        [order('revoked', { transactionId: null })],
+        [
+          member('revoked', {
+            status: 'free',
+            plan: 'free',
+            source: 'admin_revoked',
+          }),
+        ],
+        now,
+      )[0].issue,
+    ).toBe('payment_metadata_missing');
+    expect(
+      billingIssues(
+        [order('revoked')],
+        [
+          member('revoked', {
+            status: 'free',
+            plan: 'free',
+            source: 'admin_revoked',
+            sourceOrderId: 'other',
+          }),
+        ],
+        now,
+      )[0].issue,
+    ).toBe('rights_missing');
+  });
   it('flags missing rights, missing evidence, unconfirmed delivery, stale payment attempts and orphan rights without flagging normal or simulated purchases', () => {
     const orders = [
       order('normal'),

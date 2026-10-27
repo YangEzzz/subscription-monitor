@@ -61,6 +61,7 @@ model AppUser {
   testUpdatedBy String? @map("test_updated_by") @db.VarChar(80)
   testUpdatedAt DateTime? @map("test_updated_at") @db.Timestamptz(3)
   labelEvents AdminUserLabelEvent[]
+  membershipGrants AdminMembershipGrant[]
   dailyActivity UserDailyActivity[]
   authEvents AuthEvent[]
   lastAccessIp String? @map("last_access_ip") @db.VarChar(45)
@@ -201,6 +202,19 @@ model UserSettings {
   updatedAt                 DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   @@map("user_settings")
+}
+
+model AdminMembershipGrant {
+  action String @default("grant") @db.VarChar(16)
+  previousMembership Json? @map("previous_membership")
+  id String @id @db.Uuid
+  userId String @map("user_id") @db.VarChar(128)
+  user AppUser @relation(fields:[userId],references:[id],onDelete:Restrict,onUpdate:NoAction)
+  note String @db.VarChar(200)
+  operator String @db.VarChar(80)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  @@index([userId,createdAt],map:"admin_membership_grants_user_idx")
+  @@map("admin_membership_grants")
 }
 
 model Membership {

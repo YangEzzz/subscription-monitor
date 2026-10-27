@@ -133,6 +133,65 @@ describe('Local admin server', () => {
     ).toBe(200);
     expect((await read(path, {}, 'DELETE')).status).toBe(405);
   });
+  it('protects membership grants and records the session operator', async () => {
+    const path = '/users/wx-test/membership';
+    const headers = { 'Content-Type': 'application/json' };
+    const body = JSON.stringify({ note: '活动赠送', operator: 'forged' });
+    expect(
+      (await read(path, { ...headers, Cookie: '' }, 'POST', body)).status,
+    ).toBe(401);
+    expect(
+      (
+        await read(
+          path,
+          { ...headers, Origin: 'https://evil.example' },
+          'POST',
+          body,
+        )
+      ).status,
+    ).toBe(403);
+    expect((await read(path, {}, 'POST', body)).status).toBe(400);
+    expect((await read(path, headers, 'POST', '{}')).status).toBe(400);
+    expect((await read('/users/unknown/membership')).status).toBe(404);
+    expect((await read(path, {}, 'DELETE')).status).toBe(405);
+    const result = await read(path, headers, 'POST', body);
+    expect(result.status).toBe(200);
+    expect(JSON.parse(result.body)).toMatchObject({
+      membership: { source: 'admin', status: 'active' },
+      grant: { operator: 'admin', note: '活动赠送' },
+    });
+    expect(JSON.parse((await read(path)).body).grant.id).toBe(
+      JSON.parse(result.body).grant.id,
+    );
+    const cancelPath = `${path}/revoke`;
+    const input = JSON.stringify({
+      note: '取消测试资格',
+      expectedMembership: JSON.parse(result.body).membership,
+      operator: 'forged',
+    });
+    expect(
+      (await read(cancelPath, { ...headers, Cookie: '' }, 'POST', input))
+        .status,
+    ).toBe(401);
+    expect(
+      (
+        await read(
+          cancelPath,
+          { ...headers, Origin: 'https://evil.example' },
+          'POST',
+          input,
+        )
+      ).status,
+    ).toBe(403);
+    expect((await read(cancelPath)).status).toBe(405);
+    expect((await read(cancelPath, headers, 'POST', '{}')).status).toBe(400);
+    const cancelled = await read(cancelPath, headers, 'POST', input);
+    expect(cancelled.status).toBe(200);
+    expect(JSON.parse(cancelled.body)).toMatchObject({
+      membership: { status: 'free', source: 'admin_revoked' },
+      revocation: { operator: 'admin', action: 'revoke', note: '取消测试资格' },
+    });
+  });
   afterAll(async () => {
     await server.onApplicationShutdown();
     if (originalUser === undefined) delete process.env.ADMIN_USERNAME;

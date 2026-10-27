@@ -1,4 +1,5 @@
 import { readAdminJson } from './admin-request';
+import { AdminMembershipsService } from './admin-memberships.service';
 import {
   STATS_METRICS,
   StatsMetric,
@@ -46,6 +47,7 @@ export class LocalAdminServer
     if (!['127.0.0.1', '0.0.0.0'].includes(host))
       throw new Error('Invalid LOCAL_ADMIN_BIND_HOST');
     const auth = new AdminAuth();
+    const memberships = new AdminMembershipsService(this.repository);
     this.server = createServer((request, response) => {
       const handle = async () => {
         response.setHeader('Cache-Control', 'no-store');
@@ -98,6 +100,38 @@ export class LocalAdminServer
         if (rawAudience !== null && !['true', 'false'].includes(rawAudience))
           throw new BadRequestException('统计范围不正确');
         const excludeTest = rawAudience !== 'false';
+        const membershipRoute = url.pathname.match(
+          /^\/users\/([A-Za-z0-9_-]{1,128})\/membership(\/revoke)?$/,
+        );
+        if (membershipRoute) {
+          const userId = membershipRoute[1];
+          if (request.method === 'GET' && !membershipRoute[2]) {
+            response.end(JSON.stringify(await memberships.inspect(userId)));
+            return;
+          }
+          if (request.method === 'POST') {
+            if (process.env.ADMIN_MEMBERSHIP_GRANTS_ENABLED === 'false')
+              throw new ForbiddenException(
+                '当前环境未开放会员管理，请在可写后台处理。',
+              );
+            response.end(
+              JSON.stringify(
+                await memberships[membershipRoute[2] ? 'revoke' : 'grant'](
+                  userId,
+                  await readAdminJson(request),
+                  auth.current(request)!,
+                ),
+              ),
+            );
+            return;
+          }
+          response
+            .writeHead(405, {
+              Allow: membershipRoute[2] ? 'POST' : 'GET, POST',
+            })
+            .end();
+          return;
+        }
         const userFlagRoute = url.pathname.match(
           /^\/users\/([A-Za-z0-9_-]{1,128})\/test-flag$/,
         );

@@ -16,7 +16,8 @@ export function billingIssues(
     const member = byUser.get(order.userId);
     const issue =
       order.status === 'paid' &&
-      (member?.status !== 'active' || member.plan !== 'member')
+      (member?.status !== 'active' || member.plan !== 'member') &&
+      !(member?.source === 'admin_revoked' && member.sourceOrderId === order.id)
         ? 'rights_missing'
         : order.status === 'paid' && (!order.transactionId || !order.paidAt)
           ? 'payment_metadata_missing'
@@ -92,7 +93,7 @@ WITH order_checks AS (
  o.currency, o.channel, o.status, o.paid_at AS "paidAt", o.payment_requested_at AS "paymentRequestedAt",
  o.delivery_confirmed_at AS "deliveryConfirmedAt", o.transaction_id AS "transactionId",
  COALESCE(m.status::text, 'free') AS "memberStatus", m.source_order_id AS "sourceOrderId", o.created_at AS "createdAt",
- CASE WHEN o.status='paid' AND (m.status IS DISTINCT FROM 'active' OR m.plan IS DISTINCT FROM 'member') THEN 'rights_missing'
+ CASE WHEN o.status='paid' AND (m.status IS DISTINCT FROM 'active' OR m.plan IS DISTINCT FROM 'member') AND NOT (m.source IS NOT DISTINCT FROM 'admin_revoked' AND m.source_order_id IS NOT DISTINCT FROM o.id) THEN 'rights_missing'
  WHEN o.status='paid' AND (o.transaction_id IS NULL OR o.paid_at IS NULL) THEN 'payment_metadata_missing'
  WHEN o.status='paid' AND o.channel='virtual' AND o.delivery_confirmed_at IS NULL THEN 'delivery_unconfirmed'
  WHEN o.status='pending' AND o.payment_requested_at <= NOW() - INTERVAL '15 minutes' THEN 'payment_unconfirmed'

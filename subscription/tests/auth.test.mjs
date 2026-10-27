@@ -2,6 +2,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import { ensureSession, clearSession } from '../api/auth.js'
 import { request } from '../api/request.js'
+import { remoteMethods } from '../pages/subscription/subscription-remote.js'
 
 function authHarness(handler) {
 	const storage = new Map()
@@ -23,6 +24,51 @@ function loginResponse(options) {
 		accessToken: `token-${options.data.code}`, expiresAt: '2099-01-01T00:00:00Z', user: { id: 'wechat-user' }
 	} })
 }
+
+test('copying a user ID writes the full account ID only and waits for clipboard confirmation', () => {
+  const id = 'wx_' + 'a'.repeat(64)
+  const session = { accessToken: 'private-token', expiresAt: '2099-01-01', user: { id } }
+  const toasts = [], writes = []
+  globalThis.uni = { getStorageSync: () => session, showToast: value => toasts.push(value.title), setClipboardData: options => writes.push(options) }
+  const page = { currentUserId: id, authStatus: 'authenticated', userIdCopying: false }
+  remoteMethods.copyUserId.call(page)
+  remoteMethods.copyUserId.call(page)
+  assert.equal(writes.length, 1)
+  assert.equal(writes[0].data, id)
+  assert.equal(toasts.length, 0)
+  writes[0].success()
+  writes[0].complete()
+  assert.equal(page.userIdCopying, false)
+  assert.match(toasts[0], /已复制/)
+  remoteMethods.copyUserId.call(page)
+  writes[1].fail()
+  writes[1].complete()
+  assert.match(toasts.at(-1), /复制失败/)
+  assert.equal(page.userIdCopying, false)
+})
+
+test('expired, missing or switched sessions never copy a stale user ID', () => {
+  const page = { currentUserId: 'old-user', authStatus: 'authenticated', userIdCopying: false }
+  let session
+  globalThis.uni = { getStorageSync: () => session, showToast() {}, setClipboardData: () => assert.fail('must not copy stale ID') }
+  for (const value of [null, { accessToken: 'token', expiresAt: '2000-01-01', user: { id: 'old-user' } }, { accessToken: 'token', expiresAt: '2099-01-01', user: { id: 'other-user' } }]) {
+    session = value
+    remoteMethods.copyUserId.call(page)
+  }
+  assert.equal(page.userIdCopying, false)
+})
+
+test('unsupported or throwing clipboard APIs give a retryable failure without a success message', () => {
+  const page = { currentUserId: 'user', authStatus: 'authenticated', userIdCopying: false }
+  const messages = []
+  globalThis.uni = { getStorageSync: () => ({ accessToken: 'token', expiresAt: '2099-01-01', user: { id: 'user' } }), showToast: options => messages.push(options.title) }
+  remoteMethods.copyUserId.call(page)
+  uni.setClipboardData = () => { throw new Error('clipboard unavailable') }
+  remoteMethods.copyUserId.call(page)
+  assert.equal(page.userIdCopying, false)
+  assert.equal(messages.length, 2)
+  assert.ok(messages.every(message => !message.includes('已复制')))
+})
 
 test('concurrent requests share one WeChat login and reuse the stored session', async () => {
 	const harness = authHarness(options => {

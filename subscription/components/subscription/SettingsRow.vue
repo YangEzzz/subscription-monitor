@@ -14,9 +14,12 @@
     /></view>
     <view class="setting-copy"
       ><text class="setting-title">{{ title }}</text
-      ><text v-if="description" class="setting-description">{{
-        description
-      }}</text></view
+      ><text
+        v-if="description"
+        class="setting-description"
+        :selectable="selectableDescription"
+        >{{ description }}</text
+      ></view
     >
     <text v-if="value" class="setting-value num">{{ value }}</text>
     <switch
@@ -55,6 +58,7 @@ export default {
     iconColor: { type: String, default: "var(--blue)" },
     title: { type: String, required: true },
     description: { type: String, default: "" },
+    selectableDescription: { type: Boolean, default: false },
     value: { type: String, default: "" },
     switchable: { type: Boolean, default: false },
     checked: { type: Boolean, default: false },

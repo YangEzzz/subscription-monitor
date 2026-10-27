@@ -114,7 +114,13 @@ export interface Membership {
   status: 'free' | 'active';
   plan: 'free' | 'member';
   startedAt: string | null;
-  source?: 'legacy' | 'simulation' | 'wechat' | 'virtual';
+  source?:
+    | 'legacy'
+    | 'simulation'
+    | 'wechat'
+    | 'virtual'
+    | 'admin'
+    | 'admin_revoked';
   sourceOrderId?: string | null;
 }
 

@@ -66,6 +66,20 @@ describe('authentication audit events', () => {
     await new AuthService(config, existing).login('two');
     expect((await read(existing)).items[0].action).toBe('login');
   });
+  it('lets admin locate the account by the exact ID returned to the mini program', async () => {
+    const session = await auth.login('one');
+    expect(session.user.id).toMatch(/^wx_[a-f0-9]{64}$/);
+    const found = await repo.adminRead({
+      section: 'users',
+      page: 1,
+      search: session.user.id,
+    });
+    expect(found.total).toBe(1);
+    expect(found.items[0].id).toBe(session.user.id);
+    expect(JSON.stringify(found)).not.toContain('private-openid');
+    const again = await auth.login('two');
+    expect(again.user.id).toBe(session.user.id);
+  });
   it('does not record failed WeChat logins', async () => {
     jest
       .mocked(globalThis.fetch)

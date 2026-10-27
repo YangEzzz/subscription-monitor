@@ -31,7 +31,7 @@ export function createSubscriptionPageState() {
 					{ key: 'profile', label: '我的', icon: 'person', activeIcon: 'person-filled' }
 					],
 					subscriptions: [], settings: createDefaultSettings(),
-					authStatus: 'pending', currentUserId: '', loading: false, mutating: false, dataReady: false, loadError: '', loadErrorCode: '', loadErrorRequestId: '',
+					authStatus: 'pending', currentUserId: '', userIdCopying: false, loading: false, mutating: false, dataReady: false, loadError: '', loadErrorCode: '', loadErrorRequestId: '',
 					serverStats: {}, serverReminders: [], statsRequestId: 0, statsLoading: false, statsError: '', statsErrorCode: '', statsErrorRequestId: '', trashPage: 0,
 					notifications: { configured: false, schedulerEnabled: false, credits: 0, recentDeliveries: [] }, notificationAuthorizing: false, notificationLoading: false, notificationRequestId: 0, notificationError: '',
 					subscriptionLimit: null, exportBusy: false,

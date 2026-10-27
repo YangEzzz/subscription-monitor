@@ -17,10 +17,23 @@ import { MembershipOrder } from '../domain/membership-order';
 
 export const SUBSCRIPTIONS_REPOSITORY = Symbol('SUBSCRIPTIONS_REPOSITORY');
 
+export interface AdminMembershipGrant {
+  action: 'grant' | 'revoke';
+  previousMembership: Membership | null;
+  id: string;
+  userId: string;
+  note: string;
+  operator: string;
+  createdAt: string;
+}
+
 export interface SubscriptionsRepository extends NotificationRepository {
-  findUserTestFlag(
+  findAdminMembershipGrant(
     userId: string,
-  ): Promise<{
+    action?: 'grant' | 'revoke',
+  ): Promise<AdminMembershipGrant | null>;
+  recordAdminMembershipGrant(grant: AdminMembershipGrant): Promise<void>;
+  findUserTestFlag(userId: string): Promise<{
     isTest: boolean;
     testNote: string | null;
     testUpdatedBy: string | null;

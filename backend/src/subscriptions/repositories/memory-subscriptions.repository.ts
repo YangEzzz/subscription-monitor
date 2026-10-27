@@ -15,7 +15,10 @@ import {
   SubscriptionRecord,
   UserSettings,
 } from '../domain/subscription';
-import { SubscriptionsRepository } from './subscriptions.repository';
+import {
+  AdminMembershipGrant,
+  SubscriptionsRepository,
+} from './subscriptions.repository';
 import { randomUUID } from 'node:crypto';
 import { AdminOverview, AdminPage, AdminQuery } from './admin-read';
 import {
@@ -32,6 +35,23 @@ function clone<T>(value: T): T {
 
 @Injectable()
 export class MemorySubscriptionsRepository implements SubscriptionsRepository {
+  private membershipGrants: AdminMembershipGrant[] = [];
+  findAdminMembershipGrant(
+    userId: string,
+    action: 'grant' | 'revoke' = 'grant',
+  ): Promise<AdminMembershipGrant | null> {
+    return Promise.resolve(
+      clone(
+        [...this.membershipGrants]
+          .reverse()
+          .find((g) => g.userId === userId && g.action === action) ?? null,
+      ),
+    );
+  }
+  recordAdminMembershipGrant(grant: AdminMembershipGrant): Promise<void> {
+    this.membershipGrants.push(clone(grant));
+    return Promise.resolve();
+  }
   private labels = new Map<
     string,
     {
@@ -980,6 +1000,7 @@ export class MemorySubscriptionsRepository implements SubscriptionsRepository {
   async transaction<T>(
     work: (repository: SubscriptionsRepository) => Promise<T>,
   ): Promise<T> {
+    const membershipGrantsSnapshot = clone(this.membershipGrants);
     const receiptsSnapshot = new Map(
       [...this.receipts].map(([key, value]) => [key, clone(value)]),
     );
@@ -1012,6 +1033,7 @@ export class MemorySubscriptionsRepository implements SubscriptionsRepository {
     try {
       return await work(this);
     } catch (error) {
+      this.membershipGrants = membershipGrantsSnapshot;
       this.orders = ordersSnapshot;
       this.receipts = receiptsSnapshot;
       this.refunds = refundsSnapshot;

@@ -66,8 +66,36 @@ export const remoteComputed = {
 }
 
 export const remoteMethods = {
+  copyUserId() {
+    if (this.userIdCopying) return
+    const userId = this.currentUserId
+    if (this.authStatus !== 'authenticated' || !userId || getSession()?.user.id !== userId) {
+      toast('登录状态已变化，请刷新后复制用户 ID')
+      return
+    }
+    if (typeof uni.setClipboardData !== 'function') {
+      toast('当前环境不支持复制，请手动选择用户 ID')
+      return
+    }
+    this.userIdCopying = true
+    const isCurrent = () => this.authStatus === 'authenticated' && this.currentUserId === userId && getSession()?.user.id === userId
+    try {
+      uni.setClipboardData({
+        data: userId,
+        showToast: false,
+        success: () => { if (isCurrent()) toast('用户 ID 已复制，可发送给客服') },
+        fail: () => { if (isCurrent()) toast('复制失败，请重试或长按用户 ID 复制') },
+        complete: () => { if (this.currentUserId === userId) this.userIdCopying = false }
+      })
+    } catch {
+      this.userIdCopying = false
+      toast('复制失败，请重试或长按用户 ID 复制')
+    }
+  },
   ...membershipMethods,
 	clearAccountData() {
+    this.currentUserId = ''
+    this.userIdCopying = false
     this.cancelDetailLoad()
     this.membershipRequestId++
     this.membershipOrders = []

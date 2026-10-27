@@ -21,7 +21,10 @@ import {
   SubscriptionStatus,
   UserSettings,
 } from '../domain/subscription';
-import { SubscriptionsRepository } from './subscriptions.repository';
+import {
+  AdminMembershipGrant,
+  SubscriptionsRepository,
+} from './subscriptions.repository';
 import { randomUUID } from 'node:crypto';
 import { AdminOverview, AdminPage, AdminQuery } from './admin-read';
 import {
@@ -115,6 +118,21 @@ export class PrismaSubscriptionsRepository
 
   static create(client: PrismaClient): PrismaSubscriptionsRepository {
     return new PrismaSubscriptionsRepository(client, client);
+  }
+
+  async findAdminMembershipGrant(
+    userId: string,
+    action: 'grant' | 'revoke' = 'grant',
+  ): Promise<AdminMembershipGrant | null> {
+    const [row] = await this.executor.$queryRaw<
+      AdminMembershipGrant[]
+    >`SELECT id,user_id AS "userId",action,previous_membership AS "previousMembership",note,operator,to_char(created_at AT TIME ZONE 'UTC','YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') AS "createdAt" FROM admin_membership_grants WHERE user_id=${userId} AND action=${action} ORDER BY created_at DESC,id DESC LIMIT 1`;
+    return row ?? null;
+  }
+
+  async recordAdminMembershipGrant(grant: AdminMembershipGrant): Promise<void> {
+    await this.executor
+      .$queryRaw`INSERT INTO admin_membership_grants(id,user_id,action,previous_membership,note,operator,created_at) VALUES(${grant.id}::uuid,${grant.userId},${grant.action},${JSON.stringify(grant.previousMembership)}::jsonb,${grant.note},${grant.operator},${new Date(grant.createdAt)}) RETURNING id`;
   }
 
   async recordUserAccess(userId: string, ip: string, at: Date): Promise<void> {

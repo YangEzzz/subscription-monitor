@@ -147,3 +147,12 @@ H5重编译和Edge会员页待支付/已支付、错误恢复、模拟隔离、3
 - `.preview/check-membership-quota.cjs` 在真实Vue会员组件和真实页面方法上验证320/390px、首屏可见开通按钮、不自动下单、返回、停售、读取失败重试、虚拟支付平台不支持、模拟权益确认及原日期/字段继续填写，pageerror=0。截图 `.preview/membership-quota-320.png`、`.preview/membership-quota-390.png`；平台API由测试适配器提供，不替代微信真机交易验收。
 - HBuilderX 5.26 mp-weixin编译通过，产物 `.preview/membership-quota-mp`。designmd lint为0错误、7项既有令牌警告。premium strict原始报告 `.preview/membership-quota-audit.json` 为59项actionless-button、unresolved=0，包含 @tap 与组合按钮识别误报，未宣称strict全通过。
 - 无数据库迁移或新环境变量。生效需要部署新版API并重新编译/发布小程序，尚未部署或进行真机交易验收。
+
+## 2026-10-27 小程序复制用户 ID 与后台定位
+
+- 我的→数据与偏好新增「用户 ID／复制」行，复用 SettingsRow，完整 ID 换行显示并支持长按选择。ID 直接取认证会话的 user.id，与后台用户列表搜索字段相同；无需新编号、数据库迁移或修改后台查询。
+- 复制前核对当前账号和有效会话，仅写入完整 ID；防重复点击，成功才提示，失败或平台接口不可用提供恢复提示，换账号清空旧 ID／复制状态并忽略旧成功提示。
+- 前端 100 项单测通过，包含完整 ID、失败、缺少接口、登录失效与换账号拦截。后台认证 5 项测试通过，验证真实登录生成的 wx_ + 64 位哈希 ID 可直接查到唯一用户，重复登录保持相同 ID。
+- H5 构建及 tests/ui.e2e.cjs 完整 Edge 流程通过，pageerror=0；实测剪贴板 readText 与服务端登录 user.id 完全一致。320/390px个人页截图已查看，ID原文换行；其他表单、导出、会员与导航回归通过。预览输出 .preview/user-id-h5，测试使用内存 API 和模拟微信登录，不涉及真实账号操作。
+- HBuilderX 5.26 自带 Node v22 编译 mp-weixin 通过，产物 .preview/user-id-mp。系统 Node v24 初次编译遇到缓存字节码不兼容，自带运行时解决；沙箱目录写入限制通过独立目录编译授权解决。保留既有 uniCloud 未启用与第三方鸿蒙兼容提示。
+- 尚未在微信真机验证剪贴板，未发布小程序。上线需要重新编译并发布包含该入口的小程序版本；既有后台已支持粘贴完整 ID 搜索。

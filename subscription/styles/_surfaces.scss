@@ -544,6 +544,12 @@
 .profile-page .profile-sub {
   font-size: 24rpx;
 }
+.profile-page .profile-user-id .setting-description {
+  overflow-wrap: anywhere;
+  word-break: break-all;
+  user-select: text;
+  font-family: var(--font-num);
+}
 .profile-page .local-badge {
   padding: 8rpx 12rpx;
   font-size: 21rpx;

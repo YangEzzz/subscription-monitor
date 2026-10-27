@@ -153,6 +153,8 @@ const labels: Record<string, string> = {
   unknown: '待核实',
   skipped: '已跳过',
   simulation: '模拟支付',
+  admin: '后台赠送',
+  admin_revoked: '后台取消资格',
   wechat: '微信支付',
   virtual: '虚拟支付',
   legacy: '历史权益',

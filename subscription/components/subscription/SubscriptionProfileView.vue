@@ -125,6 +125,19 @@
       <view class="settings-section">
         <text class="settings-title">数据与偏好</text>
         <view class="settings-card card list">
+          <settings-row
+            class="profile-user-id"
+            icon="person"
+            icon-class="blue-bg"
+            icon-color="var(--blue)"
+            title="用户 ID"
+            :description="userId || '登录后显示用户 ID'"
+            selectable-description
+            :value="userIdCopying ? '复制中…' : userId ? '复制' : ''"
+            :disabled="!userId || userIdCopying"
+            action
+            @activate="$emit('copy-user-id')"
+          />
           <picker :range="currencies" @change="changeDefaultCurrency"
             ><settings-row
               icon="wallet"
@@ -184,6 +197,7 @@ export default {
   name: "SubscriptionProfileView",
   components: { SettingsRow, PageHeader },
   emits: [
+    "copy-user-id",
     "open-membership",
     "notification-change",
     "notification-history",
@@ -194,6 +208,8 @@ export default {
     "open-about",
   ],
   props: {
+    userId: { type: String, default: "" },
+    userIdCopying: { type: Boolean, default: false },
     exportBusy: { type: Boolean, default: false },
     membershipEntryEnabled: { type: Boolean, default: false },
     notificationReady: { type: Boolean, default: false },

@@ -158,6 +158,12 @@ uni-app picker、switch、showModal 使用平台交互；详见 UX-CONTRACT.md�
 
 ## 会员中心：活跃会员俱乐部（2026-10-20）
 
+2026-10-27 后台会员赠送：用户详情的 UserMembership 沿用账号类型面板的分隔线、13px 正文、共享 Input/Button 和语义颜色，复用 AppDialog 的滚动、焦点与窄屏布局。开通为明确两步确认，赠送来源显示为「后台赠送」。本次用户授权覆盖后台权益只读限制，业务契约见 UX-CONTRACT.md 和 deploy/后台赠送会员.md。
+
+同日追加「取消会员资格」，继续由 UserMembership 表单拥有确认和错误恢复；最终确认使用共享 Button 的 destructive 变体，说明恢复免费版、保留数据及不自动退款。不新增弹窗或独立视觉体系。
+
+2026-10-27 小程序账号定位：我的→数据与偏好增加「用户 ID」复制行，复用 SettingsRow 的图标、文字、禁用态和 activate 事件，右侧显示复制／复制中。ID 原文完整换行，使用既有数值字体并允许长按选择；SettingsRow 的 selectableDescription 是此业务变体，其他行保持默认。无新增颜色、字体或间距 token。
+
 用户明确要求重新设计会员信息流、使用活跃气氛风格。本节替代前述会员页沿用浅蓝摘要的约束，日常管理页面保持原样。移动端会员中心的任务是看懂身份、会员价值与开通状态。布局为会员通行证 → 权益 → 永久方案 → 我的订单 → 常见问题。唯一主视觉是蓝紫通行证与倾斜金色会员徽章，外围使用平静白色内容面，不增加彩色侧边装饰。
 
 会员业务变体的运行时色板由 `subscription/styles/_tokens.scss` 拥有：club-violet `#5146bb`、club-blue `#3b61d9`、club-lilac `#f0edff`、club-gold `#ffe2a0`、club-orange `#a45a1b`、club-peach `#fff2dc`。正文沿用中文系统字体，金额和无限符号使用 numeric 字体栈；通行证标题 42rpx、分区标题 30rpx、正文 24–27rpx，320px 标题缩为 38rpx。会员页局部样式由 MembershipView.vue 拥有，不覆盖全局品牌色。

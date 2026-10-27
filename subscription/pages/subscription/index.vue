@@ -177,6 +177,8 @@
         <!-- 我的 -->
         <subscription-profile-view
           v-else-if="activeView === 'profile'"
+          :user-id="authStatus === 'authenticated' ? currentUserId : ''"
+          :user-id-copying="userIdCopying"
           :navigation-bar-height="navigationBarHeight"
           :live-subscriptions="liveSubscriptions"
           :monthly-average-text="monthlyAverageText"
@@ -197,6 +199,7 @@
             mutating
           "
           @open-membership="openMembership"
+          @copy-user-id="copyUserId"
           @notification-change="handleNotificationSwitch"
           @notification-history="showNotificationHistory"
           @open-reminder-settings="openReminderSettings"

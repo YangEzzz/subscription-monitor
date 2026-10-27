@@ -100,7 +100,10 @@ global.fetch = (url, options) =>
       });
       assert.equal(r.status, 201, await r.text());
     }
-    const root = resolve(__dirname, "../.preview/redesign-h5");
+    const root = resolve(
+      __dirname,
+      process.env.SUBSCRIPTION_UI_ROOT || "../.preview/redesign-h5",
+    );
     server = createServer(async (req, res) => {
       let file = resolve(
         root,
@@ -134,6 +137,7 @@ global.fetch = (url, options) =>
     browser = await chromium.launch({ channel: "msedge", headless: true });
     const context = await browser.newContext({
       viewport: { width: 390, height: 844 },
+      permissions: ["clipboard-read", "clipboard-write"],
     });
     await context.addInitScript(
       (session) =>
@@ -399,6 +403,12 @@ global.fetch = (url, options) =>
       .click();
     await tab("我的");
     await expect(page.locator(".profile-head")).toBeVisible();
+    const accountId = page.locator(".profile-user-id");
+    await expect(accountId).toContainText(session.user.id);
+    await accountId.click();
+    await expect
+      .poll(() => page.evaluate(() => navigator.clipboard.readText()))
+      .toBe(session.user.id);
     await page.getByText("导出订阅数据", { exact: true }).click();
     await expect(page.locator(".uni-modal__bd")).toContainText(
       "不含回收站记录",

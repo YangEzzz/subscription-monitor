@@ -28,6 +28,7 @@ import AdminLogin from './components/AdminLogin.vue';
 import StatsPage from './components/StatsPage.vue';
 import StatsDetailDialog from './components/StatsDetailDialog.vue';
 import UserTestFlag from './components/UserTestFlag.vue';
+import UserMembership from './components/UserMembership.vue';
 import type { StatsSelection, Metric } from './lib/stats';
 import { useAdmin } from './lib/useAdmin';
 import {
@@ -707,6 +708,13 @@ onBeforeUnmount(() => clearTimeout(timer));
         >
       </dl>
       <UserTestFlag
+        v-if="section === 'users' && selected"
+        :key="String(selected.id)"
+        :user="selected"
+        @unauthorized="session.expire"
+        @changed="refreshOrder"
+      />
+      <UserMembership
         v-if="section === 'users' && selected"
         :key="String(selected.id)"
         :user="selected"

@@ -40,6 +40,9 @@ const overview = {
   },
 };
 async function mockApi(page: Page) {
+  await page.route('**/users/**/membership', (r) =>
+    r.fulfill({ json: { membership: null, grant: null, canGrant: false } }),
+  );
   await page.route('**/users/**/test-flag', (r) =>
     r.fulfill({
       json: {
@@ -121,6 +124,260 @@ async function mockApi(page: Page) {
     });
   });
 }
+test('后台赠送会员核对用户、保留失败原因并刷新确认，窄屏可操作', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  let granted = false;
+  let submissions = 0;
+  await page.route('**/users/**/membership', async (route) => {
+    if (route.request().method() === 'POST') {
+      submissions++;
+      expect(route.request().postDataJSON()).toEqual({ note: '活动奖励' });
+      granted = true;
+      // A lost response after commit must be resolved by reading, not resubmitting.
+      await route.fulfill({
+        status: 503,
+        json: { message: '网络中断，请刷新核对' },
+      });
+      return;
+    }
+    await route.fulfill({
+      json: {
+        membership: granted
+          ? { status: 'active', plan: 'member', source: 'admin' }
+          : null,
+        grant: granted
+          ? {
+              note: '活动奖励',
+              operator: 'admin',
+              createdAt: '2026-10-27T02:00:00Z',
+            }
+          : null,
+        canGrant: true,
+      },
+    });
+  });
+  await page.goto('/?view=users');
+  await page
+    .locator('tbody tr')
+    .first()
+    .getByRole('button', { name: /查看.*详情/ })
+    .click();
+  const dialog = page.getByRole('dialog');
+  await dialog
+    .getByRole('button', { name: '赠送永久会员', exact: true })
+    .click();
+  await expect(dialog).toContainText('将为用户 wx-user-0 免费开通永久会员');
+  await dialog.getByRole('button', { name: '确认赠送永久会员' }).click();
+  await expect(dialog.getByRole('alert')).toContainText('2–200');
+  await dialog.getByLabel('赠送原因').fill('活动奖励');
+  await dialog.getByRole('button', { name: '确认赠送永久会员' }).click();
+  await expect(dialog.getByRole('alert')).toContainText('网络中断');
+  await expect(dialog.getByLabel('赠送原因')).toHaveValue('活动奖励');
+  await expect(
+    dialog.getByRole('button', { name: '确认赠送永久会员' }),
+  ).toBeDisabled();
+  await dialog.getByRole('button', { name: '刷新会员状态' }).click();
+  await expect(dialog).toContainText('已开通永久会员');
+  await expect(dialog).toContainText('后台赠送 · admin');
+  expect(submissions).toBe(1);
+  await expect(
+    dialog.getByRole('button', { name: '赠送永久会员', exact: true }),
+  ).toHaveCount(0);
+  await page.screenshot({
+    path: 'test-results/membership-grant-mobile.png',
+    fullPage: true,
+  });
+});
+
+test('后台赠送成功后刷新列表且阻止重复开通', async ({ page }) => {
+  let granted = false;
+  let submissions = 0;
+  await page.route('**/users/**/membership', async (route) => {
+    if (route.request().method() === 'POST') {
+      granted = true;
+      submissions++;
+    }
+    await route.fulfill({
+      json: {
+        membership: granted
+          ? { status: 'active', plan: 'member', source: 'admin' }
+          : null,
+        grant: granted
+          ? {
+              note: '活动奖励',
+              operator: 'admin',
+              createdAt: '2026-10-27T02:00:00Z',
+            }
+          : null,
+        canGrant: true,
+      },
+    });
+  });
+  await page.goto('/?view=users');
+  await page
+    .locator('tbody tr')
+    .first()
+    .getByRole('button', { name: /查看.*详情/ })
+    .click();
+  const dialog = page.getByRole('dialog');
+  await dialog
+    .getByRole('button', { name: '赠送永久会员', exact: true })
+    .click();
+  await dialog.getByLabel('赠送原因').fill('活动奖励');
+  await dialog.getByRole('button', { name: '确认赠送永久会员' }).click();
+  await expect(dialog.getByRole('status')).toContainText('会员已开通');
+  await expect(dialog).toContainText('已开通永久会员');
+  expect(submissions).toBe(1);
+  await page.screenshot({
+    path: 'test-results/membership-grant-desktop.png',
+    fullPage: true,
+  });
+});
+
+for (const width of [390, 1440]) {
+  test(`后台取消会员资格确认与结果核对 ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 1000 });
+    const original = {
+      userId: 'wx-user-0',
+      status: 'active',
+      plan: 'member',
+      source: 'virtual',
+      sourceOrderId: 'paid-order',
+      startedAt: '2026-10-01T00:00:00.000Z',
+    };
+    let revoked = false;
+    let submissions = 0;
+    const state = () => ({
+      membership: revoked
+        ? {
+            ...original,
+            status: 'free',
+            plan: 'free',
+            source: 'admin_revoked',
+            startedAt: null,
+          }
+        : original,
+      grant: null,
+      revocation: revoked
+        ? {
+            operator: 'admin',
+            note: '违规取消',
+            createdAt: '2026-10-27T03:00:00Z',
+          }
+        : null,
+      canGrant: true,
+      canRevoke: true,
+    });
+    await page.route('**/users/**/membership', (route) =>
+      route.fulfill({ json: state() }),
+    );
+    await page.route('**/users/**/membership/revoke', async (route) => {
+      submissions++;
+      expect(route.request().postDataJSON()).toEqual({
+        note: '违规取消',
+        expectedMembership: original,
+      });
+      revoked = true;
+      await route.fulfill(
+        width === 390
+          ? { status: 503, json: { message: '提交响应中断' } }
+          : { json: state() },
+      );
+    });
+    await page.goto('/?view=users');
+    await page
+      .locator('tbody tr')
+      .first()
+      .getByRole('button', { name: /查看.*详情/ })
+      .click();
+    const dialog = page.getByRole('dialog');
+    await dialog
+      .getByRole('button', { name: '取消会员资格', exact: true })
+      .click();
+    expect(submissions).toBe(0);
+    await expect(dialog).toContainText('取消资格不会自动退款');
+    await expect(dialog).toContainText('已有订阅及历史记录保留');
+    await expect(dialog).toContainText('wx-user-0');
+    await dialog.getByRole('button', { name: '确认取消会员资格' }).click();
+    await expect(dialog.getByRole('alert')).toContainText('取消原因');
+    await dialog.getByLabel('取消原因').fill('违规取消');
+    await page.screenshot({
+      path: `test-results/membership-revoke-confirm-${width}.png`,
+    });
+    await dialog.getByRole('button', { name: '确认取消会员资格' }).click();
+    if (width === 390) {
+      await expect(dialog.getByRole('alert')).toContainText('提交响应中断');
+      await expect(dialog.getByLabel('取消原因')).toHaveValue('违规取消');
+      await expect(
+        dialog.getByRole('button', { name: '确认取消会员资格' }),
+      ).toBeDisabled();
+      await dialog.getByRole('button', { name: '刷新会员状态' }).click();
+    } else
+      await expect(dialog.getByRole('status')).toContainText('会员资格已取消');
+    await expect(dialog).toContainText('当前为免费用户');
+    await expect(dialog).toContainText('后台取消资格 · admin');
+    await expect(
+      dialog.getByRole('button', { name: '取消会员资格', exact: true }),
+    ).toHaveCount(0);
+    await expect(
+      dialog.getByRole('button', { name: '赠送永久会员', exact: true }),
+    ).toBeVisible();
+    expect(submissions).toBe(1);
+    await page.screenshot({
+      path: `test-results/membership-revoke-result-${width}.png`,
+    });
+  });
+}
+
+test('会员取消入口遵循只读环境限制，写入401退出会话', async ({ page }) => {
+  let writable = false;
+  await page.route('**/users/**/membership', (route) =>
+    route.fulfill({
+      json: {
+        membership: {
+          status: 'active',
+          plan: 'member',
+          source: 'admin',
+          startedAt: null,
+          sourceOrderId: null,
+        },
+        canGrant: writable,
+        canRevoke: writable,
+        grant: null,
+      },
+    }),
+  );
+  await page.route('**/users/**/membership/revoke', (route) =>
+    route.fulfill({ status: 401, json: { message: '会话已过期' } }),
+  );
+  await page.goto('/?view=users');
+  await page
+    .locator('tbody tr')
+    .first()
+    .getByRole('button', { name: /查看.*详情/ })
+    .click();
+  await expect(page.getByRole('dialog')).toContainText(
+    '当前环境未开放会员管理',
+  );
+  await expect(
+    page.getByRole('button', { name: '取消会员资格', exact: true }),
+  ).toHaveCount(0);
+  await page.keyboard.press('Escape');
+  writable = true;
+  await page
+    .locator('tbody tr')
+    .first()
+    .getByRole('button', { name: /查看.*详情/ })
+    .click();
+  await page.getByRole('button', { name: '取消会员资格', exact: true }).click();
+  await page.getByLabel('取消原因').fill('资格调整');
+  await page.getByRole('button', { name: '确认取消会员资格' }).click();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await expect(page.getByLabel('管理员账号')).toBeVisible();
+});
+
 test.beforeEach(async ({ page }) => {
   await mockApi(page);
 });

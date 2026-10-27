@@ -330,6 +330,8 @@ test('quota and status follow the backend rather than local record counts and da
 
 test('clearing account state removes old drafts, notifications and filter state', () => {
 	const page = pageHarness()
+	page.currentUserId = 'old-user'
+	page.userIdCopying = true
 	page.subscriptions = [{ id: 'old' }]
 	page.form = { name: 'private draft' }
 	page.formBaseline = 'private draft'
@@ -345,6 +347,8 @@ test('clearing account state removes old drafts, notifications and filter state'
 	assert.equal(page.notifications.credits, 0)
 	assert.deepEqual(page.notifications.recentDeliveries, [])
 	assert.equal(page.dataReady, false)
+	assert.equal(page.currentUserId, '')
+	assert.equal(page.userIdCopying, false)
 })
 
 test('an account change cannot save the previous account’s form', async () => {

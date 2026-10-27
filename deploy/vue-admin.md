@@ -87,6 +87,6 @@ docker compose --env-file deploy/.env.production up -d --build api admin
 docker compose --env-file deploy/.env.production logs --tail=100 admin api
 ```
 
-页面打不开时检查 admin 服务与资源路径；页面能打开但数据读取失败时，检查 `LOCAL_ADMIN_ENABLED=true`、API 3002 端口和 `ADMIN_API_UPSTREAM`。不需要调整小程序 `/api/v1` 地址。当前版本仅查询，不修改用户数据、购买会员或发送通知。
+页面打不开时检查 admin 服务与资源路径；页面能打开但数据读取失败时，检查 `LOCAL_ADMIN_ENABLED=true`、API 3002 端口和 `ADMIN_API_UPSTREAM`。不需要调整小程序 `/api/v1` 地址。后台支持账号分类、会员赠送及订单退款，不发送通知。会员赠送的数据库迁移、操作入口和环境限制见 [后台赠送会员](后台赠送会员.md)。
 
 退款操作与当前只读开发限制见[后台退款方案](后台退款方案.md)。后台来源与管理员会话鉴权保持生效，生产已新增订单退款 POST 接口。
