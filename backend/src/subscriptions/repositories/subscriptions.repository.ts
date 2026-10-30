@@ -15,6 +15,18 @@ import { WechatIdentity } from '../../notifications/notification.repository';
 import { AdminStats } from './admin-stats';
 import { MembershipOrder } from '../domain/membership-order';
 
+export interface RuntimePolicy {
+  membershipEnabled: boolean;
+  freeSubscriptionLimit: number;
+  updatedAt: string | null;
+  updatedBy: string | null;
+}
+export const DEFAULT_RUNTIME_POLICY: RuntimePolicy = {
+  membershipEnabled: false,
+  freeSubscriptionLimit: 10,
+  updatedAt: null,
+  updatedBy: null,
+};
 export const SUBSCRIPTIONS_REPOSITORY = Symbol('SUBSCRIPTIONS_REPOSITORY');
 
 export interface AdminMembershipGrant {
@@ -28,6 +40,8 @@ export interface AdminMembershipGrant {
 }
 
 export interface SubscriptionsRepository extends NotificationRepository {
+  getRuntimePolicy(): Promise<RuntimePolicy>;
+  saveRuntimePolicy(policy: RuntimePolicy): Promise<RuntimePolicy>;
   findAdminMembershipGrant(
     userId: string,
     action?: 'grant' | 'revoke',

@@ -23,7 +23,9 @@ export class MembershipController {
   @ApiOkResponse({ description: 'Membership status and benefits' })
   async get(@CurrentUserId() userId: string) {
     const membership = await this.subscriptionsService.getMembership(userId);
-    const product = this.payments.product();
+    const product = { ...this.payments.product() };
+    product.available =
+      product.available && membership.policy.membershipEnabled;
     return {
       ...membership,
       lifetime: membership.status === 'active',

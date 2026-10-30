@@ -36,6 +36,10 @@ test("simulated orders enforce HTTP authentication, DTOs, entitlement and the se
   app.enableVersioning({ type: VersioningType.URI });
   app.useGlobalPipes(new ValidationPipe(validationOptions));
   await app.listen(0, "127.0.0.1");
+  const { SUBSCRIPTIONS_REPOSITORY } = require('./dist/subscriptions/repositories/subscriptions.repository.js');
+  const policyRepo = app.get(SUBSCRIPTIONS_REPOSITORY);
+  await policyRepo.saveRuntimePolicy({...await policyRepo.getRuntimePolicy(), membershipEnabled:true});
+
   const base = `${await app.getUrl()}/api/v1`;
   const call = (path, token, data) =>
     fetch(base + path, {

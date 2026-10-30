@@ -85,6 +85,47 @@ describe('Local admin server', () => {
     expect(login.status).toBe(200);
     sessionCookie = login.headers['set-cookie']![0].split(';')[0];
   });
+  it('authenticates runtime configuration writes and rejects invalid quotas', async () => {
+    expect((await read('/runtime-policy', { Cookie: '' })).status).toBe(401);
+    const headers = { 'Content-Type': 'application/json' };
+    for (const limit of [0, -1, 1.5, '10', 100001]) {
+      expect(
+        (
+          await read(
+            '/runtime-policy',
+            headers,
+            'POST',
+            JSON.stringify({
+              membershipEnabled: false,
+              freeSubscriptionLimit: limit,
+            }),
+          )
+        ).status,
+      ).toBe(400);
+    }
+    expect(
+      (
+        await read(
+          '/runtime-policy',
+          headers,
+          'POST',
+          JSON.stringify({
+            membershipEnabled: false,
+            freeSubscriptionLimit: 15,
+          }),
+        )
+      ).status,
+    ).toBe(200);
+    expect(JSON.parse((await read('/runtime-policy')).body)).toMatchObject({
+      membershipEnabled: false,
+      freeSubscriptionLimit: 15,
+      updatedBy: 'admin',
+    });
+    await repository.saveRuntimePolicy({
+      ...(await repository.getRuntimePolicy()),
+      freeSubscriptionLimit: 10,
+    });
+  });
   it('protects refund writes, validates JSON and uses the authenticated operator', async () => {
     const path = '/refunds/mo-test';
     expect((await read(path, { Cookie: '' }, 'POST', '{}')).status).toBe(401);

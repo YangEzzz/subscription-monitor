@@ -21,9 +21,9 @@ export const membershipMethods = {
       (this.activeView === "form" && !this.editingId
         ? { kind: "draft" }
         : { kind: "manage" });
-    if (this.membershipEntryEnabled) return this.openMembership("quota");
+    if (this.membershipEntryEnabled && this.settings.membership.benefits?.membershipPurchaseAvailable && (this.settings.membership.product?.channel !== "virtual" || this.virtualPaymentAvailable())) return this.openMembership("quota");
     uni.showModal({
-      title: "免费额度已用完",
+      title: "额度已用完，可删除释放位置",
       content: `当前账号最多保存 ${this.subscriptionLimit} 条订阅。可删除不再使用的订阅释放额度，历史账单会保留。`,
       showCancel: false,
       confirmText: "知道了",

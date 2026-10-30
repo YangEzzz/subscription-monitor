@@ -110,7 +110,7 @@ test('page and uni.request adapter complete the workflow against real Nest HTTP 
 		assert.equal(page.subscriptions.length, 0)
 		assert.equal(page.serviceTemplates.length, 5)
 		assert.equal(page.authStatus, 'authenticated')
-		page.openForm('2028-01-31')
+		await page.openForm('2028-01-31')
 		Object.assign(page.form, { name: '联调订阅', amount: '20', category: '音乐' })
 		await page.saveSubscription()
 		assert.equal(page.activeView, 'detail')
@@ -120,7 +120,7 @@ test('page and uni.request adapter complete the workflow against real Nest HTTP 
 		assert.equal(page.statsTotal, 20)
 		const id = page.selectedId
 		await assert.rejects(api.update(id, { amount: null }), error => error.status === 422 && Boolean(error.details.amount))
-		page.openForm(null, page.selectedSubscription)
+		await page.openForm(null, page.selectedSubscription)
 		page.form.amount = '25'
 		await page.saveSubscription()
 		await page.refreshStats()
@@ -154,7 +154,7 @@ test('page and uni.request adapter complete the workflow against real Nest HTTP 
 		await page.openDetail({ id })
 		await page.cancelSubscription()
 		assert.equal(page.selectedSubscription.status, 'cancelled')
-		page.openForm('2028-03-01')
+		await page.openForm('2028-03-01')
 		Object.assign(page.form, { name: '一次性付款', cycle: '一次性', amount: '0' })
 		await page.saveSubscription()
 		await page.confirmRenewal()

@@ -33,9 +33,13 @@ function harness(used = 10) {
   for (const [key, value] of Object.entries(subscriptionComputed))
     Object.defineProperty(page, key, { get: value.bind(page) });
   page.applyMembership({
+    policy: { membershipEnabled: true },
+    benefits: { membershipPurchaseAvailable: true },
     status: "free",
     quota: { limit: 10, used, remaining: Math.max(0, 10 - used) },
   });
+  page.refreshMembershipPolicy = async () => true;
+  page.openForm = page.openFormWithQuota;
   page.loadMembershipOrders = async () => {
     page.reads++;
   };
@@ -43,6 +47,7 @@ function harness(used = 10) {
 }
 const activate = (page) =>
   page.applyMembership({
+    policy: { membershipEnabled: true },
     status: "active",
     quota: { limit: null, used: 10, remaining: null },
   });
@@ -142,6 +147,8 @@ test("released quota can resume without payment; normal membership entry resets 
   const page = harness();
   page.openForm();
   page.applyMembership({
+    policy: { membershipEnabled: true },
+    benefits: { membershipPurchaseAvailable: true },
     status: "free",
     quota: { limit: 10, used: 9, remaining: 1 },
   });
@@ -166,4 +173,37 @@ test("editing at the limit remains available and copying uses the same quota ent
   assert.equal(page.activeView, "membership");
   assert.equal(page.membershipIntent.kind, "new");
   assert.match(page.membershipIntent.initialValues.name, /副本/);
+});
+
+test("closed membership shows only the release-quota modal and keeps existing records", () => {
+ const page = harness();
+ let modal;
+ uni.showModal = options => { modal = options };
+ page.applyMembership({policy: {membershipEnabled: false}, status: 'active', quota: {limit: 10,used: 10,remaining: 0}});
+ page.openForm();
+ assert.equal(page.membershipEntryEnabled, false);
+ assert.equal(page.activeView, 'all');
+ assert.equal(page.reads, 0);
+ assert.equal(modal.title, '额度已用完，可删除释放位置');
+ assert.equal(modal.showCancel, false);
+ assert.equal(page.subscriptionLimit, 10);
+});
+test("open membership without available payment still shows quota modal", () => {
+ const page = harness();
+ let calls = 0;
+ uni.showModal = () => calls++;
+ page.settings.membership.benefits.membershipPurchaseAvailable = false;
+ page.openForm();
+ assert.equal(calls, 1);
+ assert.equal(page.reads, 0);
+});
+test("new form refreshes quota so a raised limit becomes usable", async () => {
+ const page = harness();
+ page.refreshMembershipPolicy = async () => {
+ page.applyMembership({policy: {membershipEnabled: false},status: 'free',quota: {limit: 20,used: 10,remaining: 10}});
+ return true;
+ };
+ await subscriptionMethods.openForm.call(page);
+ assert.equal(page.activeView, 'form');
+ assert.equal(page.subscriptionLimit, 20);
 });

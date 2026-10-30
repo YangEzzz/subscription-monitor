@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
+import { scryptSync } from 'node:crypto';
 
 test('HTTP login and authenticated reads update only the account access metadata', async () => {
   Object.assign(process.env, {
@@ -12,6 +13,10 @@ test('HTTP login and authenticated reads update only the account access metadata
     WECHAT_PAY_ENABLED: 'false', WECHAT_VIRTUAL_PAY_ENABLED: 'false',
     MEMBERSHIP_SIMULATION_ENABLED: 'false',
   });
+  const oldAdminUser = process.env.ADMIN_USERNAME, oldAdminHash = process.env.ADMIN_PASSWORD_HASH;
+  process.env.ADMIN_USERNAME = 'integration-admin';
+  const salt = 'b'.repeat(32), password = 'integration-admin-password';
+  process.env.ADMIN_PASSWORD_HASH = `scrypt$${salt}$${scryptSync(password,salt,64).toString('hex')}`;
   const originalFetch = globalThis.fetch;
   globalThis.fetch = (url, options) => String(url).startsWith('https://api.weixin.qq.com/')
     ? Promise.resolve(new Response(JSON.stringify({ openid: 'private-openid' })))
@@ -27,8 +32,11 @@ test('HTTP login and authenticated reads update only the account access metadata
     app.enableVersioning({ type: VersioningType.URI });
     await app.listen(0, '127.0.0.1');
     const base = `${await app.getUrl()}/api/v1`;
+    const adminLogin = await originalFetch('http://127.0.0.1:3002/login', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:'integration-admin',password})});
+    assert.equal(adminLogin.status,200);
+    const cookie = adminLogin.headers.get('set-cookie').split(';')[0];
     const readUser = async () => {
-      const response = await originalFetch('http://127.0.0.1:3002/data?section=users');
+      const response = await originalFetch('http://127.0.0.1:3002/data?section=users',{headers:{Cookie:cookie}});
       assert.equal(response.status, 200);
       const page = await response.json();
       assert.equal(page.total, 1);
@@ -57,6 +65,8 @@ test('HTTP login and authenticated reads update only the account access metadata
     assert.deepEqual(await readUser(), recorded);
   } finally {
     globalThis.fetch = originalFetch;
+    if(oldAdminUser===undefined) delete process.env.ADMIN_USERNAME; else process.env.ADMIN_USERNAME=oldAdminUser;
+    if(oldAdminHash===undefined) delete process.env.ADMIN_PASSWORD_HASH; else process.env.ADMIN_PASSWORD_HASH=oldAdminHash;
     if (app) await app.close();
   }
 });

@@ -324,3 +324,12 @@ model PaymentRefundReceipt {
  @@index([confirmedAt],map:"payment_refund_receipts_confirmed_idx")
  @@map("payment_refund_receipts")
 }
+
+model RuntimePolicy {
+ id Int @id
+ membershipEnabled Boolean @default(false) @map("membership_enabled")
+ freeSubscriptionLimit Int @default(10) @map("free_subscription_limit")
+ updatedAt DateTime @default(now()) @map("updated_at") @db.Timestamptz(3)
+ updatedBy String? @map("updated_by") @db.VarChar(80)
+ @@map("runtime_policy")
+}

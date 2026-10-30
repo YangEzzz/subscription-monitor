@@ -26,6 +26,44 @@ function createInput(index: number) {
 }
 
 describe('SubscriptionsService', () => {
+  it('applies runtime limits immediately and restores preserved membership when reopened', async () => {
+    const repo = new MemorySubscriptionsRepository();
+    const service = new SubscriptionsService(repo);
+    await repo.saveMembership({
+      userId: 'policy-user',
+      status: 'active',
+      plan: 'member',
+      startedAt: new Date().toISOString(),
+    });
+    expect((await service.getMembership('policy-user')).quota.limit).toBe(10);
+    const policy = {
+      ...(await repo.getRuntimePolicy()),
+      freeSubscriptionLimit: 2,
+    };
+    await repo.saveRuntimePolicy(policy);
+    const first = await service.create('policy-user', createInput(1));
+    await service.create('policy-user', createInput(2));
+    await expect(
+      service.create('policy-user', createInput(3)),
+    ).rejects.toMatchObject({
+      response: { code: 'SUBSCRIPTION_LIMIT_REACHED', limit: 2 },
+    });
+    await repo.saveRuntimePolicy({ ...policy, freeSubscriptionLimit: 1 });
+    expect((await service.getMembership('policy-user')).quota).toMatchObject({
+      used: 2,
+      remaining: 0,
+      limit: 1,
+    });
+    await service.update('policy-user', String(first.id), { name: 'still editable' });
+    await repo.saveRuntimePolicy({ ...policy, membershipEnabled: true });
+    await service.create('policy-user', createInput(3));
+    expect((await service.getMembership('policy-user')).quota.limit).toBeNull();
+    await repo.saveRuntimePolicy(policy);
+    expect((await service.getMembership('policy-user')).quota).toMatchObject({
+      used: 3,
+      limit: 2,
+    });
+  });
   it('converts mixed currencies before totals, categories and trends using the global currency', async () => {
     const fx = new ExchangeRatesService();
     jest.spyOn(fx, 'snapshot').mockResolvedValue({
@@ -152,6 +190,12 @@ describe('SubscriptionsService', () => {
       status: 'active',
       plan: 'member',
       startedAt: new Date().toISOString(),
+    });
+    await repository.saveRuntimePolicy({
+      membershipEnabled: true,
+      freeSubscriptionLimit: 10,
+      updatedAt: null,
+      updatedBy: null,
     });
     const memberService = new SubscriptionsService(repository);
     for (let index = 0; index < 12; index++)

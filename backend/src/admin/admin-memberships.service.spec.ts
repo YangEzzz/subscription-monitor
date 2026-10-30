@@ -7,6 +7,12 @@ describe('Admin membership grants', () => {
   let service: AdminMembershipsService;
   beforeEach(async () => {
     repo = new MemorySubscriptionsRepository();
+    void repo.saveRuntimePolicy({
+      membershipEnabled: true,
+      freeSubscriptionLimit: 10,
+      updatedAt: null,
+      updatedBy: null,
+    });
     service = new AdminMembershipsService(repo);
     await repo.saveWechatIdentity({
       userId: 'wx-grant',

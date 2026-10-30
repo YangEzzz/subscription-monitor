@@ -121,6 +121,7 @@ export const remoteMethods = {
 		this.statsRequestId++
 		this.statsLoading = false
 		this.statsError = ''
+		this.membershipEntryEnabled = false
 		this.subscriptionLimit = null
 		this.selectedId = null
 		this.editingId = null
@@ -135,7 +136,20 @@ export const remoteMethods = {
 		this.categories = []; this.cycles = []; this.payments = []; this.currencies = []
 		this.resetFilters()
 	},
+ async refreshMembershipPolicy() {
+  const userId = this.currentUserId
+  const sequence = ++this.membershipPolicyRequestId
+  if (!userId) return false
+  try {
+   const membership = await api.membership()
+   if (sequence !== this.membershipPolicyRequestId || userId !== this.currentUserId || getSession()?.user.id !== userId) return false
+   this.applyMembership(membership)
+   return true
+  } catch { if (sequence === this.membershipPolicyRequestId && userId === this.currentUserId) this.membershipEntryEnabled = false; return false }
+ },
 	applyMembership(membership) {
+  this.membershipEntryEnabled = membership.policy?.membershipEnabled === true
+  if (!this.membershipEntryEnabled && this.activeView === 'membership') this.switchTab('profile')
 		this.settings = { ...this.settings, membership: { ...membership, plan: membership.status === 'active' ? '会员版' : '免费版', startedAt: membership.startedAt ? new Date(membership.startedAt).getTime() : null } }
 		this.subscriptionLimit = membership.quota.limit
 	},
@@ -296,7 +310,7 @@ export const remoteMethods = {
 			this.mutating = false
 		}
 		if (operationError) {
-			if (operationError.code === 'SUBSCRIPTION_LIMIT_REACHED') this.showMembershipLimit()
+			if (operationError.code === 'SUBSCRIPTION_LIMIT_REACHED') { await this.refreshMembershipPolicy(); this.showMembershipLimit() }
 			else toast(operationError.message)
 			return false
 		}
@@ -336,6 +350,7 @@ export const remoteMethods = {
 	cancelDetailLoad() { this.detailRequestId++; this.detailRequestCancel?.(); this.detailRequestCancel = null; this.detailLoading = false; this.detailError = '' },
 	async saveSubscription(force = false) {
 		if (this.loading || this.mutating || !this.dataReady) return
+		if (!this.editingId && this.currentUserId && !(await this.refreshMembershipPolicy())) return toast('额度读取失败，请重试')
 		if (!this.editingId && !this.canCreateSubscription) return this.showMembershipLimit()
 		this.form.name = (this.form.name || '').trim()
 		this.formError = this.validateForm()

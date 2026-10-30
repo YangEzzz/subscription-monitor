@@ -85,6 +85,10 @@ test("virtual payment HTTP: fresh login, fixed product, encrypted XML/JSON, dupl
       new ValidationPipe(require("./dist/utils/validation-options.js").default),
     );
     await app.listen(0, "127.0.0.1");
+  const { SUBSCRIPTIONS_REPOSITORY } = require('./dist/subscriptions/repositories/subscriptions.repository.js');
+  const policyRepo = app.get(SUBSCRIPTIONS_REPOSITORY);
+  await policyRepo.saveRuntimePolicy({...await policyRepo.getRuntimePolicy(), membershipEnabled:true});
+
     const base = `${await app.getUrl()}/api/v1`;
     const call = (path, token, data) =>
       fetch(base + path, {

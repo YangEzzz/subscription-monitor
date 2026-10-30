@@ -275,18 +275,19 @@ export class SubscriptionsService {
     repository = this.repository,
   ): Promise<void> {
     const membership = await this.getMembershipRecord(userId, repository);
-    if (membership.status === 'active') return;
+    const policy = await repository.getRuntimePolicy();
+    if (policy.membershipEnabled && membership.status === 'active') return;
     const used = (await this.ownedRecords(userId, repository)).filter(
       (record) => !record.deletedAt && !record.isDemo,
     ).length;
-    if (used >= FREE_SUBSCRIPTION_LIMIT) {
+    if (used >= policy.freeSubscriptionLimit) {
       throw new ForbiddenException({
         code: 'SUBSCRIPTION_LIMIT_REACHED',
         message:
           'Free plan allows up to ' +
-          FREE_SUBSCRIPTION_LIMIT +
+          policy.freeSubscriptionLimit +
           ' subscriptions',
-        limit: FREE_SUBSCRIPTION_LIMIT,
+        limit: policy.freeSubscriptionLimit,
         used,
       });
     }
@@ -770,19 +771,24 @@ export class SubscriptionsService {
         const used = (
           await this.ownedRecords(normalizedUserId, repository)
         ).filter((record) => !record.deletedAt && !record.isDemo).length;
+        const policy = await repository.getRuntimePolicy();
+        const unlimited =
+          policy.membershipEnabled && membership.status === 'active';
         return {
+          policy: {
+            membershipEnabled: policy.membershipEnabled,
+            freeSubscriptionLimit: policy.freeSubscriptionLimit,
+          },
           ...clone(membership),
           quota: {
-            limit:
-              membership.status === 'active' ? null : FREE_SUBSCRIPTION_LIMIT,
+            limit: unlimited ? null : policy.freeSubscriptionLimit,
             used,
-            remaining:
-              membership.status === 'active'
-                ? null
-                : Math.max(0, FREE_SUBSCRIPTION_LIMIT - used),
+            remaining: unlimited
+              ? null
+              : Math.max(0, policy.freeSubscriptionLimit - used),
           },
           benefits: {
-            unlimitedSubscriptions: membership.status === 'active',
+            unlimitedSubscriptions: unlimited,
             reminderOffsets: [14, 7, 3, 1, 0],
             statistics: true,
             membershipPurchaseAvailable: false,

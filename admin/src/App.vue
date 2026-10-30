@@ -28,6 +28,7 @@ import AdminLogin from './components/AdminLogin.vue';
 import StatsPage from './components/StatsPage.vue';
 import StatsDetailDialog from './components/StatsDetailDialog.vue';
 import UserTestFlag from './components/UserTestFlag.vue';
+import RuntimePolicy from './components/RuntimePolicy.vue';
 import UserMembership from './components/UserMembership.vue';
 import type { StatsSelection, Metric } from './lib/stats';
 import { useAdmin } from './lib/useAdmin';
@@ -456,6 +457,7 @@ onBeforeUnmount(() => clearTimeout(timer));
           </div>
 
           <template v-if="view === 'overview'">
+            <RuntimePolicy @unauthorized="session.expire" />
             <TodaySummary
               :day="overview?.today"
               :loading="busy"

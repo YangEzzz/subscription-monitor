@@ -190,6 +190,7 @@ export default {
   },
   onShow() {
     nativeNavigation.show(this);
+    if (this.dataReady) void this.refreshMembershipPolicy();
   },
   onReady() {
     // Let the lightweight header render before mounting the full form.

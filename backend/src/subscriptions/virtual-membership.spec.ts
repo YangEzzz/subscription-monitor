@@ -23,6 +23,12 @@ describe('virtual membership delivery', () => {
   });
   beforeEach(async () => {
     repo = new MemorySubscriptionsRepository();
+    void repo.saveRuntimePolicy({
+      membershipEnabled: true,
+      freeSubscriptionLimit: 10,
+      updatedAt: null,
+      updatedBy: null,
+    });
     await repo.saveWechatIdentity({
       userId: 'alice',
       appId: 'wx-app',

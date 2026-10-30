@@ -21,7 +21,7 @@ export function createSubscriptionPageState() {
 			const today = toDateKey(new Date())
 			return {
 				activeView: 'home', viewStack: [], scrollTop: 0,
-				membershipEntryEnabled: MEMBERSHIP_ENTRY_ENABLED,
+				membershipEntryEnabled: MEMBERSHIP_ENTRY_ENABLED, membershipPolicyRequestId: 0,
 				statusBarHeight: 20, navigationBarHeight: 44,
 						tabs: [
 					{ key: 'home', label: '首页', icon: 'home', activeIcon: 'home-filled' },
@@ -226,7 +226,11 @@ export const subscriptionMethods = {
 			goToday() { this.calendarCursor = this.todayKey.slice(0, 7) + '-01'; this.selectedDate = this.todayKey },
 			selectDate(key) { this.selectedDate = key; if (key.slice(0, 7) !== this.calendarCursor.slice(0, 7)) this.calendarCursor = key.slice(0, 7) + '-01' },
 			createEmptyForm(date) { const nextBillingDate = date || addDays(this.todayKey, 7); return { name: '', plan: '', logo: '订', color: '#16834d', amount: '', currency: this.settings.defaultCurrency, cycle: '每月', cycleValue: '', nextBillingDate, anchorDay: parseDate(nextBillingDate).getDate(), payment: '微信支付', category: '其他', status: 'active', autoRenew: true, trial: false, trialEndDate: null, reminders: this.settings.defaultReminders.slice(), note: '', cancelGuide: '' } },
-			openForm(date, item, initialValues) { if (!item && !this.canCreateSubscription) { this.showMembershipLimit({ kind: 'new', date: date || null, initialValues: initialValues ? { ...initialValues } : null }); return } this.formError = ''; this.editingId = item ? item.id : null; this.originalBillingDate = item ? item.nextBillingDate : null; this.form = item ? { ...item, amount: item.amount === null ? '' : String(item.amount), cycleValue: item.cycleValue || '', trial: Boolean(item.trialEndDate), trialEndDate: item.trialEndDate || null, reminders: (item.reminders || []).slice() } : this.createEmptyForm(date); if (initialValues) Object.assign(this.form, initialValues); this.formBaseline = JSON.stringify(this.form); if (!initialValues) nativeNavigation.restoreDraft(this); this.navigateToView('form') },
+			async openForm(date, item, initialValues) {
+ if (!item && this.currentUserId && !(await this.refreshMembershipPolicy())) { uni.showToast({ title: '额度读取失败，请重试', icon: 'none' }); return }
+ return this.openFormWithQuota(date, item, initialValues)
+ },
+ openFormWithQuota(date, item, initialValues) { if (!item && !this.canCreateSubscription) { this.showMembershipLimit({ kind: 'new', date: date || null, initialValues: initialValues ? { ...initialValues } : null }); return } this.formError = ''; this.editingId = item ? item.id : null; this.originalBillingDate = item ? item.nextBillingDate : null; this.form = item ? { ...item, amount: item.amount === null ? '' : String(item.amount), cycleValue: item.cycleValue || '', trial: Boolean(item.trialEndDate), trialEndDate: item.trialEndDate || null, reminders: (item.reminders || []).slice() } : this.createEmptyForm(date); if (initialValues) Object.assign(this.form, initialValues); this.formBaseline = JSON.stringify(this.form); if (!initialValues) nativeNavigation.restoreDraft(this); this.navigateToView('form') },
 			applyTemplate(template) { Object.assign(this.form, { ...template, amount: template.amount == null ? '' : String(template.amount) }); uni.showToast({ title: `已选择${template.short}`, icon: 'none' }) },
 			toggleReminder(value) { const index = this.form.reminders.indexOf(value); if (index >= 0) this.form.reminders.splice(index, 1); else this.form.reminders.push(value); this.form.reminders.sort((a, b) => b - a) },
 			changeCycle(value) { this.form.cycle = value; if (value !== '自定义天数') this.form.cycleValue = ''; if (value === '一次性') { this.form.autoRenew = false; this.form.trial = false; this.form.trialEndDate = null } },

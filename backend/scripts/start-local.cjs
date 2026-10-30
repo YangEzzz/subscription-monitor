@@ -38,6 +38,7 @@ async function main() {
     ANALYTICS_COLLECTION_ENABLED: 'false',
     WECHAT_VIRTUAL_PAY_ENABLED: 'false',
     ADMIN_REFUNDS_ENABLED: 'false',
+    ADMIN_RUNTIME_POLICY_ENABLED: readOnly ? 'false' : 'true',
     ADMIN_MEMBERSHIP_GRANTS_ENABLED: readOnly ? 'false' : (env.ADMIN_MEMBERSHIP_GRANTS_ENABLED || 'true'),
     ADMIN_USER_LABELS_ENABLED: env.ADMIN_USER_LABELS_ENABLED === 'false' ? 'false' : 'true',
     MEMBERSHIP_SIMULATION_ENABLED: 'false',

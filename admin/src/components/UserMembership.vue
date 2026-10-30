@@ -167,10 +167,11 @@ onBeforeUnmount(() => controller.abort());
       <p v-if="editing === 'revoke'">
         将取消用户
         {{ user.id }} 的会员资格并恢复免费版。已有订阅及历史记录保留，超过免费版
-        10 条额度时无法新增；取消资格不会自动退款，付费订单退款请另行办理。
+        配置的订阅额度时无法新增；取消资格不会自动退款，付费订单退款请另行办理。
       </p>
       <p v-else>
-        将为用户 {{ user.id }} 免费开通永久会员，订阅数量不限，不产生支付订单。
+        将为用户 <span>{{ user.id }}</span> 免费开通永久会员，不产生支付订单。
+        会员功能开放时订阅数量不限，关闭期间仍按统一上限执行。
       </p>
       <label for="membership-grant-note">{{
         editing === 'revoke' ? '取消原因' : '赠送原因'

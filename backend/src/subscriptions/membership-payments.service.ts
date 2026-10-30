@@ -155,7 +155,15 @@ export class MembershipPaymentsService
       });
     return order;
   }
+  private async assertMembershipOpen() {
+    if (!(await this.repository.getRuntimePolicy()).membershipEnabled)
+      throw new ForbiddenException({
+        code: 'MEMBERSHIP_DISABLED',
+        message: '会员功能暂未开放',
+      });
+  }
   async create(userId: string, input: CreateMembershipOrderDto) {
+    await this.assertMembershipOpen();
     this.assertEnabled();
     return this.repository.transactionForUser(userId, async (repository) => {
       const orders = await repository.listMembershipOrders(userId);
@@ -206,6 +214,7 @@ export class MembershipPaymentsService
     id: string,
     input: SimulateMembershipPaymentDto,
   ) {
+    await this.assertMembershipOpen();
     this.assertSimulationEnabled();
     return this.repository.transactionForUser(userId, async (repository) => {
       const order = await repository.findMembershipOrder(userId, id);
@@ -289,6 +298,7 @@ export class MembershipPaymentsService
   }
 
   async payment(userId: string, id: string) {
+    await this.assertMembershipOpen();
     if (!this.virtualPay) throw new ForbiddenException('虚拟支付暂未开放');
     this.virtualPay.assertEnabled();
     const order = await this.detail(userId, id);

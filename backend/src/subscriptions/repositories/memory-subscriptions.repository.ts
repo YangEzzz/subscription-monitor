@@ -17,6 +17,8 @@ import {
 } from '../domain/subscription';
 import {
   AdminMembershipGrant,
+  RuntimePolicy,
+  DEFAULT_RUNTIME_POLICY,
   SubscriptionsRepository,
 } from './subscriptions.repository';
 import { randomUUID } from 'node:crypto';
@@ -35,6 +37,14 @@ function clone<T>(value: T): T {
 
 @Injectable()
 export class MemorySubscriptionsRepository implements SubscriptionsRepository {
+  private runtimePolicy = { ...DEFAULT_RUNTIME_POLICY };
+  getRuntimePolicy(): Promise<RuntimePolicy> {
+    return Promise.resolve(clone(this.runtimePolicy));
+  }
+  saveRuntimePolicy(policy: RuntimePolicy): Promise<RuntimePolicy> {
+    this.runtimePolicy = clone(policy);
+    return this.getRuntimePolicy();
+  }
   private membershipGrants: AdminMembershipGrant[] = [];
   findAdminMembershipGrant(
     userId: string,

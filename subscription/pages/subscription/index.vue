@@ -467,6 +467,7 @@ export default {
   },
   onShow() {
     nativeNavigation.show(this);
+    if (this.dataReady) void this.refreshMembershipPolicy();
   },
   onReady() {
     nativeNavigation.ready(this);

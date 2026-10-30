@@ -96,6 +96,46 @@ export class LocalAdminServer
             .end(JSON.stringify({ message: '请先登录管理后台。' }));
           return;
         }
+        if (url.pathname === '/runtime-policy') {
+          if (
+            request.method === 'POST' &&
+            process.env.ADMIN_RUNTIME_POLICY_ENABLED === 'false'
+          )
+            throw new ForbiddenException(
+              '当前环境为只读，请在可写后台保存配置。',
+            );
+          if (request.method === 'GET') {
+            response.end(
+              JSON.stringify(await this.repository.getRuntimePolicy()),
+            );
+            return;
+          }
+          if (request.method === 'POST') {
+            const input = await readAdminJson(request);
+            if (
+              typeof input.membershipEnabled !== 'boolean' ||
+              !Number.isInteger(input.freeSubscriptionLimit) ||
+              Number(input.freeSubscriptionLimit) < 1 ||
+              Number(input.freeSubscriptionLimit) > 100000
+            )
+              throw new BadRequestException(
+                '请选择会员开关，并填写 1–100000 的整数订阅上限。',
+              );
+            response.end(
+              JSON.stringify(
+                await this.repository.saveRuntimePolicy({
+                  membershipEnabled: input.membershipEnabled,
+                  freeSubscriptionLimit: Number(input.freeSubscriptionLimit),
+                  updatedAt: new Date().toISOString(),
+                  updatedBy: auth.current(request)!,
+                }),
+              ),
+            );
+            return;
+          }
+          response.writeHead(405, { Allow: 'GET, POST' }).end();
+          return;
+        }
         const rawAudience = url.searchParams.get('excludeTest');
         if (rawAudience !== null && !['true', 'false'].includes(rawAudience))
           throw new BadRequestException('统计范围不正确');

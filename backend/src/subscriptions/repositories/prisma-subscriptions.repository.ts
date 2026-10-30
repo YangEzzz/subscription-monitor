@@ -23,6 +23,8 @@ import {
 } from '../domain/subscription';
 import {
   AdminMembershipGrant,
+  RuntimePolicy,
+  DEFAULT_RUNTIME_POLICY,
   SubscriptionsRepository,
 } from './subscriptions.repository';
 import { randomUUID } from 'node:crypto';
@@ -116,6 +118,17 @@ export class PrismaSubscriptionsRepository
     private readonly rootClient?: PrismaClient,
   ) {}
 
+  async getRuntimePolicy(): Promise<RuntimePolicy> {
+    const [row] = await this.executor.$queryRaw<
+      RuntimePolicy[]
+    >`SELECT membership_enabled AS "membershipEnabled",free_subscription_limit AS "freeSubscriptionLimit",to_char(updated_at AT TIME ZONE 'UTC','YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') AS "updatedAt",updated_by AS "updatedBy" FROM runtime_policy WHERE id=1`;
+    return row ?? { ...DEFAULT_RUNTIME_POLICY };
+  }
+  async saveRuntimePolicy(policy: RuntimePolicy): Promise<RuntimePolicy> {
+    await this.executor
+      .$queryRaw`INSERT INTO runtime_policy (id,membership_enabled,free_subscription_limit,updated_at,updated_by) VALUES (1,${policy.membershipEnabled},${policy.freeSubscriptionLimit},${new Date(policy.updatedAt!)},${policy.updatedBy}) ON CONFLICT (id) DO UPDATE SET membership_enabled=EXCLUDED.membership_enabled,free_subscription_limit=EXCLUDED.free_subscription_limit,updated_at=EXCLUDED.updated_at,updated_by=EXCLUDED.updated_by RETURNING id`;
+    return policy;
+  }
   static create(client: PrismaClient): PrismaSubscriptionsRepository {
     return new PrismaSubscriptionsRepository(client, client);
   }

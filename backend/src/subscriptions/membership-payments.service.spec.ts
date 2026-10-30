@@ -9,8 +9,26 @@ describe('simulated membership purchases', () => {
   const requestId = 'purchase_request_123456789';
   beforeEach(() => {
     repository = new MemorySubscriptionsRepository();
+    void repository.saveRuntimePolicy({
+      membershipEnabled: true,
+      freeSubscriptionLimit: 10,
+      updatedAt: null,
+      updatedBy: null,
+    });
     config = new ConfigService({ app: { membershipSimulationEnabled: true } });
     service = new MembershipPaymentsService(config, repository);
+  });
+  it('rejects new orders and payment initiation when membership is closed', async () => {
+    await repository.saveRuntimePolicy({
+      ...(await repository.getRuntimePolicy()),
+      membershipEnabled: false,
+    });
+    await expect(
+      service.create('alice', { productId: 'lifetime', requestId }),
+    ).rejects.toMatchObject({ response: { code: 'MEMBERSHIP_DISABLED' } });
+    await expect(service.payment('alice', 'old-order')).rejects.toMatchObject({
+      response: { code: 'MEMBERSHIP_DISABLED' },
+    });
   });
   it('creates a server-priced order, reuses concurrent attempts and grants once', async () => {
     const [first, second] = await Promise.all([
