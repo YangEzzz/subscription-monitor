@@ -16,7 +16,212 @@
   "compileType": "miniprogram",
   "simulatorPluginLibVersion": {},
   "packOptions": {
-    "ignore": [],
+    "ignore": [
+      {
+        "type": "folder",
+        "value": "static/icons"
+      },
+      {
+        "type": "folder",
+        "value": "static/image"
+      },
+      {
+        "type": "folder",
+        "value": "static/font"
+      },
+      {
+        "type": "file",
+        "value": "static/60x60.png"
+      },
+      {
+        "type": "file",
+        "value": "static/api.png"
+      },
+      {
+        "type": "file",
+        "value": "static/apiHL.png"
+      },
+      {
+        "type": "file",
+        "value": "static/apiIndex.png"
+      },
+      {
+        "type": "file",
+        "value": "static/c1.png"
+      },
+      {
+        "type": "file",
+        "value": "static/c2.png"
+      },
+      {
+        "type": "file",
+        "value": "static/c3.png"
+      },
+      {
+        "type": "file",
+        "value": "static/c4.png"
+      },
+      {
+        "type": "file",
+        "value": "static/c5.png"
+      },
+      {
+        "type": "file",
+        "value": "static/c6.png"
+      },
+      {
+        "type": "file",
+        "value": "static/c7.png"
+      },
+      {
+        "type": "file",
+        "value": "static/c8.png"
+      },
+      {
+        "type": "file",
+        "value": "static/c9.png"
+      },
+      {
+        "type": "file",
+        "value": "static/compass.png"
+      },
+      {
+        "type": "file",
+        "value": "static/component.png"
+      },
+      {
+        "type": "file",
+        "value": "static/componentHL.png"
+      },
+      {
+        "type": "file",
+        "value": "static/componentIndex.png"
+      },
+      {
+        "type": "file",
+        "value": "static/extui.png"
+      },
+      {
+        "type": "file",
+        "value": "static/extuiHL.png"
+      },
+      {
+        "type": "file",
+        "value": "static/extuiIndex.png"
+      },
+      {
+        "type": "file",
+        "value": "static/home-active.png"
+      },
+      {
+        "type": "file",
+        "value": "static/home.png"
+      },
+      {
+        "type": "file",
+        "value": "static/iconfont.css"
+      },
+      {
+        "type": "file",
+        "value": "static/iconfont.ttf"
+      },
+      {
+        "type": "file",
+        "value": "static/image-active.png"
+      },
+      {
+        "type": "file",
+        "value": "static/image.png"
+      },
+      {
+        "type": "file",
+        "value": "static/location.png"
+      },
+      {
+        "type": "file",
+        "value": "static/logo.png"
+      },
+      {
+        "type": "file",
+        "value": "static/menu.png"
+      },
+      {
+        "type": "file",
+        "value": "static/miniprogram-avatar-blue.png"
+      },
+      {
+        "type": "file",
+        "value": "static/miniprogram-avatar-renewal.png"
+      },
+      {
+        "type": "file",
+        "value": "static/nav.png"
+      },
+      {
+        "type": "file",
+        "value": "static/pause.png"
+      },
+      {
+        "type": "file",
+        "value": "static/play.png"
+      },
+      {
+        "type": "file",
+        "value": "static/plus.png"
+      },
+      {
+        "type": "file",
+        "value": "static/record.png"
+      },
+      {
+        "type": "file",
+        "value": "static/share-card.png"
+      },
+      {
+        "type": "file",
+        "value": "static/shuijiao.jpg"
+      },
+      {
+        "type": "file",
+        "value": "static/star-active.png"
+      },
+      {
+        "type": "file",
+        "value": "static/star.png"
+      },
+      {
+        "type": "file",
+        "value": "static/stop.png"
+      },
+      {
+        "type": "file",
+        "value": "static/template.png"
+      },
+      {
+        "type": "file",
+        "value": "static/templateHL.png"
+      },
+      {
+        "type": "file",
+        "value": "static/templateIndex.png"
+      },
+      {
+        "type": "file",
+        "value": "static/trash.png"
+      },
+      {
+        "type": "file",
+        "value": "static/uni.png"
+      },
+      {
+        "type": "folder",
+        "value": "wxcomponents"
+      },
+      {
+        "type": "folder",
+        "value": "uni_modules/uni-upgrade-center-app"
+      }
+    ],
     "include": []
   },
   "appid": "wx639160564da9289a",
